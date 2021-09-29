@@ -18,6 +18,13 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Rust File" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -64,7 +71,7 @@
       <workItem from="1632918721173" duration="278000" />
       <workItem from="1632919076661" duration="67000" />
       <workItem from="1632919400083" duration="3211000" />
-      <workItem from="1632923830524" duration="1311000" />
+      <workItem from="1632923830524" duration="1682000" />
     </task>
     <servers />
   </component>
