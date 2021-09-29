@@ -1,0 +1,13 @@
+
+[build]
+target = "x86_64-blog_os.json"
+
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
+
+#target.'cfg(target_os = "none")' 筛选了三元组中宿主系统设置为 "none" 的所有编译目标——
+#这将包含我们的 x86_64-blog_os.json 目标。
+#另外，runner 的值规定了运行 cargo run 使用的
+#命令 bootimage runner 由 bootimage 包提供，参数格式经过特殊设计，
+#可以用于 runner 命令。它将给定的可执行文件与项目的引导程序依赖项链接，
+#然后在 QEMU 中启动它命令
