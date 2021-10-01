@@ -3,6 +3,7 @@
 
 mod vga_buffer;
 
+use core::fmt::Write;
 use core::panic::PanicInfo;
 
 
@@ -10,12 +11,14 @@ static HELLO: &[u8] = b"Hello World!";
 /// 这个函数将在 panic 时被调用
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-
+    println!("{}",_info);
     loop {}
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    vga_buffer::print_something();
+
+    println!("This is very nice{}","!");
+    panic!("Fail");
     loop {}
 }
