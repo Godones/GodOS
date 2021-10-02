@@ -9,6 +9,10 @@ edition = "2018"
 volatile = "0.2.6"
 bootloader = "0.9.3"
 spin = "0.9.2"
+x86_64 = "0.14.6"
+uart_16550 = "0.2.15"
+
+
 # 使用 `cargo build` 编译时需要的配置
 [profile.dev]
 panic = "abort" # 禁用panic时栈展开
@@ -25,3 +29,13 @@ features = ["spin_no_std"] #禁止链接标准库
 
 [package.metadata.bootimage]
 build-command = ["xbuild"]
+test-timeout = 10 #设置超时时间
+test-args = [
+    "-device","isa-debug-exit,iobase=0xf4,iosize=0x04",
+    "-serial","stdio",
+    "-display","none",#隐藏qemu窗口
+]
+#QEMU支持一种名为 isa-debug-exit的特殊设备，
+#它提供了一种从客户系统（guest system）里退出QEMU的简单方式
+test-success-exit-code = 33
+#将33映射为测试成功的代码，即将原来成功标识为0 改成33而已

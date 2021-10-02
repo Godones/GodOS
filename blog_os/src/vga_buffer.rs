@@ -163,14 +163,19 @@ pub fn _print(args: fmt::Arguments) {
 }
 
 
-pub fn print_something() {
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::Green, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-        //危险操作,裸指针等使用
-    };
-    writer.write_byte(b'H');
-    writer.write_string("ello ");
-    write!(writer, "The numbers are {} and {}", 42, 1.0 / 3.0).unwrap();
+#[cfg(test)]
+use crate::{serial_print,serial_println};
+#[test_case]
+pub fn test_print_something() {
+    serial_print!("test_println... ");
+    println!("test_print_something output");
+    serial_println!("[ok]");
+}
+#[test_case]
+fn test_println_many() {
+    serial_print!("test_println_many... ");
+    for _ in 0..200 {
+        println!("test_println_many output");
+    }
+    serial_println!("[ok]");
 }
