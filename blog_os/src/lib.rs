@@ -3,10 +3,11 @@
 #![feature(custom_test_frameworks)]//启用自定义测试框架
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]//重定义test生成的主函数main名称
-
+#![feature(abi_x86_interrupt)]
 use core::panic::PanicInfo;
 pub mod serial;
 pub mod vga_buffer;
+pub mod interrupts;
 
 #[repr(u32)]
 pub enum QemuExitCode{
@@ -38,6 +39,11 @@ pub fn exit_qemu(exit_code:QemuExitCode){
     }
 }
 
+pub fn init(){
+    interrupts::init_idt();//初始化idt表
+}
+
+
 pub fn test_panic_handler(info:&PanicInfo)->!{
     serial_println!("[Failed]");
     serial_println!("Error: {}",info);
@@ -50,10 +56,18 @@ pub fn test_panic_handler(info:&PanicInfo)->!{
 fn panic(info: &PanicInfo) -> ! {
     test_panic_handler(info)
 }
+#[test_case]
+fn test_breakpoint_exception(){
+    serial_print!("blog_os::interrupts::test_breakpoint_exception...");
+    x86_64::instructions::interrupts::int3();//触发断点异常
+    serial_println!("[ok]");
+}
+
 
 #[cfg(test)]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    init();
     test_main();
     loop {}
 }

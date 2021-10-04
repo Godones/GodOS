@@ -25,7 +25,12 @@ fn panic(info:&PanicInfo)->!{
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("This is very nice{}","!");
+
+    blog_os::init();
+    x86_64::instructions::interrupts::int3();
+
     #[cfg(test)]
         test_main();
+    println!("Continue!");
     loop {}
 }
