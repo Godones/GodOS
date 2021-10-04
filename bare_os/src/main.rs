@@ -31,5 +31,7 @@ fn clear_bss(){
 extern "C" fn rust_main()->!{
     println!("Godone's OS");
     println!("It's so nice");
+    println!("{x:5}",x = 1);
+
     panic!("Stop");
 }
