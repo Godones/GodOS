@@ -1,7 +1,5 @@
 use core::fmt;
 use core::fmt::Write;
-
-
 const SYSCALL_EXIT:usize = 93;
 const SYSCALL_WRITE:usize = 64;
 
@@ -23,6 +21,7 @@ fn syscall(id:usize,args:[usize;3])->isize{
 pub fn sys_exit(state:i32) ->isize{
     syscall(SYSCALL_EXIT,[state as usize,0,0])//执行退出
 }
+
 pub fn sys_write(fd:usize,buffer:&[u8])->isize{
     syscall(SYSCALL_WRITE,[fd,buffer.as_ptr() as usize,buffer.len()])
 }
