@@ -1,5 +1,3 @@
-#![feature(panic_info_message)]
-
 use core::option::Option::Some;
 use core::panic::PanicInfo;
 // use crate::print::sys_exit;
@@ -16,8 +14,5 @@ fn panic(_info: &PanicInfo) -> ! {
         println!("Panicked :{}",_info.message().unwrap())
     }
     shutdown();
-    // sys_exit(9);
-    loop {
 
-    }
 }

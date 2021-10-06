@@ -1,19 +1,19 @@
-#![feature(llvm_asm)]
 #![allow(dead_code)]
+
 ///使用RustSBI接口进行相关操作
 ///
-const SBI_SET_TIMER:usize = 0;
-const SBI_CONSOLE_PUTCHAR :usize = 1;
+const SBI_SET_TIMER: usize = 0;
+const SBI_CONSOLE_PUTCHAR: usize = 1;
 const SBI_CONSOLE_GETCHAR: usize = 2;
-const SBI_CLEAR_IPI:usize = 3;
-const SBI_SEND_IPI:usize = 4;
-const SBI_REMOTE_FENCE_I :usize = 5;
-const SBI_REMOTE_SFENCE_VMA:usize = 6;
-const SBI_REMOTE_SFENCE_VMA_ASID:usize =7;
-const SBI_SHUTDOWN:usize = 8;
+const SBI_CLEAR_IPI: usize = 3;
+const SBI_SEND_IPI: usize = 4;
+const SBI_REMOTE_FENCE_I: usize = 5;
+const SBI_REMOTE_SFENCE_VMA: usize = 6;
+const SBI_REMOTE_SFENCE_VMA_ASID: usize = 7;
+const SBI_SHUTDOWN: usize = 8;
 
-fn sbi_call(function:usize,arg0: usize,arg1:usize,arg2:usize)->usize{
-    let mut ret = 0;
+fn sbi_call(function: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
+    let mut ret ;
     unsafe {
         //汇编指令
         llvm_asm!(
@@ -27,43 +27,48 @@ fn sbi_call(function:usize,arg0: usize,arg1:usize,arg2:usize)->usize{
         ret
     }
 }
-//向控制台输出一个字符
- fn console_putchar(c:usize){
-    sbi_call(SBI_CONSOLE_PUTCHAR,c ,0,0);
-}
-//从控制台读取数据
- fn console_getchar()->usize{
-    sbi_call(SBI_CONSOLE_GETCHAR,0,0,0)
-}
-pub fn shutdown() ->!{
-    sbi_call(SBI_SHUTDOWN,0,0,0);
-    // panic!("It should shutdown\n");
-    loop {
 
-    }
+//向控制台输出一个字符
+fn console_putchar(c: usize) {
+    sbi_call(SBI_CONSOLE_PUTCHAR, c, 0, 0);
 }
+
+//从控制台读取数据
+fn console_getchar() -> usize {
+    sbi_call(SBI_CONSOLE_GETCHAR, 0, 0, 0)
+}
+
+pub fn shutdown() -> ! {
+    sbi_call(SBI_SHUTDOWN, 0, 0, 0);
+    // panic!("It should shutdown\n");
+    loop {}
+}
+pub fn set_timer(time:u64){
+    sbi_call(SBI_SET_TIMER,time as usize,0,0);
+}
+
+
 pub struct Console;
 
 impl Console {
-    pub fn write_byte(&mut self, byte: usize){
+    pub fn write_byte(&mut self, byte: usize) {
         console_putchar(byte);
     }
-    pub fn write_string(&mut self,s:&str){
-        for char in s.bytes(){
+    pub fn write_string(&mut self, s: &str) {
+        for char in s.bytes() {
             self.write_byte(char as usize);
         }
     }
 }
 
 use core::fmt::{Arguments, Write};
+
 impl Write for Console {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.write_string(s);
         Ok(())
     }
 }
-
-
 
 
 //延迟初始化，在第一次使用此变量时进行初始化。
@@ -76,7 +81,7 @@ lazy_static! {
     pub static ref CONSOLE : Mutex<Console> = Mutex::new(Console);
 }
 #[doc(hidden)]//防止在文档中生成
-pub fn _print(args:Arguments) {
+pub fn _print(args: Arguments) {
     CONSOLE.lock().write_fmt(args).unwrap();
 }
 ///借用标准库的print!实现
