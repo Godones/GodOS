@@ -29,9 +29,10 @@ fn clear_bss(){
 
 #[no_mangle]
 extern "C" fn rust_main()->!{
+    clear_bss();
     println!("Godone's OS");
     println!("It's so nice");
-    println!("{x:5}",x = 1);
+    println!("{x:#?}",x = 1);
 
     panic!("Stop");
 }

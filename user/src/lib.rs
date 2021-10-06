@@ -1,0 +1,46 @@
+#![no_std]
+#![feature(llvm_asm)]
+#![feature(linkage)]
+#![feature(panic_info_message)]
+
+
+#[macro_use]
+pub mod console;
+mod lang_items;
+mod syscall;
+
+use crate::syscall::{sys_exit, sys_write};
+pub fn write(fd:usize,buf:&[u8])->isize{
+    sys_write(fd,buf)
+}
+pub fn exit(exit_code:i32)->isize{
+    sys_exit(exit_code)
+}
+
+#[linkage = "weak"]
+#[no_mangle]
+fn main()->i32{
+    panic!("Cannot find main!");
+}
+
+fn clear_bss(){
+    // 我们需要手动初始化.bss段，因为没有系统库或操作系统提供支持会将其初始化为0
+    unsafe {
+        extern "C"{
+            fn start_bss();
+            fn end_bss();
+        }
+        (start_bss as usize..end_bss as usize).for_each(|a|{
+            unsafe {(a as *mut u8).write_volatile(0)}
+        });
+    }
+}
+
+#[no_mangle]
+#[link_section = ".text.entry"]
+//代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中
+pub extern "C" fn _start()->!{
+    clear_bss();
+    exit(main());
+    panic!("unreachable after sys_exit!");
+}
