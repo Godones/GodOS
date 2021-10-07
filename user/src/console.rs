@@ -1,5 +1,6 @@
 use core::fmt::{self,Write};
 use crate::write;
+
 const STDOUT: usize = 1;
 
 
@@ -10,7 +11,6 @@ impl Write for Stdout{
         Ok(())
     }
 }
-
 pub fn print(args:fmt::Arguments){
     Stdout.write_fmt(args).unwrap();
 }
@@ -18,13 +18,13 @@ pub fn print(args:fmt::Arguments){
 #[macro_export]
 macro_rules! print {
     ($fmt:literal $(,$(arg:tt)+)?) => {
-        $crate::console::print(format_args!($fmt $(,$($args)+)?));
+        $crate::console::print(format_args!($fmt $(,$($args)+)?))
     }
 }
 
 #[macro_export]
 macro_rules! println {
     ($fmt: literal $(, $($arg: tt)+)?) => {
-        $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
+        $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?))
     }
 }

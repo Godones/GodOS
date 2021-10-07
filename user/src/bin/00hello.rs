@@ -1,6 +1,6 @@
 #![no_main]
 #![no_std]
-#![feature(llvm_asm)]
+#![feature(asm)]
 
 
 
@@ -11,7 +11,7 @@ extern crate lib;
 fn main()->i32{
     println!("Hello God\n");
     unsafe {
-        llvm_asm!("sret");
+        asm!("sret");
     }
     0
 }

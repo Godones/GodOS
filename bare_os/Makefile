@@ -1,59 +1,88 @@
-TARGET      := riscv64gc-unknown-none-elf
-MODE        := release
-KERNEL_FILE := target/$(TARGET)/$(MODE)/bare_os
-BIN_FILE    := target/$(TARGET)/$(MODE)/bare_os.bin
+TARGET := riscv64gc-unknown-none-elf
+MODE := release
+KERNEL_ELF := target/$(TARGET)/$(MODE)/bare_os
+KERNEL_BIN := $(KERNEL_ELF).bin
+DISASM_TMP := target/$(TARGET)/$(MODE)/asm
+
+# BOARD
 BOARD ?= qemu
 SBI ?= rustsbi
 BOOTLOADER := ../bootloader/$(SBI)-$(BOARD).bin
+K210_BOOTLOADER_SIZE := 131072
 
+#内核入口地址
+ifeq ($(BOARD), qemu)
+	KERNEL_ENTRY_PA := 0x80200000
+else ifeq ($(BOARD), k210)
+	KERNEL_ENTRY_PA := 0x80020000
+endif
 
-USER_DIR    := ../user
-USER_BUILD  := $(USER_DIR)/build
-IMG_FILE    := $(USER_BUILD)/disk.img
+# Run K210
+K210-SERIALPORT	= /dev/ttyUSB0
+K210-BURNER = ../tools/kflash.py
 
-OBJDUMP     := rust-objdump --arch-name=riscv64
-OBJCOPY     := rust-objcopy --binary-architecture=riscv64
+# 二进制数据转化
+OBJDUMP := rust-objdump --arch-name=riscv64
+OBJCOPY := rust-objcopy --binary-architecture=riscv64
 
-.PHONY: doc kernel build clean qemu run env
+# Disassembly
+DISASM ?= -x
 
-# 默认 build 为输出二进制文件
-build: $(BIN_FILE)
+build: env $(KERNEL_BIN)
 
-# 通过 Rust 文件中的注释生成文档
-doc:
-	@cargo doc --document-private-items
+env:
+	(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add $(TARGET)
+	cargo install cargo-binutils
+	rustup component add rust-src
+	rustup component add llvm-tools-preview
 
-# 编译 kernel
+$(KERNEL_BIN): kernel
+	@$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
+
 kernel:
+	@cd ../user && make build
+	@echo Platform: $(BOARD)
+	@cp src/linker-$(BOARD).ld src/linker.ld
 	@cargo build --release
+	@rm src/linker.ld
 
-# 生成 kernel 的二进制文件
-$(BIN_FILE): kernel
-	@$(OBJCOPY) $(KERNEL_FILE) --strip-all -O binary $@
 
-# 查看反汇编结果
-asm:
-	@$(OBJDUMP) -d $(KERNEL_FILE) | less
-
-# 清理编译出的文件
 clean:
 	@cargo clean
 
-# 运行 QEMU
-qemu: kernel build
+disasm: kernel
+	@$(OBJDUMP) $(DISASM) $(KERNEL_ELF) | less
+
+disasm-vim: kernel
+	@$(OBJDUMP) $(DISASM) $(KERNEL_ELF) > $(DISASM_TMP)
+	@vim $(DISASM_TMP)
+	@rm $(DISASM_TMP)
+
+run: run-inner
+
+
+
+run-inner: build
+ifeq ($(BOARD),qemu)
 	@qemu-system-riscv64 \
-    		-machine virt \
-    		-nographic \
-    		-bios $(BOOTLOADER) \
-    		-device loader,file=$(BIN_FILE),addr=0x80200000 \
+		-machine virt \
+		-nographic \
+		-bios $(BOOTLOADER) \
+		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
+else
+	(which $(K210-BURNER)) || (cd .. && git clone https://github.com/sipeed/kflash.py.git && mv kflash.py tools)
+	@cp $(BOOTLOADER) $(BOOTLOADER).copy
+	@dd if=$(KERNEL_BIN) of=$(BOOTLOADER).copy bs=$(K210_BOOTLOADER_SIZE) seek=1
+	@mv $(BOOTLOADER).copy $(KERNEL_BIN)
+	@sudo chmod 777 $(K210-SERIALPORT)
+	python3 $(K210-BURNER) -p $(K210-SERIALPORT) -b 1500000 $(KERNEL_BIN)
+	python3 -m serial.tools.miniterm --eol LF --dtr 0 --rts 0 --filter direct $(K210-SERIALPORT) 115200
+endif
 
-# 一键运行
-run: build qemu
-
-# 一键 gdb
 debug: build
 	@tmux new-session -d \
-		"qemu-system-riscv64 -machine virt -nographic -bios default -device loader,file=$(BIN_FILE),addr=0x80200000 \
-		-drive file=$(IMG_FILE),format=qcow2,id=sfs -device virtio-blk-device,drive=sfs -s -S" && \
-		tmux split-window -h "riscv64-unknown-elf-gdb -ex 'file $(KERNEL_FILE)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'" && \
+		"qemu-system-riscv64 -machine virt -nographic -bios $(BOOTLOADER) -device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) -s -S" && \
+		tmux split-window -h "riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'" && \
 		tmux -2 attach-session -d
+
+.PHONY: build env kernel clean disasm disasm-vim run-inner

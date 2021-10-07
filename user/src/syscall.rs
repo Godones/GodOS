@@ -1,5 +1,3 @@
-use core::panic::PanicInfo;
-use core::fmt::{self,Write};
 const SYSCALL_EXIT:usize = 93;
 const SYSCALL_WRITE:usize = 64;
 
@@ -23,26 +21,28 @@ pub fn sys_exit(state:i32) ->isize{
 }
 
 
-struct Stdout;
-impl Write for Stdout{
-    fn write_str(&mut self,s:&str)->fmt::Result{
-        sys_write(1,s.as_bytes());
-        Ok(())
-    }
-}
+// struct Stdout;
+// impl Write for Stdout{
+//     fn write_str(&mut self,s:&str)->fmt::Result{
+//         sys_write(1,s.as_bytes());
+//         Ok(())
+//     }
+// }
+//
+// pub fn print(args:fmt::Arguments){
+//     Stdout.write_fmt(args).unwrap();
+// }
 
-pub fn print(args:fmt::Arguments){
-    Stdout.write_fmt(args).unwrap();
-}
 fn syscall(id: usize, args: [usize; 3]) -> isize {
-    let mut ret: isize =-1;
+    let mut ret: isize;
     unsafe {
-        llvm_asm!("ecall"
-            : "={x10}" (ret)
-            : "{x10}" (args[0]), "{x11}" (args[1]), "{x12}" (args[2]), "{x17}" (id)
-            : "memory"
-            : "volatile"
-        );
+        asm!("ecall",
+        inlateout("x10") args[0] => ret,
+        in("x11") args[1],
+        in("x12") args[2],
+        in("x17") id,
+        options(nostack)
+        )
     }
     ret
 }
