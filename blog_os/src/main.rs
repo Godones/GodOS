@@ -28,6 +28,10 @@ pub extern "C" fn _start() -> ! {
 
     blog_os::init();
     x86_64::instructions::interrupts::int3();
+    unsafe {
+        *(0xdeadbeef as *mut u64) = 52;//访问非法地址，触发缺页异常，再触发双重异常
+
+    };
 
     #[cfg(test)]
         test_main();
