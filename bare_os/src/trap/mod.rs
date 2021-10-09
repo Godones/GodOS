@@ -5,16 +5,15 @@ use crate::syscall::syscall;
 use riscv::register::{
     scause::{self,Exception,Trap},
     stvec,stval,
-    sstatus::{self},
 };
 
-use crate::println;
+use crate::{println,ERROR};
 use context::TrapFrame;
 use crate::batch::run_next_app;
 
 global_asm!(include_str!("trap.asm"));
 
-///批处理操作系统初始化
+/// 批处理操作系统初始化
 /// 需要设置好stvec寄存器指向正确的Trap处理入口点
 /// 当trap发生时，cpu根据stvec的地址执行相应的处理，这里将其
 /// 设置为_alltraps, 则cpu会保存上下文
@@ -26,7 +25,7 @@ pub fn init(){
             fn _alltraps();
         }
         stvec::write(_alltraps as usize,stvec::TrapMode::Direct);
-        sstatus::set_sie();//s态全局使能位
+        // sstatus::set_sie();//s态全局使能位
     }
     println!("++++ setup trap! ++++");
 }
@@ -44,9 +43,9 @@ pub fn trap_handler(tf:&mut TrapFrame)->&mut TrapFrame{
         //系统调用
         Trap::Exception(Exception::UserEnvCall)=>{
             //指令地址 需要跳转到下一句执行，否则就处于死循环中
+            // println!("[kernel] UserEnvCall in application.");
             tf.sepc +=4;
             tf.reg[10] = syscall(tf.reg[17],[tf.reg[10],tf.reg[11],tf.reg[12]]) as usize;
-
         }
         //页错误，应该是内存泄露什么的？
         Trap::Exception(Exception::StorePageFault|Exception::StoreFault)=>{
@@ -56,7 +55,7 @@ pub fn trap_handler(tf:&mut TrapFrame)->&mut TrapFrame{
         }
         //非法指令
         Trap::Exception(Exception::IllegalInstruction)=>{
-            println!("[kernel]  IllegalInstruction in application, core dumped.");
+            ERROR!("[kernel]  IllegalInstruction in application, core dumped.");
             run_next_app();
         }
         //断点中断
@@ -69,7 +68,6 @@ pub fn trap_handler(tf:&mut TrapFrame)->&mut TrapFrame{
         //     println!("")
         // }
         _ =>{
-            
             panic!("undefined trap cause: {:?}, stval: {:?}",scause.cause(),stval)
         }
     }

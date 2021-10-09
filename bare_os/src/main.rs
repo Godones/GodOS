@@ -13,6 +13,7 @@ mod trap;
 mod syscall;
 
 
+
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
 // include_str! 宏将同目录下的汇编代码 entry.asm 转化为字符串并通过
@@ -28,16 +29,38 @@ fn clear_bss() {
         (sbss as usize..ebss as usize).for_each(|a| (a as *mut u8).write_volatile(0));
     }
 }
-
+fn color_output_test(){
+    extern "C" {
+        fn stext();
+        fn etext();
+        fn srodata();
+        fn erodata();
+        fn sdata();
+        fn edata();
+        fn sbss();
+        fn ebss();
+        fn boot_stack();
+        fn boot_stack_top();
+    }
+    // clear_bss();
+    println!("Hello, world!");
+    println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
+    println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
+    println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
+    println!("boot_stack [{:#x}, {:#x})", boot_stack as usize, boot_stack_top as usize);
+    println!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
+}
 #[no_mangle]
 extern "C" fn rust_main() -> ! {
     clear_bss();
-    println!("Godone's OS");
+    INFO!("Godone's OS");
+    // color_output_test();
     //trap初始化，设置stvec的入口地址
     trap::init();
-    //初始应用管理器，答应应用地址
+
+    //初始应用管理器，管理应用地址
     batch::init();
     //运行程序
     batch::run_next_app();
-    // panic!("Stop");
+    panic!("Stop");
 }

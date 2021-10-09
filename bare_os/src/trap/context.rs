@@ -14,8 +14,8 @@ impl TrapFrame {
     }
     pub unsafe fn app_into_context (entry:usize, sp:usize) ->Self{
         //为启动应用程序而特殊构造的 Trap 上下文，
-        let  status = sstatus::read();
         sstatus::set_spp(SPP::User);    //将status的spp位置设置为用户态
+        let  status = sstatus::read();
         let mut tf = Self{
             reg:[0;32],
             sstatus:status,

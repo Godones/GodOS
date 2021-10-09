@@ -119,6 +119,7 @@ impl AppManagerInner {
             "fence.i",
             options(nostack)
         );
+
         //清除应用程序段
         (APP_BASE_ADDRESS..APP_BASE_ADDRESS + APP_SIZE_LIMIT).for_each(|addr| {
             (addr as *mut u8).write_volatile(0); //取地址并写入0，以字节写入
@@ -129,6 +130,7 @@ impl AppManagerInner {
         );
         let app_dst = core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, app_src.len());
         app_dst.copy_from_slice(app_src); //写入数据
+        // println!("[kernel] batch write data over");
     }
 }
 fn print_app_info() {
@@ -142,7 +144,6 @@ pub fn init() {
 }
 //下一个app
 pub fn run_next_app() ->!{
-    println!("[God]: run_next_app");
     let current_app = APP_MANAGER.inner.borrow().current_app;
     unsafe {
         APP_MANAGER.inner.borrow().load_app(current_app);//加载application到0x80400000位置开始运行
@@ -159,6 +160,7 @@ pub fn run_next_app() ->!{
     // push_context 的返回值是内核栈压入 Trap 上下文之后的内核栈顶，
     // 它会被作为 __restore 的参
     unsafe {
+        // println!("[kernel] Begin run application!");
         _restore(KERNEL_STACK.push_context(
             TrapFrame::app_into_context(
                 APP_BASE_ADDRESS,
