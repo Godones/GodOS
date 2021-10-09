@@ -19,6 +19,8 @@ pub fn exit(exit_code: i32) -> isize {
     sys_exit(exit_code)
 }
 
+//weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
+
 #[linkage = "weak"]
 #[no_mangle]
 fn main() -> i32 {
@@ -42,6 +44,7 @@ fn clear_bss() {
 #[no_mangle]
 #[link_section = ".text.entry"]
 //代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中
+//便于将其放在 链接文件中
 pub extern "C" fn _start() -> ! {
     clear_bss();
     exit(main());
