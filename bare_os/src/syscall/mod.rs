@@ -3,8 +3,8 @@ mod exit;
 
 use write::sys_write;
 
-const SYSCALL_WRITE :usize = 1;
-const SYSCALL_EXIT: usize = 8;
+const SYSCALL_WRITE :usize = 64;
+const SYSCALL_EXIT: usize = 93;
 use crate::syscall::exit::sys_exit;
 
 pub fn syscall(function: usize, args:[usize;3]) -> isize{
@@ -13,11 +13,10 @@ pub fn syscall(function: usize, args:[usize;3]) -> isize{
             sys_write(args[0], args[1] as *const u8,args[2])
         }
         SYSCALL_EXIT => {
-            sys_exit(args[0])
+            sys_exit(args[0]as i32)
         }
         _ => {
             panic!("Undefined function for syscallfunction: {}",function);
         }
     }
-
  }

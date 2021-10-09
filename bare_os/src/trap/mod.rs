@@ -4,7 +4,7 @@ use crate::syscall::syscall;
 
 use riscv::register::{
     scause::{self,Exception,Trap},
-    stvec,sscratch,stval,
+    stvec,stval,
     sstatus::{self},
 };
 
@@ -14,6 +14,12 @@ use crate::batch::run_next_app;
 
 global_asm!(include_str!("trap.asm"));
 
+///批处理操作系统初始化
+/// 需要设置好stvec寄存器指向正确的Trap处理入口点
+/// 当trap发生时，cpu根据stvec的地址执行相应的处理，这里将其
+/// 设置为_alltraps, 则cpu会保存上下文
+/// 在_alltraps 的最后会调用trap_handler函数对不同的错误进行处理
+/// 处理完成 后在调用_restore恢复上下文
 pub fn init(){
     unsafe {
         extern "C"{
@@ -26,6 +32,10 @@ pub fn init(){
 }
 
 ///根据不同类型的中断选择不同的处理
+/// 在trap.asm中我们将x10-a0的值设置为sp的值，即内核栈地址
+/// 此时我们以及按照TrapFrame的布局设置好了各个寄存器的值
+/// tf 就是trap里面保存好的东西
+/// 而函数原样返回传入的tf，因此a0寄存器仍然是进入函数时的值
 #[no_mangle]
 pub fn trap_handler(tf:&mut TrapFrame)->&mut TrapFrame{
     let scause = scause::read();
@@ -33,7 +43,8 @@ pub fn trap_handler(tf:&mut TrapFrame)->&mut TrapFrame{
     match scause.cause() {
         //系统调用
         Trap::Exception(Exception::UserEnvCall)=>{
-            tf.sepc +=4;//指令地址
+            //指令地址 需要跳转到下一句执行，否则就处于死循环中
+            tf.sepc +=4;
             tf.reg[10] = syscall(tf.reg[17],[tf.reg[10],tf.reg[11],tf.reg[12]]) as usize;
 
         }
@@ -57,7 +68,10 @@ pub fn trap_handler(tf:&mut TrapFrame)->&mut TrapFrame{
         //     // supertimer_handler()
         //     println!("")
         // }
-        _ =>panic!("undefined trap cause: {:?}, stval: {:?}",scause.cause(),stval)
+        _ =>{
+            
+            panic!("undefined trap cause: {:?}, stval: {:?}",scause.cause(),stval)
+        }
     }
     tf
 }

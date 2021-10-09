@@ -6,8 +6,6 @@
     ld x\n, \n*8(sp)
 .endm
 
-
-
     .section .text
     .globl _alltraps
     .globl _restore

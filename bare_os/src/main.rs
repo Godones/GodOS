@@ -33,10 +33,11 @@ fn clear_bss() {
 extern "C" fn rust_main() -> ! {
     clear_bss();
     println!("Godone's OS");
-    println!("It's so nice");
-    println!("{x:#?}", x = 1);
+    //trap初始化，设置stvec的入口地址
     trap::init();
+    //初始应用管理器，答应应用地址
     batch::init();
+    //运行程序
     batch::run_next_app();
-    panic!("Stop");
+    // panic!("Stop");
 }
