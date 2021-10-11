@@ -5,6 +5,7 @@
 #[macro_use]
 extern crate lib;
 
+
 const SIZE: usize = 10;
 const P: u32 = 3;
 const STEP: usize = 100000;
@@ -12,7 +13,7 @@ const MOD: u32 = 10007;
 
 #[no_mangle]
 fn main() -> i32 {
-    println!("[User] Power application");
+    // println!("[User] Power application");
     let mut pow = [0u32; SIZE];
     let mut index: usize = 0;
     pow[index] = 1;

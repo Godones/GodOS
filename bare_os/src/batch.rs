@@ -6,17 +6,11 @@ use lazy_static::lazy_static;
 use crate::trap::context::TrapFrame;
 
 /// 应用管理器，找到并加载应用程序的二进制文件
-const MAX_APP_NUM: usize = 10;
-const APP_BASE_ADDRESS: usize = 0x80400000; //应用程序起始地址
-const APP_SIZE_LIMIT: usize = 0x20000; //应用程序的空间限制
-const USER_STACK_SIZE:usize = 4096*2;//用户栈大小
-const KERNEL_STACK_SIZE:usize = 4096*2;//内核栈大小
 
+use crate::config::*;
 
 static KERNEL_STACK:KernelStack = KernelStack{data:[0;KERNEL_STACK_SIZE]};
 static USER_STACK:UserStack = UserStack{data:[0;USER_STACK_SIZE]};
-
-
 
 #[repr(align(4096))]
 struct KernelStack{

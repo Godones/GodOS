@@ -9,7 +9,7 @@ use riscv::register::{
 
 use crate::{println,ERROR};
 use context::TrapFrame;
-use crate::batch::run_next_app;
+use crate::loader::run_next_app;
 
 global_asm!(include_str!("trap.asm"));
 
@@ -49,7 +49,7 @@ pub fn trap_handler(tf:&mut TrapFrame)->&mut TrapFrame{
         }
         //页错误，应该是内存泄露什么的？
         Trap::Exception(Exception::StorePageFault|Exception::StoreFault)=>{
-            println!("[kernel] PageFault in application, core dumped.");
+            ERROR!("[kernel] PageFault in application, core dumped.");
             run_next_app();//下一个app
 
         }

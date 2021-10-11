@@ -11,6 +11,9 @@ mod batch;
 mod sbi;
 mod trap;
 mod syscall;
+mod config;
+mod loader;
+mod tests;
 
 
 
@@ -29,38 +32,20 @@ fn clear_bss() {
         (sbss as usize..ebss as usize).for_each(|a| (a as *mut u8).write_volatile(0));
     }
 }
-fn color_output_test(){
-    extern "C" {
-        fn stext();
-        fn etext();
-        fn srodata();
-        fn erodata();
-        fn sdata();
-        fn edata();
-        fn sbss();
-        fn ebss();
-        fn boot_stack();
-        fn boot_stack_top();
-    }
-    // clear_bss();
-    println!("Hello, world!");
-    println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-    println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-    println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
-    println!("boot_stack [{:#x}, {:#x})", boot_stack as usize, boot_stack_top as usize);
-    println!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
-}
+
 #[no_mangle]
 extern "C" fn rust_main() -> ! {
     clear_bss();
     INFO!("Godone's OS");
     // color_output_test();
-
     //trap初始化，设置stvec的入口地址
     trap::init();
     //初始应用管理器，管理应用地址
-    batch::init();
+    // batch::init();
     //运行程序
-    batch::run_next_app();
+    // batch::run_next_app();
     // panic!("Stop");
+    loader::init_load();
+    loader::run_next_app();
+    // panic!("Stop!")
 }
