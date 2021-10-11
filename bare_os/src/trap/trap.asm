@@ -51,7 +51,8 @@ _restore:
     ld t2, 2*8(sp)
     csrw sstatus, t0
     csrw sepc, t1
-    csrw sscratch, t2
+    csrw sscratch, t2  #sscratch是用户栈栈顶地址
+
     # restore general-purpuse registers except sp/tp
     ld x1, 1*8(sp)
     ld x3, 3*8(sp)
@@ -63,5 +64,5 @@ _restore:
     # release TrapContext on kernel stack
     addi sp, sp, 34*8
     # now sp->kernel stack, sscratch->user stack
-    csrrw sp, sscratch, sp
+    csrrw sp, sscratch, sp #此时sp 指向用户栈，sscratch指向内核
     sret

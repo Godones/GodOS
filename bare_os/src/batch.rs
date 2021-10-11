@@ -155,7 +155,7 @@ pub fn run_next_app() ->!{
     }
     // 复用_restore函数
     // 在内核栈上压入一个Trap上下文
-    // sepc 是应用程序入口地址 0x80400000 ，
+    // sepc 是应用程序入口地址  0x80400000 ，
     // 其 sp 寄存器指向用户栈，其sstatus 的 SPP 字段被设置为 User 。
     // push_context 的返回值是内核栈压入 Trap 上下文之后的内核栈顶，
     // 它会被作为 __restore 的参

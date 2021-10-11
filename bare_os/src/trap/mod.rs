@@ -4,7 +4,7 @@ use crate::syscall::syscall;
 
 use riscv::register::{
     scause::{self,Exception,Trap},
-    stvec,stval,
+    stvec,stval,sstatus
 };
 
 use crate::{println,ERROR};
@@ -25,7 +25,7 @@ pub fn init(){
             fn _alltraps();
         }
         stvec::write(_alltraps as usize,stvec::TrapMode::Direct);
-        // sstatus::set_sie();//s态全局使能位
+        sstatus::set_sie();//s态全局使能位
     }
     println!("++++ setup trap! ++++");
 }
