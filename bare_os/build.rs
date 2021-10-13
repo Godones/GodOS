@@ -1,5 +1,3 @@
-
-
 use std::fs::{read_dir, File};
 use std::io::{Result, Write};
 

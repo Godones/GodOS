@@ -8,14 +8,13 @@
 #[macro_use]
 mod panic;
 mod batch;
-mod sbi;
-mod trap;
-mod syscall;
 mod config;
 mod loader;
+mod sbi;
+mod syscall;
+mod task;
 mod tests;
-
-
+mod trap;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));

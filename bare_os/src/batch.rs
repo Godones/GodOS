@@ -1,42 +1,43 @@
-
 use crate::println;
+use crate::trap::context::TrapFrame;
 use core::cell::RefCell;
 use core::slice::from_raw_parts;
 use lazy_static::lazy_static;
-use crate::trap::context::TrapFrame;
 
 /// 应用管理器，找到并加载应用程序的二进制文件
-
 use crate::config::*;
 
-static KERNEL_STACK:KernelStack = KernelStack{data:[0;KERNEL_STACK_SIZE]};
-static USER_STACK:UserStack = UserStack{data:[0;USER_STACK_SIZE]};
+static KERNEL_STACK: KernelStack = KernelStack {
+    data: [0; KERNEL_STACK_SIZE],
+};
+static USER_STACK: UserStack = UserStack {
+    data: [0; USER_STACK_SIZE],
+};
 
 #[repr(align(4096))]
-struct KernelStack{
-    data:[u8;KERNEL_STACK_SIZE]
+struct KernelStack {
+    data: [u8; KERNEL_STACK_SIZE],
 }
 #[repr(align(4096))]
-struct UserStack{
-    data:[u8;USER_STACK_SIZE],
+struct UserStack {
+    data: [u8; USER_STACK_SIZE],
 }
-
 
 impl UserStack {
     //获取栈顶地址
-    fn get_sp(&self)->usize{
+    fn get_sp(&self) -> usize {
         self.data.as_ptr() as usize + USER_STACK_SIZE
     }
 }
 
 impl KernelStack {
     //获取内核栈栈顶地址
-    fn get_sp(&self)->usize{
+    fn get_sp(&self) -> usize {
         self.data.as_ptr() as usize + KERNEL_STACK_SIZE
     }
-    fn push_context(&self,cx:TrapFrame)->&'static mut TrapFrame{
+    fn push_context(&self, cx: TrapFrame) -> &'static mut TrapFrame {
         //在内核栈上压入trap上下文
-        let cx_ptr = (self.get_sp()-core::mem::size_of::<TrapFrame>() )as *mut TrapFrame;
+        let cx_ptr = (self.get_sp() - core::mem::size_of::<TrapFrame>()) as *mut TrapFrame;
         unsafe {
             *cx_ptr = cx;
             cx_ptr.as_mut().unwrap()
@@ -49,8 +50,8 @@ struct AppManager {
     inner: RefCell<AppManagerInner>,
 }
 struct AppManagerInner {
-    num_app: usize,//app数量
-    current_app: usize, //当前的app
+    num_app: usize,                      //app数量
+    current_app: usize,                  //当前的app
     app_start: [usize; MAX_APP_NUM + 1], //app的起始地址
 }
 
@@ -109,22 +110,19 @@ impl AppManagerInner {
         }
         println!("[kernel] Loading app_{}", app_id);
         //重要 clear i-cache
-        asm!(
-            "fence.i",
-            options(nostack)
-        );
+        asm!("fence.i", options(nostack));
 
         //清除应用程序段
         (APP_BASE_ADDRESS..APP_BASE_ADDRESS + APP_SIZE_LIMIT).for_each(|addr| {
             (addr as *mut u8).write_volatile(0); //取地址并写入0，以字节写入
         });
         let app_src = core::slice::from_raw_parts(
-            self.app_start[app_id] as *const u8,//起始地址
-            self.app_start[app_id + 1] - self.app_start[app_id],//长度，以字节记
+            self.app_start[app_id] as *const u8,                 //起始地址
+            self.app_start[app_id + 1] - self.app_start[app_id], //长度，以字节记
         );
         let app_dst = core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, app_src.len());
         app_dst.copy_from_slice(app_src); //写入数据
-        // println!("[kernel] batch write data over");
+                                          // println!("[kernel] batch write data over");
     }
 }
 fn print_app_info() {
@@ -137,15 +135,15 @@ pub fn init() {
     print_app_info();
 }
 //下一个app
-pub fn run_next_app() ->!{
+pub fn run_next_app() -> ! {
     let current_app = APP_MANAGER.inner.borrow().current_app;
     unsafe {
-        APP_MANAGER.inner.borrow().load_app(current_app);//加载application到0x80400000位置开始运行
+        APP_MANAGER.inner.borrow().load_app(current_app); //加载application到0x80400000位置开始运行
     }
     //设置下一个应用
     APP_MANAGER.inner.borrow_mut().move_to_next_app();
-    extern "C"{
-        fn _restore(cx_addr:usize); //定义外部接口，来自trap.asm用于恢复上下文
+    extern "C" {
+        fn _restore(cx_addr: usize); //定义外部接口，来自trap.asm用于恢复上下文
     }
     // 复用_restore函数
     // 在内核栈上压入一个Trap上下文
@@ -155,11 +153,10 @@ pub fn run_next_app() ->!{
     // 它会被作为 __restore 的参
     unsafe {
         // println!("[kernel] Begin run application!");
-        _restore(KERNEL_STACK.push_context(
-            TrapFrame::app_into_context(
-                APP_BASE_ADDRESS,
-                USER_STACK.get_sp()))as * const _ as usize
-        );
+        _restore(KERNEL_STACK.push_context(TrapFrame::app_into_context(
+            APP_BASE_ADDRESS,
+            USER_STACK.get_sp(),
+        )) as *const _ as usize);
         //此时sp指向的是用户栈地址，sscratch指向的是内核栈地址
     }
     panic!("The end of application");
