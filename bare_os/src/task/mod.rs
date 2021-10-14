@@ -1,8 +1,8 @@
-use core::borrow::{Borrow, BorrowMut};
 use crate::config::*;
 use crate::loader::{get_num_app, init_app_cx, run_next_app};
 use core::cell::RefCell;
 use lazy_static::lazy_static;
+use switch::__switch;
 use task::TaskControlBlock;
 use task::TaskStatus;
 
@@ -60,18 +60,26 @@ impl TaskManager {
     }
     fn find_next_task(&self) -> Option<usize> {
         //寻找下一个可行的任务
-        let mut inner = self.inner.borrow_mut();
+        let inner = self.inner.borrow_mut();
         let current_task = inner.current_task;
-        (current_task..current_task + self.num_app + 1).map(
-            |x| x % self.num_app
-        ).find(|index| {
-            //找到处于准备状态的任务
-            inner.tasks[*index].task_status == TaskStatus::Ready
-        })
+        (current_task..current_task + self.num_app + 1)
+            .map(|x| x % self.num_app)
+            .find(|index| {
+                //找到处于准备状态的任务
+                inner.tasks[*index].task_status == TaskStatus::Ready
+            })
     }
     fn run_next_task(&self) {
-        if let Some(index) = self.find_next_task(){
+        if let Some(index) = self.find_next_task() {
             let mut inner = self.inner.borrow_mut();
+            let current_task = inner.current_task;
+            inner.current_task = index;
+            inner.tasks[index].task_status = TaskStatus::Running;
+            let current_task_cx_ptr2 = inner.tasks[current_task].get_task_cx_ptr2();
+            let next_task_cx_ptr2 = inner.tasks[index].get_task_cx_ptr2();
+            unsafe {
+                __switch(current_task_cx_ptr2, next_task_cx_ptr2);
+            }
         }
     }
 }

@@ -1,4 +1,3 @@
-use crate::loader::run_next_app;
 use crate::task::exit_current_run_next;
 use crate::task::suspend_current_run_next;
 use crate::{print, INFO};
