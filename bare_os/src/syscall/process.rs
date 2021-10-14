@@ -1,5 +1,16 @@
-use crate::print;
+use crate::loader::run_next_app;
+use crate::task::exit_current_run_next;
+use crate::task::suspend_current_run_next;
+use crate::{print, INFO};
+
 const FUNCTION_STDOUT: usize = 1;
+pub fn sys_exit(xstate: i32) -> ! {
+    INFO!("[kernel] Application exited with code {}", xstate);
+    //函数退出后，运行下一个应用程序
+    exit_current_run_next();
+    panic!("Unreachable sys_exit!")
+}
+
 pub fn sys_write(function: usize, buf: *const u8, len: usize) -> isize {
     match function {
         FUNCTION_STDOUT => {
@@ -13,4 +24,8 @@ pub fn sys_write(function: usize, buf: *const u8, len: usize) -> isize {
             panic!("Undefined function in sys_write");
         }
     }
+}
+pub fn sys_yield() -> isize {
+    suspend_current_run_next(); //暂停当前任务运行下一个任务
+    0
 }

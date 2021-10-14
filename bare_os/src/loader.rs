@@ -48,20 +48,26 @@ impl KernelStack {
         }
     }
 }
-pub fn get_num_app()->usize{
+pub fn get_num_app() -> usize {
     extern "C" {
-        fn _num_app();    }
+        fn _num_app();
+    }
     let num_app_ptr = _num_app as usize as *const usize; //取地址
     unsafe { num_app_ptr.read_volatile() } //读内容 应用数量
 }
 
-pub fn init_app_cx(task_address:usize)->usize{
+pub fn init_app_cx(app: usize) -> usize {
     todo!()
 }
 
 fn load_app() -> usize {
     //取出app所在位置的地址
     //link_apps按8字节对其
+    extern "C" {
+        fn _num_app();
+    }
+    let num_app_ptr = _num_app as usize as *const usize; //取地址
+
     let num_app = get_num_app();
     let mut app_start: [usize; MAX_APP_NUM + 1] = [0; MAX_APP_NUM + 1];
     let app_start_raw: &[usize] = unsafe {
