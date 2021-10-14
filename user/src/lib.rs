@@ -9,7 +9,7 @@ mod lang_items;
 pub mod syscall;
 
 
-use crate::syscall::{sys_exit, sys_write};
+use crate::syscall::{sys_exit, sys_write,sys_yield};
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
     sys_write(fd, buf)
@@ -19,6 +19,9 @@ pub fn exit(exit_code: i32) -> isize {
     sys_exit(exit_code)
 }
 
+pub fn yield_()->isize{
+    sys_yield()
+}
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 
 #[linkage = "weak"]
@@ -29,7 +32,6 @@ fn main() -> i32 {
 
 fn clear_bss() {
     // 我们需要手动初始化.bss段，因为没有系统库或操作系统提供支持会将其初始化为0
-
     extern "C" {
         fn start_bss();
         fn end_bss();

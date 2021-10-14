@@ -1,6 +1,6 @@
 const SYSCALL_EXIT:usize = 93;
 const SYSCALL_WRITE:usize = 64;
-
+const SYSCALL_YIELD:usize = 124;
 /// 功能：将内存中缓冲区中的数据写入文件。
 /// 参数：`fd` 表示待写入文件的文件描述符；
 ///      `buf` 表示内存中缓冲区的起始地址；
@@ -20,18 +20,9 @@ pub fn sys_exit(state:i32) ->isize{
     syscall(SYSCALL_EXIT,[state as usize,0,0])//执行退出
 }
 
-
-// struct Stdout;
-// impl Write for Stdout{
-//     fn write_str(&mut self,s:&str)->fmt::Result{
-//         sys_write(1,s.as_bytes());
-//         Ok(())
-//     }
-// }
-//
-// pub fn print(args:fmt::Arguments){
-//     Stdout.write_fmt(args).unwrap();
-// }
+pub fn sys_yield()->isize{
+    syscall(SYSCALL_YIELD,[0,0,0])
+}
 
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
