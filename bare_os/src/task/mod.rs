@@ -1,14 +1,13 @@
-use crate::config::*;
+use crate::config::MAX_APP_NUM;
 use crate::loader::{get_num_app, init_app_cx, run_next_app};
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
-use task::TaskControlBlock;
-use task::TaskStatus;
+use task::{TaskControlBlock,TaskStatus};
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
-mod context;
+pub mod context;
 mod switch;
 mod task;
 
@@ -62,7 +61,7 @@ impl TaskManager {
         //寻找下一个可行的任务
         let inner = self.inner.borrow_mut();
         let current_task = inner.current_task;
-        (current_task..current_task + self.num_app + 1)
+        (current_task+1..current_task + self.num_app + 1)
             .map(|x| x % self.num_app)
             .find(|index| {
                 //找到处于准备状态的任务

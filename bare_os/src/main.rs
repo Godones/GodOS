@@ -7,7 +7,6 @@
 
 #[macro_use]
 mod panic;
-mod batch;
 mod config;
 mod loader;
 mod sbi;

@@ -4,19 +4,19 @@ use crate::trap::context::TrapFrame;
 use crate::{DEBUG, INFO};
 use core::slice::{from_raw_parts, from_raw_parts_mut};
 use lazy_static::lazy_static;
+use crate::task::context::TaskContext;
 
-lazy_static! {
-    static ref LOADAPP: usize = load_app();
-}
-static mut CURRENTAPP: usize = 0;
 
-static KERNEL_STACK: KernelStack = KernelStack {
-    data: [0; KERNEL_STACK_SIZE],
-};
-static USER_STACK: UserStack = UserStack {
-    data: [0; USER_STACK_SIZE],
-};
+static KERNEL_STACK: [KernelStack;MAX_APP_NUM] = [
+    KernelStack{data:[0;KERNEL_STACK_SIZE]};
+    MAX_APP_NUM
+];
 
+
+static USER_STACK: [UserStack;MAX_APP_NUM]  = [
+    UserStack{data:[0;USER_STACK_SIZE]};
+    MAX_APP_NUM
+];
 #[repr(align(4096))]
 struct KernelStack {
     data: [u8; KERNEL_STACK_SIZE],
@@ -38,13 +38,14 @@ impl KernelStack {
     fn get_sp(&self) -> usize {
         self.data.as_ptr() as usize + KERNEL_STACK_SIZE
     }
-    fn push_context(&self, cx: TrapFrame) -> &'static mut TrapFrame {
+    fn push_context(&self, trap_cx: TrapFrame,task_cx: TaskContext) -> &'static mut TaskContext {
         //在内核栈上压入trap上下文
-        let cx_ptr = (self.get_sp() - core::mem::size_of::<TrapFrame>()) as *mut TrapFrame;
         unsafe {
-            *cx_ptr = cx;
-            cx_ptr.as_mut().unwrap()
-            //返回内核栈地址
+            let trap_cx_ptr = (self.get_sp() - core::mem::size_of::<TrapFrame>()) as *mut TrapFrame;
+             *trap_cx_ptr = trap_cx;//
+            let task_cx_ptr = (trap_cx_ptr as usize - core::mem::size_of<TaskContext)()) as *mut TaskContext;
+            *task_cx_ptr = task_cx;
+            task_cx_ptr.as_mut().unwrap()
         }
     }
 }
@@ -56,8 +57,9 @@ pub fn get_num_app() -> usize {
     unsafe { num_app_ptr.read_volatile() } //读内容 应用数量
 }
 
-pub fn init_app_cx(app: usize) -> usize {
-    todo!()
+pub fn init_app_cx(app: usize) -> &'static TaskContext {
+    //返回任务的上下文地址
+
 }
 
 fn load_app() -> usize {
