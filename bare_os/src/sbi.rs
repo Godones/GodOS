@@ -41,6 +41,12 @@ pub fn shutdown() -> ! {
     // panic!("It should shutdown\n");
     panic!()
 }
+pub fn set_timer(time:usize){
+    //设置mtimecmp的值
+    sbi_call(SBI_SET_TIMER,time,0,0);
+}
+
+
 pub struct Console;
 
 impl Console {

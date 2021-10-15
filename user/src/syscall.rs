@@ -1,6 +1,7 @@
 const SYSCALL_EXIT:usize = 93;
 const SYSCALL_WRITE:usize = 64;
 const SYSCALL_YIELD:usize = 124;
+const SYSCALL_TIME:usize = 169;
 /// 功能：将内存中缓冲区中的数据写入文件。
 /// 参数：`fd` 表示待写入文件的文件描述符；
 ///      `buf` 表示内存中缓冲区的起始地址；
@@ -24,6 +25,9 @@ pub fn sys_yield()->isize{
     syscall(SYSCALL_YIELD,[0,0,0])
 }
 
+pub fn sys_get_time()->isize{
+    syscall(SYSCALL_TIME,[0,0,0])
+}
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
     unsafe {

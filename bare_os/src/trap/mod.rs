@@ -1,12 +1,14 @@
 pub mod context;
 use crate::syscall::syscall;
+use crate::timer::set_next_timetrigger;
 
 use riscv::register::{
-    scause::{self, Exception, Trap},
+    scause::{self, Exception,Interrupt, Trap},
     sstatus, stval, stvec,
 };
 use crate::{println, ERROR};
 use context::TrapFrame;
+use crate::task::suspend_current_run_next;
 
 global_asm!(include_str!("trap.asm"));
 
@@ -47,20 +49,21 @@ pub fn trap_handler(tf: &mut TrapFrame) -> &mut TrapFrame {
         //页错误，应该是内存泄露什么的？
         Trap::Exception(Exception::StorePageFault | Exception::StoreFault) => {
             ERROR!("[kernel] PageFault in application, core dumped.");
-            // run_next_app(); //下一个app
+            panic!();
         }
         //非法指令
         Trap::Exception(Exception::IllegalInstruction) => {
             ERROR!("[kernel]  IllegalInstruction in application, core dumped.");
-            // run_next_app();
+            panic!();
         }
         //断点中断
-        Trap::Exception(Exception::Breakpoint) => breakpoint_handler(&mut tf.sepc),
+        Trap::Exception(Exception::Breakpoint) => {
+            breakpoint_handler(&mut tf.sepc)
+        }
         //s态时钟中断
-        // Trap::Interrupt(Interrupt::SupervisorTimer) =>{
-        //     // supertimer_handler()
-        //     println!("")
-        // }
+        Trap::Interrupt(Interrupt::SupervisorTimer) =>{
+            supertimer_handler();
+        }
         _ => {
             panic!(
                 "undefined trap cause: {:?}, stval: {:?}",
@@ -76,18 +79,9 @@ fn breakpoint_handler(sepc: &mut usize) {
     *sepc += 4;
 }
 
-// //S态时钟处理函数
-// fn supertimer_handler(){
-//     clock_next_time();
-//     unsafe {
-//         //修改静态变量是非常危险的操作
-//         TICKS +=1;
-//         if TICKS==100{
-//             TICKS = 0;
-//             // shutdown();
-//             println!("The {} timer interrupt!",100);
-//         }
-//
-//     }
-//     //外界中断,我们并未执行完该有的操作，此处不跳到下一行指令
-// }
+//S态时钟处理函数
+fn supertimer_handler(){
+    set_next_timetrigger();
+    suspend_current_run_next();
+    //外界中断,我们并未执行完该有的操作，此处不跳到下一行指令
+}

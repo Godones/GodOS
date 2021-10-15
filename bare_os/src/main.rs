@@ -14,6 +14,7 @@ mod syscall;
 mod task;
 mod tests;
 mod trap;
+mod timer;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -40,6 +41,8 @@ extern "C" fn rust_main() -> ! {
     trap::init();
     //运行程序
     loader::load_app();
+    timer::enable_timer_interrupt();//使能位
+    timer::set_next_timetrigger();
     task::run_first_task();
     panic!("The main_end!");
 

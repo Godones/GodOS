@@ -17,3 +17,6 @@ feature=["inline-asm"]
 [dependencies.lazy_static]
 version = "1.4.0"
 features = ["spin_no_std"] #禁止链接标准库
+
+[features]
+board_qemu = []
