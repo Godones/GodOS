@@ -34,16 +34,13 @@ fn clear_bss() {
 #[no_mangle]
 extern "C" fn rust_main() -> ! {
     clear_bss();
-    INFO!("Godone's OS");
+    INFO!("[kernel] Godone OS");
     // color_output_test();
     //trap初始化，设置stvec的入口地址
     trap::init();
-    //初始应用管理器，管理应用地址
-    // batch::init();
     //运行程序
-    // batch::run_next_app();
-    // panic!("Stop");
-    loader::init_load();
-    loader::run_next_app();
-    // panic!("Stop!")
+    loader::load_app();
+    task::run_first_task();
+    panic!("The main_end!");
+
 }

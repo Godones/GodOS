@@ -1,5 +1,5 @@
 use crate::config::MAX_APP_NUM;
-use crate::loader::{get_num_app, init_app_cx, run_next_app};
+use crate::loader::{get_num_app, init_app_cx};
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
@@ -34,7 +34,7 @@ lazy_static! {
         ];
         // todo!("注意这个位置");
         for i in 0..num_app{
-            tasks[i].task_cx_ptr = init_app_cx(i) as *const usize as usize;
+            tasks[i].task_cx_ptr = init_app_cx(i) as *const _ as usize;
             tasks[i].task_status = TaskStatus::Ready;
         }
         TaskManager{
@@ -50,10 +50,12 @@ lazy_static! {
 }
 impl TaskManager {
     fn mark_current_suspended(&self) {
+        //将当前任务变成暂停状态
         let current_task = self.inner.borrow().current_task;
         self.inner.borrow_mut().tasks[current_task].task_status = TaskStatus::Ready;
     }
     fn mark_current_exited(&self) {
+        // 退出当前任务
         let current_task = self.inner.borrow().current_task;
         self.inner.borrow_mut().tasks[current_task].task_status = TaskStatus::Exited;
     }
@@ -68,14 +70,28 @@ impl TaskManager {
                 inner.tasks[*index].task_status == TaskStatus::Ready
             })
     }
+    fn run_first_task(&self){
+        self.inner.borrow_mut().tasks[0].task_status = TaskStatus::Running;
+        let next_task_ptr2 = self.inner.borrow().tasks[0].get_task_cx_ptr2();
+        let _unused :usize = 0;
+        unsafe {
+            __switch(&_unused as *const usize,next_task_ptr2);
+        }
+    }
     fn run_next_task(&self) {
-        if let Some(index) = self.find_next_task() {
+        if let Some(next) = self.find_next_task() {
+            //查询是否有处于准备的任务，如果有就运行
+            //否则退出
             let mut inner = self.inner.borrow_mut();
             let current_task = inner.current_task;
-            inner.current_task = index;
-            inner.tasks[index].task_status = TaskStatus::Running;
+            inner.current_task = next;
+            inner.tasks[next].task_status = TaskStatus::Running;
+            //获取两个任务的task上下文指针
             let current_task_cx_ptr2 = inner.tasks[current_task].get_task_cx_ptr2();
-            let next_task_cx_ptr2 = inner.tasks[index].get_task_cx_ptr2();
+            let next_task_cx_ptr2 = inner.tasks[next].get_task_cx_ptr2();
+
+            //释放可变借用，否则进入下一个任务后将不能获取到inner的使用权
+            core::mem::drop(inner);
             unsafe {
                 __switch(current_task_cx_ptr2, next_task_cx_ptr2);
             }
@@ -93,6 +109,9 @@ pub fn exit_current_run_next() {
     run_next_task();
 }
 
+pub fn run_first_task(){
+    TASK_MANAGER.run_first_task();
+}
 fn mark_current_suspended() {
     TASK_MANAGER.mark_current_suspended();
 }

@@ -5,8 +5,6 @@ use riscv::register::{
     scause::{self, Exception, Trap},
     sstatus, stval, stvec,
 };
-
-use crate::loader::run_next_app;
 use crate::{println, ERROR};
 use context::TrapFrame;
 
@@ -49,12 +47,12 @@ pub fn trap_handler(tf: &mut TrapFrame) -> &mut TrapFrame {
         //页错误，应该是内存泄露什么的？
         Trap::Exception(Exception::StorePageFault | Exception::StoreFault) => {
             ERROR!("[kernel] PageFault in application, core dumped.");
-            run_next_app(); //下一个app
+            // run_next_app(); //下一个app
         }
         //非法指令
         Trap::Exception(Exception::IllegalInstruction) => {
             ERROR!("[kernel]  IllegalInstruction in application, core dumped.");
-            run_next_app();
+            // run_next_app();
         }
         //断点中断
         Trap::Exception(Exception::Breakpoint) => breakpoint_handler(&mut tf.sepc),

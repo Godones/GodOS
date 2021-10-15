@@ -9,8 +9,8 @@
     .globl __switch
 __switch:
     # __switch(
-    #     current_task_cx_ptr2: &*const TaskContext, 当前trap控制流
-    #     next_task_cx_ptr2: &*const TaskContext 切换目的trap控制流
+    #     current_task_cx_ptr2: &*const TaskContext, 当前task控制流
+    #     next_task_cx_ptr2: &*const TaskContext 切换目的task控制流
     # )
     # push TaskContext to current sp and save its address to where a0 points to
     # current_task_cx_ptr2位于a0 寄存器
