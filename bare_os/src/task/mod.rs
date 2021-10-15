@@ -25,7 +25,11 @@ struct TaskManagerInner {
 }
 
 unsafe impl Sync for TaskManager {}
+
 lazy_static! {
+    /// 初始化任务管理器
+    /// 将各个应用的内核初始化完成 --- init_app_cx
+    /// 将各个任务的状态改变为初始化完成状态
      static ref TASK_MANAGER: TaskManager = {
         let num_app = get_num_app();
         let mut tasks = [
@@ -34,6 +38,7 @@ lazy_static! {
         ];
         // todo!("注意这个位置");
         for i in 0..num_app{
+            // init_app_cx会返回一个任务上下文，task_cx_ptr保存的是任务上下文的引用的指针
             tasks[i].task_cx_ptr = init_app_cx(i) as *const _ as usize;
             tasks[i].task_status = TaskStatus::Ready;
         }
@@ -95,6 +100,9 @@ impl TaskManager {
             unsafe {
                 __switch(current_task_cx_ptr2, next_task_cx_ptr2);
             }
+        }
+        else {
+            panic!("There are no tasks!");
         }
     }
 }

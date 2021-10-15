@@ -7,11 +7,12 @@ pub enum TaskStatus {
 }
 #[derive(Copy, Clone)]
 pub struct TaskControlBlock {
-    pub task_cx_ptr: usize, //任务上下文栈顶地址
+    pub task_cx_ptr: usize, //任务上下文栈顶地址的应用
     pub task_status: TaskStatus,
 }
 
 impl TaskControlBlock {
+    //返回指向task栈顶的指针 -> task_cx_ptr 里面存的是task上下文的地址的地址
     pub fn get_task_cx_ptr2(&self) -> *const usize {
         &self.task_cx_ptr as *const usize //指向指针的指针
     }

@@ -28,7 +28,7 @@ __switch:
     # ready for loading TaskContext a1 points to
     ld sp, 0(a1) #将a1的值加载到sp，即此时sp指向下一个task栈顶
     # load registers in the TaskContext
-    ld ra, 0(sp) #将下一个task栈顶保存在ra位置里面，即原来保存的指令位置
+    ld ra, 0(sp) #
     .set n, 0 #恢复寄存器
     .rept 12
         LOAD_SN %n

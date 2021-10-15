@@ -47,7 +47,7 @@ impl KernelStack {
             *trap_cx_ptr = trap_cx;// trap栈栈顶
             let task_cx_ptr = (trap_cx_ptr as usize - core::mem::size_of::< TaskContext > ()) as *mut TaskContext;
             *task_cx_ptr = task_cx; //task栈顶
-            task_cx_ptr.as_mut().unwrap()
+            task_cx_ptr.as_mut().unwrap() //这里会返回一个引用
         }
     }
 }
@@ -59,9 +59,10 @@ pub fn get_num_app() -> usize {
     let num_app_ptr = _num_app as usize as *const usize; //取地址
     unsafe { num_app_ptr.read_volatile() } //读内容 应用数量
 }
-
+/// 最重要的函数
+/// 用于初始化相关的设置
 pub  fn init_app_cx(app: usize) -> &'static TaskContext {
-    //返回任务的上下文地址
+    //返回任务的上下文
     KERNEL_STACK[app].push_context(
         //首先压入trap上下文，再压入task上下文
         TrapFrame::app_into_context(get_base_address(app),USER_STACK[app].get_sp()),
@@ -70,8 +71,8 @@ pub  fn init_app_cx(app: usize) -> &'static TaskContext {
 }
 
 pub fn load_app() {
-    //取出app所在位置的地址
-    //link_apps按8字节对其
+    // 记载各个app到指定的位置，固定分区
+    // link_apps按8字节对其
     extern "C" {
         fn _num_app();
     }

@@ -13,13 +13,13 @@ const HEIGHT:usize = 5;
 fn main()->i32{
 
     for i in 0..HEIGHT{
-        println!("Print the word 'C': ");
+        println!("Print the word 'A': ");
         for _ in 0..WIDTH {
-            print!("C");
+            print!("A");
         }
         println!("[{}/{}]",i+1,HEIGHT);
         yield_();//暂停应用
     }
-    println!("Test print C is Ok");
+    println!("Test print A is Ok");
     0
 }

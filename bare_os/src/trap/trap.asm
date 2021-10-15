@@ -51,7 +51,7 @@ _restore:
     ld t2, 2*8(sp)
     csrw sstatus, t0
     csrw sepc, t1
-    csrw sscratch, t2  #sscratch是用户栈栈顶地址
+    csrw sscratch, t2  #sscratch  是用户栈栈顶地址
 
     # restore general-purpuse registers except sp/tp
     ld x1, 1*8(sp)
