@@ -3,16 +3,13 @@ import os
 base_address = 0x80400000
 app_address = 0x20000
 
-
 linker = "src/linker.ld"
 apps = os.listdir("src/bin")
-
 ori_text = [];
 with open(linker,'r') as f:
     for line in f.readlines():
         ori_text.append(line)
 apps.sort()
-
 for i,app in enumerate(apps):
     app_name = app.split('.')[0]
     with open(linker,'w+') as f:

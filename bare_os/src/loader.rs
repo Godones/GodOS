@@ -80,7 +80,6 @@ impl KernelStack {
                 app_start[i + 1] - app_start[i],//长度，以字节记
             )
         };
-
         let app_dst = unsafe{from_raw_parts_mut(app_i_address as *mut u8, app_src.len())};
         app_dst.copy_from_slice(app_src); //写入数据
     }
