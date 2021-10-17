@@ -15,11 +15,12 @@ pub struct TaskContext {
 /// 将ra设置为_restore的地址，那么在应用执行完__switch后，就会返回到_restore
 /// 此时就转变为初始化一个trap上下文的情况了。
 impl TaskContext {
-    pub fn goto_restore()->Self{
-        extern "C" { fn _restore();}
-        Self{
+    pub fn goto_restore() -> Self {
+        extern "C" {
+            fn _restore();        }
+        Self {
             ra: _restore as usize,
-            s:[0;12]
+            s: [0; 12],
         }
     }
 }

@@ -12,11 +12,13 @@ impl TrapFrame {
         //x2寄存器
         self.reg[2] = sp;
     }
-    pub  fn app_into_context(entry: usize, sp: usize) -> Self {
+    pub fn app_into_context(entry: usize, sp: usize) -> Self {
         //为启动应用程序而特殊构造的 Trap 上下文，
         //entry: 0x80400000 + 0x200000 * app_id
         //sp: 用户栈顶地址
-        unsafe {sstatus::set_spp(SPP::User);} //将status的spp位置设置为用户态
+        unsafe {
+            sstatus::set_spp(SPP::User);
+        } //将status的spp位置设置为用户态
         let status = sstatus::read();
         let mut tf = Self {
             reg: [0; 32],

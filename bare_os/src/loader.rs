@@ -2,20 +2,16 @@
 use crate::config::*;
 use crate::trap::context::TrapFrame;
 // use crate::{DEBUG, INFO};
-use core::slice::{from_raw_parts, from_raw_parts_mut};
 use crate::task::context::TaskContext;
+use core::slice::{from_raw_parts, from_raw_parts_mut};
 
+static KERNEL_STACK: [KernelStack; MAX_APP_NUM] = [KernelStack {
+    data: [0; KERNEL_STACK_SIZE],
+}; MAX_APP_NUM];
 
-static KERNEL_STACK: [KernelStack;MAX_APP_NUM] = [
-    KernelStack{data:[0;KERNEL_STACK_SIZE],};
-    MAX_APP_NUM
-];
-
-
-static USER_STACK: [UserStack;MAX_APP_NUM]  = [
-    UserStack{data:[0;USER_STACK_SIZE],};
-    MAX_APP_NUM
-];
+static USER_STACK: [UserStack; MAX_APP_NUM] = [UserStack {
+    data: [0; USER_STACK_SIZE],
+}; MAX_APP_NUM];
 
 #[repr(align(4096))]
 #[derive(Copy, Clone)]
@@ -44,8 +40,9 @@ impl KernelStack {
         //在内核栈上压入trap上下文，并紧接着压入task上下文
         unsafe {
             let trap_cx_ptr = (self.get_sp() - core::mem::size_of::<TrapFrame>()) as *mut TrapFrame;
-            *trap_cx_ptr = trap_cx;// trap栈栈顶
-            let task_cx_ptr = (trap_cx_ptr as usize - core::mem::size_of::< TaskContext > ()) as *mut TaskContext;
+            *trap_cx_ptr = trap_cx; // trap栈栈顶
+            let task_cx_ptr =
+                (trap_cx_ptr as usize - core::mem::size_of::<TaskContext>()) as *mut TaskContext;
             *task_cx_ptr = task_cx; //task栈顶
             task_cx_ptr.as_mut().unwrap() //这里会返回一个引用
         }
@@ -61,11 +58,11 @@ pub fn get_num_app() -> usize {
 }
 /// 最重要的函数
 /// 用于初始化相关的设置
-pub  fn init_app_cx(app: usize) -> &'static TaskContext {
+pub fn init_app_cx(app: usize) -> &'static TaskContext {
     //返回任务的上下文
     KERNEL_STACK[app].push_context(
         //首先压入trap上下文，再压入task上下文
-        TrapFrame::app_into_context(get_base_address(app),USER_STACK[app].get_sp()),
+        TrapFrame::app_into_context(get_base_address(app), USER_STACK[app].get_sp()),
         TaskContext::goto_restore(),
     )
 }
@@ -112,5 +109,3 @@ pub fn load_app() {
 fn get_base_address(app_id: usize) -> usize {
     APP_BASE_ADDRESS + APP_SIZE_LIMIT * app_id
 }
-
-

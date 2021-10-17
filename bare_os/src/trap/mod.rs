@@ -2,13 +2,13 @@ pub mod context;
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 
-use riscv::register::{
-    scause::{self, Exception,Interrupt, Trap},
-    sstatus, stval, stvec,
-};
+use crate::task::suspend_current_run_next;
 use crate::{println, ERROR};
 use context::TrapFrame;
-use crate::task::suspend_current_run_next;
+use riscv::register::{
+    scause::{self, Exception, Interrupt, Trap},
+    sstatus, stval, stvec,
+};
 
 global_asm!(include_str!("trap.asm"));
 
@@ -57,11 +57,9 @@ pub fn trap_handler(tf: &mut TrapFrame) -> &mut TrapFrame {
             panic!();
         }
         //断点中断
-        Trap::Exception(Exception::Breakpoint) => {
-            breakpoint_handler(&mut tf.sepc)
-        }
+        Trap::Exception(Exception::Breakpoint) => breakpoint_handler(&mut tf.sepc),
         //s态时钟中断
-        Trap::Interrupt(Interrupt::SupervisorTimer) =>{
+        Trap::Interrupt(Interrupt::SupervisorTimer) => {
             supertimer_handler();
         }
         _ => {
@@ -80,7 +78,7 @@ fn breakpoint_handler(sepc: &mut usize) {
 }
 
 //S态时钟处理函数
-fn supertimer_handler(){
+fn supertimer_handler() {
     set_next_timetrigger();
     suspend_current_run_next();
     //外界中断,我们并未执行完该有的操作，此处不跳到下一行指令

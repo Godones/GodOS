@@ -28,6 +28,6 @@ pub fn sys_yield() -> isize {
     suspend_current_run_next(); //暂停当前任务运行下一个任务
     0
 }
-pub fn sys_get_time() ->isize{
+pub fn sys_get_time() -> isize {
     crate::timer::get_costtime() as isize
 }

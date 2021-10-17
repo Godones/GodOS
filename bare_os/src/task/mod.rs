@@ -3,7 +3,7 @@ use crate::loader::{get_num_app, init_app_cx};
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
-use task::{TaskControlBlock,TaskStatus};
+use task::{TaskControlBlock, TaskStatus};
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
@@ -68,19 +68,19 @@ impl TaskManager {
         //寻找下一个可行的任务
         let inner = self.inner.borrow_mut();
         let current_task = inner.current_task;
-        (current_task+1..current_task + self.num_app + 1)
+        (current_task + 1..current_task + self.num_app + 1)
             .map(|x| x % self.num_app)
             .find(|index| {
                 //找到处于准备状态的任务
                 inner.tasks[*index].task_status == TaskStatus::Ready
             })
     }
-    fn run_first_task(&self){
+    fn run_first_task(&self) {
         self.inner.borrow_mut().tasks[0].task_status = TaskStatus::Running;
         let next_task_ptr2 = self.inner.borrow().tasks[0].get_task_cx_ptr2();
-        let _unused :usize = 0;
+        let _unused: usize = 0;
         unsafe {
-            __switch(&_unused as *const usize,next_task_ptr2);
+            __switch(&_unused as *const usize, next_task_ptr2);
         }
     }
     fn run_next_task(&self) {
@@ -100,8 +100,7 @@ impl TaskManager {
             unsafe {
                 __switch(current_task_cx_ptr2, next_task_cx_ptr2);
             }
-        }
-        else {
+        } else {
             panic!("There are no tasks!");
         }
     }
@@ -117,9 +116,10 @@ pub fn exit_current_run_next() {
     run_next_task();
 }
 
-pub fn run_first_task(){
+pub fn run_first_task() {
     TASK_MANAGER.run_first_task();
 }
+
 fn mark_current_suspended() {
     TASK_MANAGER.mark_current_suspended();
 }
