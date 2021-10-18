@@ -4,11 +4,12 @@
 #![allow(non_snake_case)]
 #[macro_use]
 extern crate lib;
-
+use lib::set_priority;
 const LEN: usize = 100;
 
 #[no_mangle]
 fn main() -> i32 {
+    set_priority(10);
     let p = 3u64;
     let m = 998244353u64;
     let iter: usize = 200000;

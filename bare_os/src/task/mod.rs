@@ -1,9 +1,11 @@
 use crate::config::{MAX_APP_NUM,BIG_STRIDE};
 use crate::loader::{get_num_app, init_app_cx};
 use core::cell::RefCell;
+use core::fmt::Error;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
+use crate::{DEBUG};
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
@@ -71,8 +73,10 @@ impl TaskManager {
     }
     fn set_priority(&self,priority:usize)->isize{
         //设置优先级就等价于更改增长量
-        let current_task = self.inner.borrow().current_task;
-        self.inner.borrow_mut().tasks[current_task].pass = BIG_STRIDE/priority;
+        let  mut inner = self.inner.borrow_mut();
+        let current_task = inner.current_task;
+        inner.tasks[current_task].pass = BIG_STRIDE/priority;
+
         priority as isize
     }
     fn rr(&self) ->Option<usize>{
@@ -89,17 +93,31 @@ impl TaskManager {
 
     fn stride(&self) ->Option<usize>{
         //stride调度算法
-        todo!()
+        let mut miniest =usize::MAX ;
+        let mut index  = 0;
+        for i in 0..self.num_app{
+            if self.inner.borrow().tasks[i].stride < miniest&&
+                self.inner.borrow().tasks[i].task_status==TaskStatus::Ready{
+                miniest = self.inner.borrow().tasks[i].stride;
+                index = i;
+            }
+        }
+        // DEBUG!("[kernel debug] {} {}",miniest,index);
+        Some(index)
     }
 
     fn find_next_task(&self) -> Option<usize> {
         //寻找下一个可行的任务
-        self.rr()
+        // self.rr()
+        self.stride()
     }
     fn run_first_task(&self) {
-        self.inner.borrow_mut().tasks[0].task_status = TaskStatus::Running;
-        let next_task_ptr2 = self.inner.borrow().tasks[0].get_task_cx_ptr2();
+        let mut inner = self.inner.borrow_mut();
+        inner.tasks[0].task_status = TaskStatus::Running;
+        inner.tasks[0].stride += inner.tasks[0].pass;
+        let next_task_ptr2 = inner.tasks[0].get_task_cx_ptr2();
         let _unused: usize = 0;
+        drop(inner);
         unsafe {
             __switch(&_unused as *const usize, next_task_ptr2);
         }
@@ -112,6 +130,8 @@ impl TaskManager {
             let current_task = inner.current_task;
             inner.current_task = next;
             inner.tasks[next].task_status = TaskStatus::Running;
+
+            inner.tasks[next].stride +=inner.tasks[next].pass;
             //获取两个任务的task上下文指针
             let current_task_cx_ptr2 = inner.tasks[current_task].get_task_cx_ptr2();
             let next_task_cx_ptr2 = inner.tasks[next].get_task_cx_ptr2();
