@@ -8,8 +8,13 @@ pub mod console;
 mod lang_items;
 pub mod syscall;
 
-
-use crate::syscall::{sys_exit, sys_write,sys_yield,sys_get_time};
+use crate::syscall::{
+    sys_exit,
+    sys_get_time,
+    sys_write,
+    sys_yield,
+    sys_set_priority
+};
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
     sys_write(fd, buf)
@@ -18,14 +23,18 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
 pub fn exit(exit_code: i32) -> isize {
     sys_exit(exit_code)
 }
-pub fn get_time()->isize{
+pub fn get_time() -> isize {
     sys_get_time()
 }
-pub fn yield_()->isize{
+pub fn yield_() -> isize {
     sys_yield()
 }
-//weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 
+pub fn set_priority(priority:isize)->isize{
+    sys_set_priority(priority)
+}
+
+//weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]
 #[no_mangle]
 fn main() -> i32 {
@@ -39,9 +48,7 @@ fn clear_bss() {
         fn end_bss();
     }
     unsafe {
-        (start_bss as usize..end_bss as usize).for_each(|a| {
-            (a as *mut u8).write_volatile(0)
-        });
+        (start_bss as usize..end_bss as usize).for_each(|a| (a as *mut u8).write_volatile(0));
     }
 }
 

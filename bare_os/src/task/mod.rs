@@ -1,4 +1,4 @@
-use crate::config::MAX_APP_NUM;
+use crate::config::{MAX_APP_NUM,BIG_STRIDE};
 use crate::loader::{get_num_app, init_app_cx};
 use core::cell::RefCell;
 use lazy_static::lazy_static;
@@ -33,7 +33,12 @@ lazy_static! {
      static ref TASK_MANAGER: TaskManager = {
         let num_app = get_num_app();
         let mut tasks = [
-            TaskControlBlock{task_cx_ptr:0,task_status:TaskStatus::Uninit};
+            TaskControlBlock{
+                task_cx_ptr: 0,
+                task_status: TaskStatus::Uninit,
+                pass: BIG_STRIDE/16,
+                stride: 0,
+            };
             MAX_APP_NUM
         ];
         // todo!("注意这个位置");
@@ -64,8 +69,14 @@ impl TaskManager {
         let current_task = self.inner.borrow().current_task;
         self.inner.borrow_mut().tasks[current_task].task_status = TaskStatus::Exited;
     }
-    fn find_next_task(&self) -> Option<usize> {
-        //寻找下一个可行的任务
+    fn set_priority(&self,priority:usize)->isize{
+        //设置优先级就等价于更改增长量
+        let current_task = self.inner.borrow().current_task;
+        self.inner.borrow_mut().tasks[current_task].pass = BIG_STRIDE/priority;
+        priority as isize
+    }
+    fn rr(&self) ->Option<usize>{
+        //这个是简单的时间片轮转法
         let inner = self.inner.borrow_mut();
         let current_task = inner.current_task;
         (current_task + 1..current_task + self.num_app + 1)
@@ -74,6 +85,16 @@ impl TaskManager {
                 //找到处于准备状态的任务
                 inner.tasks[*index].task_status == TaskStatus::Ready
             })
+    }
+
+    fn stride(&self) ->Option<usize>{
+        //stride调度算法
+        todo!()
+    }
+
+    fn find_next_task(&self) -> Option<usize> {
+        //寻找下一个可行的任务
+        self.rr()
     }
     fn run_first_task(&self) {
         self.inner.borrow_mut().tasks[0].task_status = TaskStatus::Running;
@@ -116,6 +137,10 @@ pub fn exit_current_run_next() {
     run_next_task();
 }
 
+pub fn set_priority(priority:usize) ->isize{
+    //设置特权级
+    TASK_MANAGER.set_priority(priority)
+}
 pub fn run_first_task() {
     TASK_MANAGER.run_first_task();
 }

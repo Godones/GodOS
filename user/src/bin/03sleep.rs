@@ -4,7 +4,7 @@
 #![allow(non_snake_case)]
 #[macro_use]
 extern crate lib;
-use lib::{yield_,get_time};
+use lib::{get_time, yield_};
 
 #[no_mangle]
 fn main() -> i32 {

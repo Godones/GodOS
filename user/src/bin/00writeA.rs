@@ -5,8 +5,6 @@
 #[macro_use]
 extern crate lib;
 
-
-
 const LEN: usize = 100;
 
 #[no_mangle]

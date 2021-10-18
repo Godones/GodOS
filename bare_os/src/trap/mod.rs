@@ -81,5 +81,4 @@ fn breakpoint_handler(sepc: &mut usize) {
 fn supertimer_handler() {
     set_next_timetrigger();
     suspend_current_run_next();
-    //外界中断,我们并未执行完该有的操作，此处不跳到下一行指令
 }

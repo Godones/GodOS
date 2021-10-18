@@ -46,8 +46,10 @@ pub fn set_timer(time: usize) {
     sbi_call(SBI_SET_TIMER, time, 0, 0);
 }
 
-pub struct Console;
 
+
+
+pub struct Console;
 impl Console {
     pub fn write_byte(&mut self, byte: usize) {
         console_putchar(byte);
