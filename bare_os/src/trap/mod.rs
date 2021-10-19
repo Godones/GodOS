@@ -49,7 +49,7 @@ pub fn trap_handler(tf: &mut TrapFrame) -> &mut TrapFrame {
         //页错误，应该是内存泄露什么的？
         Trap::Exception(Exception::StorePageFault | Exception::StoreFault) => {
             ERROR!("[kernel] PageFault in application, core dumped.");
-            panic!();
+            panic!("StorePageFault");
         }
         //非法指令
         Trap::Exception(Exception::IllegalInstruction) => {

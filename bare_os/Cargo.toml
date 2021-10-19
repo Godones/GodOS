@@ -19,4 +19,10 @@ version = "1.4.0"
 features = ["spin_no_std"] #禁止链接标准库
 
 [features]
+default = []
 board_qemu = []
+ERROR = []
+WARN = []
+INFO = []
+DEBUG = []
+TRACE = []

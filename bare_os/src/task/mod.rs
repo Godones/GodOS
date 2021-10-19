@@ -108,8 +108,8 @@ impl TaskManager {
 
     fn find_next_task(&self) -> Option<usize> {
         //寻找下一个可行的任务
-        // self.rr()
-        self.stride()
+        self.rr()
+        // self.stride()
     }
     fn run_first_task(&self) {
         let mut inner = self.inner.borrow_mut();

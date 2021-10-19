@@ -3,6 +3,7 @@ MODE := release
 KERNEL_ELF := target/$(TARGET)/$(MODE)/bare_os
 KERNEL_BIN := $(KERNEL_ELF).bin
 DISASM_TMP := target/$(TARGET)/$(MODE)/asm
+INFO := TRACE
 
 # BOARD
 BOARD ?= qemu
@@ -43,7 +44,7 @@ kernel:
 	@cd ../user && make build
 	@echo Platform: $(BOARD)
 	@cp src/linker-$(BOARD).ld src/linker.ld
-	@cargo build --release
+	@cargo build --release  --features "board_$(BOARD)" --features "$(INFO)"
 	@rm src/linker.ld
 
 

@@ -45,4 +45,5 @@ extern "C" fn rust_main() -> ! {
     timer::set_next_timetrigger();
     task::run_first_task();
     panic!("The main_end!");
+
 }
