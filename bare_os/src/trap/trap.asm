@@ -42,7 +42,7 @@ _alltraps:
 _restore:
     # case1: start running app by __restore
     # case2: back to U after handling trap
-    # 把sp的地址重新设置为栈顶地址
+    # 把sp的地重新设置为栈顶地址
     mv sp, a0
     # now sp->kernel stack(after allocated), sscratch->user stack
     # restore sstatus/sepc
