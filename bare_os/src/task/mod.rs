@@ -1,11 +1,10 @@
 use crate::config::{MAX_APP_NUM,BIG_STRIDE};
 use crate::loader::{get_num_app, init_app_cx};
 use core::cell::RefCell;
-use core::fmt::Error;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
-use crate::{DEBUG};
+
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出

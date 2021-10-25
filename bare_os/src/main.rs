@@ -3,8 +3,9 @@
 #![feature(asm)]
 #![feature(global_asm)]
 #![feature(panic_info_message)]
+#![feature(alloc_error_handler)]
 #![allow(dead_code)]
-
+#![feature(const_mut_refs)]
 #[macro_use]
 mod panic;
 mod config;
@@ -15,6 +16,11 @@ mod task;
 mod tests;
 mod timer;
 mod trap;
+mod system_allocator;
+mod mm;
+
+extern crate alloc;
+
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -36,7 +42,12 @@ fn clear_bss() {
 extern "C" fn rust_main() -> ! {
     clear_bss();
     INFO!("[kernel] Godone OS");
-    // color_output_test();
+    //test
+    {
+        // color_output_test();
+        crate::system_allocator::heap_test();
+    }
+
     //trap初始化，设置stvec的入口地址
     trap::init();
     //运行程序
