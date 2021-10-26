@@ -7,12 +7,14 @@ use crate::config::KERNEL_HEAP_SIZE;
 mod bump_allocator;
 mod common;
 mod linked_list;
+mod fixed_block;
 
 static mut HEAP_SPACE :[u8;KERNEL_HEAP_SIZE] = [0;KERNEL_HEAP_SIZE];
 
 #[global_allocator]
 // static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 static ALLOCATOR:Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
+
 pub fn init_heap(){
     unsafe {
         ALLOCATOR.lock().init(HEAP_SPACE.as_ptr()as usize,KERNEL_HEAP_SIZE);
@@ -34,6 +36,7 @@ pub  fn heap_test() {
     let a = Box::new(5);
 
     assert_eq!(*a, 5);
+
     assert!(bss_range.contains(&(a.as_ref() as *const _ as usize)));
     //判断指针是否指向bss段
     drop(a);

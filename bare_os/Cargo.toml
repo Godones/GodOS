@@ -9,10 +9,12 @@ edition = "2021"
 [dependencies]
 spin = "0.9.2"
 uart_16550 = "0.2.15"
+bitflags = "1.2.1"
 
 [dependencies.riscv]
 version = "0.7.0"
 feature=["inline-asm"]
+
 
 [dependencies.lazy_static]
 version = "1.4.0"

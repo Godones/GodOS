@@ -107,7 +107,6 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
             let excess = region.end_addr() - alloc_end;//剩余容量
             if excess>0{
                 allocator.push(alloc_end,excess);//放回链表中
-
             }
             alloc_start as * mut u8
         }else{
