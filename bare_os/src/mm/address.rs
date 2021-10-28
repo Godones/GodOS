@@ -2,16 +2,16 @@ use crate::config::{PAGE_SIZE, PAGE_SIZE_BIT};
 use crate::mm::page_table::PageTableEntry;
 
 /// 虚拟地址、物理地址、虚拟页号、物理页帧的定义
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
 pub struct VirtAddr(usize);
 
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
 pub struct PhysAddr(usize);
 
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
 pub struct VirtPageNum(usize);
 
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
 pub struct PhysPageNum(usize);
 
 impl From<usize> for PhysAddr {
@@ -87,10 +87,9 @@ impl VirtAddr {
 }
 
 impl PhysPageNum {
-
-    //todo
-    pub fn get_bytes_array(&self)->&'static mut  [u8]{
-        let phyaddress:PhysAddr= self.0.clone().into();//获得物理地址
+    // todo!(有错);
+    pub fn get_bytes_array(&self)->&'static mut [u8]{
+        let phyaddress:PhysAddr= self.clone().into();//获得物理地址
         unsafe {
             core::slice::from_raw_parts_mut(phyaddress.0 as *mut u8,4096)
         }

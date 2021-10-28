@@ -39,15 +39,15 @@ impl LinkedListAllocator {
     unsafe fn push(&mut self, address: usize, size: usize) {
         //判断是否满足对齐要求
         //是否满足大小要求
-        DEBUG!("address: {}\nalign: {}",address,core::mem::size_of::<ListNode>());
-        DEBUG!("align_address: {:}",align_up(address,core::mem::align_of::<ListNode>()));
-        DEBUG!("address: {}",address);
+        // DEBUG!("address: {}\nalign: {}",address,core::mem::size_of::<ListNode>());
+        // DEBUG!("align_address: {:}",align_up(address,core::mem::align_of::<ListNode>()));
+        // DEBUG!("address: {}",address);
+
         assert_eq!(
             align_up(address, core::mem::align_of::<ListNode>()),
             address
         );
         assert!(size >= core::mem::size_of::<ListNode>());
-
         let mut node = ListNode::new(size);
         node.next = self.head.next.take();
         let node_ptr = address as *mut ListNode; //指针类型转换

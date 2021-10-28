@@ -1,11 +1,14 @@
 use alloc::prelude::v1::Vec;
+use core::fmt::{Debug, Formatter};
 use core::option::Option;
+use crate::{INFO,println};
 ///物理页帧分配器
 
 use crate::config::MEMORY_END;
 use crate::mm::address::{PhysAddr, PhysPageNum};
 use lazy_static::lazy_static;
 use spin::Mutex;
+use crate::sbi::_print;
 
 //全局分配器
 lazy_static!{
@@ -51,6 +54,7 @@ impl FrameAllocator for StackFrameAllocator {
     }
     fn alloc(&mut self) -> Option<PhysPageNum> {
         //先从回收的页帧中分配出去，若找不到再从未分配的里面分配出去
+        // INFO!("[kernel] mm::FrameAllocator::alloc");
         if let Some (T) =self.recycled.pop(){
             Some(T.into())
         }
@@ -86,13 +90,14 @@ impl StackFrameAllocator {
         self.end = end.into();
     }
 }
-
+#[derive(Debug)]
 pub struct FrameTracker{
     pub ppn: PhysPageNum,
 }
 
 impl FrameTracker {
     pub fn new(ppn:PhysPageNum)-> Self {
+        // INFO!("[kernel] mm::FrameAllocator::FrameTracker::new");
         let bytes_array = ppn.get_bytes_array();//指针数组
         for i in bytes_array{
             *i = 0;
@@ -105,11 +110,14 @@ impl Drop for FrameTracker {
         frame_dealloc(self.ppn)
     }
 }
+
+
 ///公开的接口
 pub fn frame_alloc()->Option<FrameTracker>{
     //返回一个FrameTracker的原因：
     // 再包装一层需要清零？
     // RAII 的思想，生命周期绑定
+    // 为啥不直接再physpagenum上面实现Drop呢
     FRAME_ALLOCATOR.lock()
         .alloc()
         .map(|ppn|FrameTracker::new(ppn))
@@ -117,4 +125,24 @@ pub fn frame_alloc()->Option<FrameTracker>{
 pub fn frame_dealloc(ppn:PhysPageNum){
     FRAME_ALLOCATOR.lock()
         .dealloc(ppn);
+}
+
+#[allow(unused)]
+pub fn frame_test(){
+    init_frame_allocator();
+    let mut framepages: Vec<FrameTracker> = Vec::new();
+    for i in 0..5{
+        let temp = frame_alloc().unwrap();
+        INFO!("frame: {:?}",temp);
+        // framepages.push(temp);
+    }
+    framepages.clear();
+    for i in 0..5{
+        let temp = frame_alloc().unwrap();
+        INFO!("frame: {:?}",temp);
+        framepages.push(temp);
+
+    }
+    drop(framepages);
+    INFO!("Frame_alloc_test passed!");
 }

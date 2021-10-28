@@ -45,6 +45,7 @@ extern "C" fn rust_main() -> ! {
     {
         // color_output_test();
         crate::system_allocator::heap_test();
+        crate::mm::FrameAllocator::frame_test();
     }
 
     //trap初始化，设置stvec的入口地址
