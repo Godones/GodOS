@@ -102,7 +102,6 @@ macro_rules! ERROR {
     }
 }
 
-
 // 表示发生不常见情况，但是并不一定导致系统错误
 
 #[macro_export]
@@ -119,9 +118,7 @@ macro_rules! WARN {
     }
 }
 
-
 // 比较中庸的选项，输出比较重要的信息，比较常用
-
 
 #[macro_export]
 macro_rules! INFO {
@@ -137,7 +134,6 @@ macro_rules! INFO {
     }
 }
 
-
 #[macro_export]
 macro_rules! DEBUG {
     () => {
@@ -151,7 +147,6 @@ macro_rules! DEBUG {
         $crate::print!("");
     }
 }
-
 
 // 最详细的输出，跟踪了每一步关键路径的执行
 

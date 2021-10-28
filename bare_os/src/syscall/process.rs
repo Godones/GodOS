@@ -1,6 +1,6 @@
 use crate::task::exit_current_run_next;
-use crate::task::suspend_current_run_next;
 use crate::task::set_priority;
+use crate::task::suspend_current_run_next;
 use crate::{print, INFO};
 
 const FUNCTION_STDOUT: usize = 1;
@@ -32,7 +32,7 @@ pub fn sys_yield() -> isize {
 pub fn sys_get_time() -> isize {
     crate::timer::get_costtime() as isize
 }
-pub fn sys_set_priority(priority:usize)->isize{
+pub fn sys_set_priority(priority: usize) -> isize {
     //设置应用的特权级
     set_priority(priority)
 }

@@ -9,8 +9,8 @@ pub enum TaskStatus {
 pub struct TaskControlBlock {
     pub task_cx_ptr: usize, //任务上下文栈顶地址的应用
     pub task_status: TaskStatus,
-    pub stride:usize, //已走步长
-    pub pass:usize, //每一步的步长，只与特权级相关
+    pub stride: usize, //已走步长
+    pub pass: usize,   //每一步的步长，只与特权级相关
 }
 
 impl TaskControlBlock {

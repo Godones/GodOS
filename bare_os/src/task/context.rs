@@ -17,7 +17,8 @@ pub struct TaskContext {
 impl TaskContext {
     pub fn goto_restore() -> Self {
         extern "C" {
-            fn _restore();        }
+            fn _restore();
+        }
         Self {
             ra: _restore as usize,
             s: [0; 12],

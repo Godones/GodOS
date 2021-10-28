@@ -5,7 +5,7 @@ const SYSCALL_WRITE: usize = 64;
 const SYSCALL_EXIT: usize = 93;
 const SYSCALL_YIELD: usize = 124;
 const SYSCALL_GET_TIME: usize = 169;
-const SYSCALL_SET_PRIORITY:usize = 140;
+const SYSCALL_SET_PRIORITY: usize = 140;
 
 pub fn syscall(function: usize, args: [usize; 3]) -> isize {
     // crate::println!("function: {}, args: {:?}",function,args);

@@ -10,17 +10,16 @@
 mod panic;
 mod config;
 mod loader;
+mod mm;
 mod sbi;
 mod syscall;
+mod system_allocator;
 mod task;
 mod tests;
 mod timer;
 mod trap;
-mod system_allocator;
-mod mm;
 
 extern crate alloc;
-
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -56,5 +55,4 @@ extern "C" fn rust_main() -> ! {
     timer::set_next_timetrigger();
     task::run_first_task();
     panic!("The main_end!");
-
 }
