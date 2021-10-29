@@ -3,16 +3,16 @@ use crate::mm::page_table::PageTableEntry;
 
 /// 虚拟地址、物理地址、虚拟页号、物理页帧的定义
 #[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
-pub struct VirtAddr(usize);
+pub struct VirtAddr(pub usize);
 
 #[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
-pub struct PhysAddr(usize);
+pub struct PhysAddr(pub usize);
 
 #[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
-pub struct VirtPageNum(usize);
+pub struct VirtPageNum(pub usize);
 
 #[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
-pub struct PhysPageNum(usize);
+pub struct PhysPageNum(pub usize);
 
 impl From<usize> for PhysAddr {
     fn from(value: usize) -> Self {
@@ -86,12 +86,37 @@ impl VirtAddr {
     }
 }
 
+impl VirtPageNum {
+    pub fn index(&self) -> [usize; 3] {
+        let mut pagenum = self.0;
+        let mut idx = [0usize;3];
+        for i in idx.to_vec(){
+            idx[i] = pagenum&511;//取出低9位
+            pagenum >>=9;
+        }
+        idx
+    }
+}
 impl PhysPageNum {
-    // todo!(有错);
+    //以不同方式访问一个物理页帧
     pub fn get_bytes_array(&self)->&'static mut [u8]{
+        //将物理页帧转换为字节数组，方便进行写操作
         let phyaddress:PhysAddr= self.clone().into();//获得物理地址
         unsafe {
             core::slice::from_raw_parts_mut(phyaddress.0 as *mut u8,4096)
+        }
+    }
+    pub fn get_pte_array(&self)->&'static mut [PageTableEntry]{
+        //返回物理页帧中所有的页表项
+        let phyaddress :PhysAddr = self.clone().into();
+        unsafe {
+            core::slice::from_raw_parts_mut(phyaddress.0 as *mut PageTableEntry,512)
+        }
+    }
+    pub fn get_mut<T>(&self)->&'static mut T{
+        let phyaddress:PhysAddr = self.clone().into();
+        unsafe {
+            (phyaddress.0 as *mut T).as_mut().unwrap()
         }
     }
 }

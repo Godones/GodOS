@@ -1,14 +1,13 @@
 use alloc::prelude::v1::Vec;
-use core::fmt::{Debug, Formatter};
+use core::fmt::{Debug};
 use core::option::Option;
-use crate::{INFO,println};
+use crate::{INFO};
 ///物理页帧分配器
 
 use crate::config::MEMORY_END;
 use crate::mm::address::{PhysAddr, PhysPageNum};
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::sbi::_print;
 
 //全局分配器
 lazy_static!{

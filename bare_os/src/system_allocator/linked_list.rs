@@ -4,7 +4,7 @@
 use crate::system_allocator::common::{align_up, Locked};
 use core::alloc::GlobalAlloc;
 use core::{alloc::Layout, result};
-use crate::DEBUG;
+
 struct ListNode {
     size: usize,
     next: Option<&'static mut ListNode>,
