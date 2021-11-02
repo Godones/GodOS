@@ -35,25 +35,25 @@ impl PageTableEntry {
         //获取一个空项,不合法的项
         PageTableEntry { bits: 0 }
     }
-    fn ppn(&self) -> PhysPageNum {
+    pub fn ppn(&self) -> PhysPageNum {
         //ppn占据 10-53位
         (self.bits >> 10 & (1usize << 44 - 1)).into()
     }
-    fn flags(&self) -> PTEFlags {
+    pub fn flags(&self) -> PTEFlags {
         //截断低8位
         PTEFlags::from_bits(self.bits as u8).unwrap()
     }
-    fn is_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         //是否有效,即V标志位是否位1
         (self.flags() & PTEFlags::V) != PTEFlags::empty()
     }
-    fn writable(&self) -> bool {
+    pub fn writable(&self) -> bool {
         (self.flags() & PTEFlags::W) != PTEFlags::empty()
     }
-    fn readable(&self) -> bool {
+    pub fn readable(&self) -> bool {
         (self.flags() & PTEFlags::R) != PTEFlags::empty()
     }
-    fn executable(&self) -> bool {
+    pub fn executable(&self) -> bool {
         (self.flags() & PTEFlags::X) != PTEFlags::empty()
     }
 }
@@ -64,13 +64,18 @@ pub struct PageTable{
 }
 
 impl PageTable {
-    fn new()->Self{
-        //位根页表申请一个物理页帧
+    pub fn new() ->Self{
+        //为根页表申请一个物理页帧
         let root_frame = frame_alloc().unwrap();
         PageTable{
             root_ppn:root_frame.ppn,
             frames:vec![root_frame],
         }
+    }
+    pub fn token(&self)->usize{
+        //构造一个satp数据
+        //最高四位 为模式选择，低44位是根目录所在的物理页帧号
+        8usize<<60|self.root_ppn.0
     }
     pub fn map(&mut self,vpn:VirtPageNum,ppn:PhysPageNum,flags:PTEFlags){
         //添加一个虚拟页号到物理页号的映射
@@ -87,7 +92,7 @@ impl PageTable {
     }
     fn find_pte_create(&mut self,vpn:VirtPageNum)->Option<&mut PageTableEntry>{
         //根据虚拟页号找到页表项
-        let idxs = vpn.index();//将虚拟页表号划分
+        let idxs = vpn.index();//将虚拟页表号划分3部分
         let mut ppn = self.root_ppn;
         let mut result: Option<& mut PageTableEntry>=None;
         for i in 0..3{
@@ -106,7 +111,9 @@ impl PageTable {
         result
     }
 
-    //下方的代码用来手动查找页表项
+    //下方的代码用来手动查
+    // 找页表项
+    //未知作用？
     pub fn from_token(&self,stap:usize)->Self{
         Self{
             root_ppn:PhysPageNum::from(stap&((1<<44)-1)),

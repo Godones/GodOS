@@ -1,5 +1,5 @@
 use crate::config::{BIG_STRIDE, MAX_APP_NUM};
-use crate::loader::{get_num_app, init_app_cx};
+use crate::loader::{get_num_app};
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;

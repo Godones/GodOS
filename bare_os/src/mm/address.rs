@@ -1,3 +1,6 @@
+use core::cmp::Ordering;
+use core::convert::Infallible;
+
 use crate::config::{PAGE_SIZE, PAGE_SIZE_BIT};
 use crate::mm::page_table::PageTableEntry;
 
@@ -90,13 +93,68 @@ impl VirtPageNum {
     pub fn index(&self) -> [usize; 3] {
         let mut pagenum = self.0;
         let mut idx = [0usize;3];
-        for i in idx.to_vec(){
+        for i in (0..3).rev(){
             idx[i] = pagenum&511;//取出低9位
             pagenum >>=9;
         }
         idx
     }
 }
+
+//虚拟页号迭代器？
+pub trait StepByOne{
+    fn step(&mut self);
+}
+
+impl StepByOne for VirtPageNum {
+    fn step(&mut self) {
+        self.0 +=1;
+    }
+}
+
+#[derive(Copy,Clone,Debug)]
+pub struct VirPageIter{
+    current:VirtPageNum,
+    l:VirtPageNum,
+    r:VirtPageNum,
+}
+
+
+impl VirPageIter {
+    pub fn new(start:VirtPageNum, end:VirtPageNum) ->Self{
+        Self{
+            current:VirtPageNum::from(0),
+            l:start,
+            r:end
+        }
+    }
+    pub fn get_start(&self) -> VirtPageNum {
+        self.l
+    }
+    pub fn get_end(&self)->VirtPageNum{
+        self.r
+    }
+}
+
+impl StepByOne for VirPageIter {
+    fn step(&mut self) {
+        self.current.step();
+    }
+}
+impl Iterator for VirPageIter {
+    type Item = VirtPageNum;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current.0 <= self.r.0  {
+            self.current.step();
+            Some(self.current)
+        }
+        else {
+            None
+        }
+    }
+}
+pub type VPNRange = VirPageIter;
+
 impl PhysPageNum {
     //以不同方式访问一个物理页帧
     pub fn get_bytes_array(&self)->&'static mut [u8]{

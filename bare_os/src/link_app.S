@@ -14,6 +14,7 @@ _num_app:
     .section .data
     .global app_0_start
     .global app_0_end
+    .align 3
 app_0_start:
     .incbin "../user/target/riscv64gc-unknown-none-elf/release/00writeA.bin"
 app_0_end:
@@ -21,6 +22,7 @@ app_0_end:
     .section .data
     .global app_1_start
     .global app_1_end
+    .align 3
 app_1_start:
     .incbin "../user/target/riscv64gc-unknown-none-elf/release/01wirteB.bin"
 app_1_end:
@@ -28,6 +30,7 @@ app_1_end:
     .section .data
     .global app_2_start
     .global app_2_end
+    .align 3
 app_2_start:
     .incbin "../user/target/riscv64gc-unknown-none-elf/release/02writeC.bin"
 app_2_end:
@@ -35,6 +38,7 @@ app_2_end:
     .section .data
     .global app_3_start
     .global app_3_end
+    .align 3
 app_3_start:
     .incbin "../user/target/riscv64gc-unknown-none-elf/release/03sleep.bin"
 app_3_end:
