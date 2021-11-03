@@ -1,11 +1,11 @@
-mod address;
-mod page_table;
-pub mod FrameAllocator;
-mod memory_set;
+pub mod address;
+pub mod frame_allocator;
+pub mod memory_set;
+pub mod page_table;
 
-use memory_set::KERNEL_SPACE;
+pub use memory_set::KERNEL_SPACE;
 
-pub fn init(){
-    FrameAllocator::init_frame_allocator();
+pub fn init() {
+    frame_allocator::init_frame_allocator();
     KERNEL_SPACE.lock().activate();
 }

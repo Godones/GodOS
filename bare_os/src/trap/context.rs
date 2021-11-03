@@ -5,6 +5,9 @@ pub struct TrapFrame {
     pub reg: [usize; 32], //32个通用寄存器
     pub sstatus: Sstatus,
     pub sepc: usize,
+    pub kernel_satp: usize,  //内核的地址空间根页表位置
+    pub kernel_sp: usize,    //内核的用户栈栈顶 位置
+    pub trap_handler: usize, //内核处理trap的位置
 }
 
 impl TrapFrame {
@@ -12,7 +15,13 @@ impl TrapFrame {
         //x2寄存器
         self.reg[2] = sp;
     }
-    pub fn app_into_context(entry: usize, sp: usize) -> Self {
+    pub fn app_into_context(
+        entry: usize,
+        sp: usize,
+        kernel_satp: usize,
+        user_stack_ap: usize,
+        trap_handler:usize
+    ) -> Self {
         //为启动应用程序而特殊构造的 Trap 上下文，
         //entry: 0x80400000 + 0x200000 * app_id
         //sp: 用户栈顶地址
@@ -20,12 +29,15 @@ impl TrapFrame {
             sstatus::set_spp(SPP::User);
         } //将status的spp位置设置为用户态
         let status = sstatus::read();
-        let mut tf = Self {
-            reg: [0; 32],
-            sstatus: status,
-            sepc: entry,
+        let mut trap_cx = TrapFrame{
+            reg:[0;32],
+            sstatus:status,
+            sepc:entry,
+            kernel_satp,
+            kernel_sp:user_stack_ap,
+            trap_handler
         };
-        tf.set_sp(sp); //设置栈顶地址为用户栈栈顶地址
-        tf
+        trap_cx.set_sp(sp);
+        trap_cx
     }
 }

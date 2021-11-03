@@ -1,10 +1,11 @@
+use alloc::vec::Vec;
 use crate::config::{BIG_STRIDE, MAX_APP_NUM};
-use crate::loader::{get_num_app};
+use crate::loader::get_num_app;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
-
+use crate::INFO;
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
 pub mod context;
@@ -19,9 +20,9 @@ pub struct TaskManager {
 }
 
 struct TaskManagerInner {
-    current_task: usize,
     //当前任务
-    tasks: [TaskControlBlock; MAX_APP_NUM],
+    current_task: usize,
+    tasks: Vec<TaskControlBlock>
 }
 
 unsafe impl Sync for TaskManager {}
@@ -31,21 +32,13 @@ lazy_static! {
     /// 将各个应用的内核初始化完成 --- init_app_cx
     /// 将各个任务的状态改变为初始化完成状态
      static ref TASK_MANAGER: TaskManager = {
+        INFO!("[kernel] init application...");
         let num_app = get_num_app();
-        let mut tasks = [
-            TaskControlBlock{
-                task_cx_ptr: 0,
-                task_status: TaskStatus::Uninit,
-                pass: BIG_STRIDE/16,
-                stride: 0,
-            };
-            MAX_APP_NUM
-        ];
-        // todo!("注意这个位置");
+        INFO!("[kernel] The app num :{}",num_app);
+
+        let mut tasks :Vec<TaskControlBlock> = Vec::new();
         for i in 0..num_app{
-            // init_app_cx会返回一个任务上下文，task_cx_ptr保存的是任务上下文的引用的指针
-            tasks[i].task_cx_ptr = init_app_cx(i) as *const _ as usize;
-            tasks[i].task_status = TaskStatus::Ready;
+            tasks.push(TaskControlBlock::new(i));
         }
         TaskManager{
             num_app,

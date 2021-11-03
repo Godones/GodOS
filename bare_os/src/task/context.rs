@@ -1,3 +1,5 @@
+use crate::trap::context::TrapFrame;
+
 /// 任务上下文
 /// 对于一般的函数，编译器会在函数的起始位置自动生成代码保存 被调用者保存寄存器
 /// _switch函数不会被编译器特殊处理，因此我们需要手动保存这些寄存器
@@ -15,7 +17,7 @@ pub struct TaskContext {
 /// 将ra设置为_restore的地址，那么在应用执行完__switch后，就会返回到_restore
 /// 此时就转变为初始化一个trap上下文的情况了。
 impl TaskContext {
-    pub fn goto_restore() -> Self {
+    pub fn goto_trap_return() -> Self {
         extern "C" {
             fn _restore();
         }

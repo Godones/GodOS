@@ -1,20 +1,17 @@
-use core::cmp::Ordering;
-use core::convert::Infallible;
-
 use crate::config::{PAGE_SIZE, PAGE_SIZE_BIT};
 use crate::mm::page_table::PageTableEntry;
 
 /// 虚拟地址、物理地址、虚拟页号、物理页帧的定义
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq, Debug)]
 pub struct VirtAddr(pub usize);
 
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq, Debug)]
 pub struct PhysAddr(pub usize);
 
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq, Debug)]
 pub struct VirtPageNum(pub usize);
 
-#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq,Debug)]
+#[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq, Debug)]
 pub struct PhysPageNum(pub usize);
 
 impl From<usize> for PhysAddr {
@@ -92,46 +89,45 @@ impl VirtAddr {
 impl VirtPageNum {
     pub fn index(&self) -> [usize; 3] {
         let mut pagenum = self.0;
-        let mut idx = [0usize;3];
-        for i in (0..3).rev(){
-            idx[i] = pagenum&511;//取出低9位
-            pagenum >>=9;
+        let mut idx = [0usize; 3];
+        for i in (0..3).rev() {
+            idx[i] = pagenum & 511; //取出低9位
+            pagenum >>= 9;
         }
         idx
     }
 }
 
 //虚拟页号迭代器？
-pub trait StepByOne{
+pub trait StepByOne {
     fn step(&mut self);
 }
 
 impl StepByOne for VirtPageNum {
     fn step(&mut self) {
-        self.0 +=1;
+        self.0 += 1;
     }
 }
 
-#[derive(Copy,Clone,Debug)]
-pub struct VirPageIter{
-    current:VirtPageNum,
-    l:VirtPageNum,
-    r:VirtPageNum,
+#[derive(Copy, Clone, Debug)]
+pub struct VirPageIter {
+    current: VirtPageNum,
+    l: VirtPageNum,
+    r: VirtPageNum,
 }
 
-
 impl VirPageIter {
-    pub fn new(start:VirtPageNum, end:VirtPageNum) ->Self{
-        Self{
-            current:VirtPageNum::from(0),
-            l:start,
-            r:end
+    pub fn new(start: VirtPageNum, end: VirtPageNum) -> Self {
+        Self {
+            current: VirtPageNum::from(0),
+            l: start,
+            r: end,
         }
     }
     pub fn get_start(&self) -> VirtPageNum {
         self.l
     }
-    pub fn get_end(&self)->VirtPageNum{
+    pub fn get_end(&self) -> VirtPageNum {
         self.r
     }
 }
@@ -144,11 +140,10 @@ impl StepByOne for VirPageIter {
 impl Iterator for VirPageIter {
     type Item = VirtPageNum;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current.0 <= self.r.0  {
+        if self.current.0 <= self.r.0 {
             self.current.step();
             Some(self.current)
-        }
-        else {
+        } else {
             None
         }
     }
@@ -157,25 +152,19 @@ pub type VPNRange = VirPageIter;
 
 impl PhysPageNum {
     //以不同方式访问一个物理页帧
-    pub fn get_bytes_array(&self)->&'static mut [u8]{
+    pub fn get_bytes_array(&self) -> &'static mut [u8] {
         //将物理页帧转换为字节数组，方便进行写操作
-        let phyaddress:PhysAddr= self.clone().into();//获得物理地址
-        unsafe {
-            core::slice::from_raw_parts_mut(phyaddress.0 as *mut u8,4096)
-        }
+        let phyaddress: PhysAddr = self.clone().into(); //获得物理地址
+        unsafe { core::slice::from_raw_parts_mut(phyaddress.0 as *mut u8, 4096) }
     }
-    pub fn get_pte_array(&self)->&'static mut [PageTableEntry]{
+    pub fn get_pte_array(&self) -> &'static mut [PageTableEntry] {
         //返回物理页帧中所有的页表项
-        let phyaddress :PhysAddr = self.clone().into();
-        unsafe {
-            core::slice::from_raw_parts_mut(phyaddress.0 as *mut PageTableEntry,512)
-        }
+        let phyaddress: PhysAddr = self.clone().into();
+        unsafe { core::slice::from_raw_parts_mut(phyaddress.0 as *mut PageTableEntry, 512) }
     }
-    pub fn get_mut<T>(&self)->&'static mut T{
-        let phyaddress:PhysAddr = self.clone().into();
-        unsafe {
-            (phyaddress.0 as *mut T).as_mut().unwrap()
-        }
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let phyaddress: PhysAddr = self.clone().into();
+        unsafe { (phyaddress.0 as *mut T).as_mut().unwrap() }
     }
 }
 

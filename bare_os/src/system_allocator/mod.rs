@@ -3,10 +3,10 @@ use crate::system_allocator::bump_allocator::BumpAllocator;
 use crate::system_allocator::common::Locked;
 use crate::system_allocator::linked_list::LinkedListAllocator;
 use crate::INFO;
+mod buddy;
 /// 实现自己的堆分配器
 mod bump_allocator;
 mod common;
-mod buddy;
 mod linked_list;
 
 static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];

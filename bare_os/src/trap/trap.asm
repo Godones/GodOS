@@ -6,16 +6,16 @@
     ld x\n, \n*8(sp)
 .endm
 
-    .section .text
+    .section .text.trampoline
     .globl _alltraps
     .globl _restore
     .align 2
 _alltraps:
+    #在trap跳转进入的时候，sscratch保存的是应用地址空间的trap上下文页位置
+    #sp 指向的是用户栈顶地址
     csrrw sp, sscratch, sp
-    # now sp->kernel stack, sscratch->user stack
-    # allocate a TrapContext on kernel stack
-    addi sp, sp, -34*8
-    # save general-purpose registers
+    # now sp->*TrapContext in user space, sscratch->user stack
+    # save other general purpose registers
     sd x1, 1*8(sp)
     # skip sp(x2), we will save it later
     sd x3, 3*8(sp)
@@ -26,34 +26,43 @@ _alltraps:
         SAVE_GP %n
         .set n, n+1
     .endr
-    # we can use t0/t1/t2 freely, because they were saved on kernel stack
-    csrr t0, sstatus
-    csrr t1, sepc
-    sd t0, 32*8(sp)
-    sd t1, 33*8(sp)
-    # read user stack from sscratch and save it on the kernel stack
-    csrr t2, sscratch
-    sd t2, 2*8(sp)
-    # set input argument of trap_handler(cx: &mut TrapContext)
-    #让寄存器a0保存sp的值，即栈顶指针
-    mv a0, sp
-    call trap_handler
+    # we can use t0/t1/t2 freely, because they have been saved in TrapContext
+    csrr t0, sstatus //读取sstatus
+    csrr t1, sepc //读取sepc的值
+    sd t0, 32*8(sp) //保存sstatus
+    sd t1, 33*8(sp) //保存sepc
+    # read user stack from sscratch and save it in TrapContext
+    csrr t2, sscratch //读取用户栈顶地址
+    sd t2, 2*8(sp) //保存栈顶地址
+
+    #内核代码中我们会将trap上下文写入相应的位置，里面含有
+    #内核的kernel_satp traphandle kernel_sp地址
+    # load kernel_satp into t0
+    ld t0, 34*8(sp)
+    # load trap_handler into t1
+    ld t1, 36*8(sp)
+    # move to kernel_sp
+    ld sp, 35*8(sp)
+    # switch to kernel space
+    csrw satp, t0
+    sfence.vma
+    # jump to trap_handler
+    jr t1
 
 _restore:
-    # case1: start running app by __restore
-    # case2: back to U after handling trap
-    # 把sp的地址重新设置为栈顶地址
-    # mv sp, a0
-    # now sp->kernel stack(after allocated), sscratch->user stack
+    # a0: *TrapContext in user space(Constant); a1: user space token
+    # switch to user space
+    csrw satp, a1
+    sfence.vma
+    csrw sscratch, a0 //保存a0到sscratch
+    mv sp, a0
+    # now sp points to TrapContext in user space, start restoring based on it
     # restore sstatus/sepc
     ld t0, 32*8(sp)
     ld t1, 33*8(sp)
-    ld t2, 2*8(sp)
     csrw sstatus, t0
     csrw sepc, t1
-    csrw sscratch, t2  #sscratch  是用户栈栈顶地址
-
-    # restore general-purpuse registers except sp/tp
+    # restore general purpose registers except x0/sp/tp
     ld x1, 1*8(sp)
     ld x3, 3*8(sp)
     .set n, 5
@@ -61,8 +70,6 @@ _restore:
         LOAD_GP %n
         .set n, n+1
     .endr
-    # release TrapContext on kernel stack
-    addi sp, sp, 34*8
-    # now sp->kernel stack, sscratch->user stack
-    csrrw sp, sscratch, sp #此时sp 指向用户栈，sscratch指向内核
+    # back to user stack
+    ld sp, 2*8(sp)
     sret
