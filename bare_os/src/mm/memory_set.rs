@@ -105,11 +105,11 @@ impl MemorySet {
     }
     fn new_kernel() -> Self {
         //生成内核的地址空间
-
         let mut memoryset = MemorySet::new_bare();
         //映射跳板
-
+        println!("[Debug] new_kernel");
         memoryset.map_trampoline();
+
         //恒等映射各个逻辑段
         println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
         println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
@@ -346,6 +346,7 @@ lazy_static! {
     pub static ref KERNEL_SPACE: Arc<Mutex<MemorySet>> =
         Arc::new(Mutex::new(MemorySet::new_kernel()));
 }
+
 #[allow(unused)]
 pub fn remap_test() {
     //测试内核映射的正确性

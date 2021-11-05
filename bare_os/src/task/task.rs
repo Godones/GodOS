@@ -13,7 +13,7 @@ pub enum TaskStatus {
     Running, //正在执行
     Exited,  //已经退出
 }
-#[derive(Copy, Clone)]
+
 pub struct TaskControlBlock {
     pub task_cx_ptr: usize, //任务上下文栈顶地址的位置
     pub task_status: TaskStatus,
@@ -74,14 +74,18 @@ impl TaskControlBlock {
                 use_sp,
                 KERNEL_SPACE.lock().token(), //内核地址空间的根页表
                 top,
-                trap_handle as usize,
+                trap_handler as usize,
             );
         } //构造trap上下文
         task_control_block
     }
 
-    fn get_trap_cx(&self) -> &'static mut TrapFrame {
+    pub fn get_trap_cx(&self) -> &'static mut TrapFrame {
         //返回应用的trap上下文所在位置
         self.trap_cx_ppn.get_mut()
+    }
+    pub fn get_user_token(&self) -> usize {
+        //获取当前任务的用户地址空间根页表satp
+        self.memory_set.token()
     }
 }

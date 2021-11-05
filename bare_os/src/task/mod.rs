@@ -1,11 +1,13 @@
-use alloc::vec::Vec;
 use crate::config::{BIG_STRIDE, MAX_APP_NUM};
 use crate::loader::get_num_app;
+use crate::trap::context::TrapFrame;
+use crate::INFO;
+use alloc::vec::Vec;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
-use crate::INFO;
+
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
 pub mod context;
@@ -22,7 +24,7 @@ pub struct TaskManager {
 struct TaskManagerInner {
     //当前任务
     current_task: usize,
-    tasks: Vec<TaskControlBlock>
+    tasks: Vec<TaskControlBlock>,
 }
 
 unsafe impl Sync for TaskManager {}
@@ -52,6 +54,16 @@ lazy_static! {
 };
 }
 impl TaskManager {
+    fn get_current_token(&self) -> usize {
+        //获取用户地址空间的satp
+        let current_task = self.inner.borrow().current_task;
+        self.inner.borrow().tasks[current_task].get_user_token()
+    }
+    fn get_trap_cx(&self) -> &'static mut TrapFrame {
+        //获取用户trap上下文所在位置
+        let current_task = self.inner.borrow().current_task;
+        self.inner.borrow().tasks[current_task].get_trap_cx()
+    }
     fn mark_current_suspended(&self) {
         //将当前任务变成暂停状态
         let current_task = self.inner.borrow().current_task;
@@ -148,7 +160,12 @@ pub fn exit_current_run_next() {
     mark_current_exited();
     run_next_task();
 }
-
+pub fn current_user_token() -> usize {
+    TASK_MANAGER.get_current_token()
+}
+pub fn current_trap_cx() -> & 'static mut TrapFrame {
+    TASK_MANAGER.get_trap_cx()
+}
 pub fn set_priority(priority: usize) -> isize {
     //设置特权级
     TASK_MANAGER.set_priority(priority)

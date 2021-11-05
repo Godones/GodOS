@@ -20,7 +20,7 @@ impl TrapFrame {
         sp: usize,
         kernel_satp: usize,
         user_stack_ap: usize,
-        trap_handler:usize
+        trap_handler: usize,
     ) -> Self {
         //为启动应用程序而特殊构造的 Trap 上下文，
         //entry: 0x80400000 + 0x200000 * app_id
@@ -29,13 +29,13 @@ impl TrapFrame {
             sstatus::set_spp(SPP::User);
         } //将status的spp位置设置为用户态
         let status = sstatus::read();
-        let mut trap_cx = TrapFrame{
-            reg:[0;32],
-            sstatus:status,
-            sepc:entry,
+        let mut trap_cx = TrapFrame {
+            reg: [0; 32],
+            sstatus: status,
+            sepc: entry,
             kernel_satp,
-            kernel_sp:user_stack_ap,
-            trap_handler
+            kernel_sp: user_stack_ap,
+            trap_handler,
         };
         trap_cx.set_sp(sp);
         trap_cx

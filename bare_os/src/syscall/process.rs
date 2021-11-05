@@ -1,8 +1,8 @@
-use crate::task::exit_current_run_next;
+use crate::mm::page_table::PageTable;
 use crate::task::set_priority;
 use crate::task::suspend_current_run_next;
+use crate::task::{current_user_token, exit_current_run_next};
 use crate::{print, INFO};
-
 const FUNCTION_STDOUT: usize = 1;
 pub fn sys_exit(xstate: i32) -> ! {
     INFO!("[kernel] Application exited with code {}", xstate);
@@ -14,9 +14,11 @@ pub fn sys_exit(xstate: i32) -> ! {
 pub fn sys_write(function: usize, buf: *const u8, len: usize) -> isize {
     match function {
         FUNCTION_STDOUT => {
-            let slice = unsafe { core::slice::from_raw_parts(buf, len) };
-            let str = core::str::from_utf8(slice).unwrap();
-            print!("{}", str);
+            let slice = PageTable::translated_byte_buffer(current_user_token(), buf, len);
+            for buffer in slice {
+                let str = core::str::from_utf8(buffer).unwrap();
+                print!("{}", str);
+            }
             len as isize
         }
         _ => {

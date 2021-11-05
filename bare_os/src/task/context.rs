@@ -1,4 +1,5 @@
 use crate::trap::context::TrapFrame;
+use crate::trap::trap_return;
 
 /// 任务上下文
 /// 对于一般的函数，编译器会在函数的起始位置自动生成代码保存 被调用者保存寄存器
@@ -14,15 +15,12 @@ pub struct TaskContext {
 }
 
 /// 在应用第一次运行时，我们需要为其构造一个任务上下文
-/// 将ra设置为_restore的地址，那么在应用执行完__switch后，就会返回到_restore
+/// 将ra设置为trap_return的地址，那么在应用执行完__switch后，就会返回到trap_return继续执行
 /// 此时就转变为初始化一个trap上下文的情况了。
 impl TaskContext {
     pub fn goto_trap_return() -> Self {
-        extern "C" {
-            fn _restore();
-        }
         Self {
-            ra: _restore as usize,
+            ra: trap_return as usize,
             s: [0; 12],
         }
     }

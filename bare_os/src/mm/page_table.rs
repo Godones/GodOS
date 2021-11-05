@@ -1,10 +1,11 @@
 extern crate bitflags;
 
-use crate::mm::address::{PhysPageNum, VirtPageNum};
+use crate::mm::address::{PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::bitflags;
+use crate::DEBUG;
 //页表项标志位
 bitflags! {
     pub struct PTEFlags:u8{
@@ -79,8 +80,10 @@ impl PageTable {
     }
     pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
         //添加一个虚拟页号到物理页号的映射
+        DEBUG!("[Debug] map");
         let pte = self.find_pte_create(vpn).unwrap();
         //查找虚拟页号是否已经被映射过了
+        DEBUG!("[Debug] map end");
         assert!(!pte.is_valid(), "vpn: {:?} is mapped before mapping", vpn);
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V); //建立一个映射
     }
@@ -93,6 +96,7 @@ impl PageTable {
     fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
         //根据虚拟页号找到页表项
         let idxs = vpn.index(); //将虚拟页表号划分3部分
+        DEBUG!("[Debug] idxs: {:?} root_ppn: {:?}",idxs,self.root_ppn);
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
         for i in 0..3 {
@@ -102,24 +106,48 @@ impl PageTable {
                 return result;
             }
             if !pte.is_valid() {
+                DEBUG!("[Debug] !pte is valid");
                 let new_frame = frame_alloc().unwrap();
                 *pte = PageTableEntry::new(new_frame.ppn, PTEFlags::V);
+                DEBUG!("[Debug] pte's ppn :{}",new_frame.ppn.0);
                 self.frames.push(new_frame);
             }
             ppn = pte.ppn();
+            DEBUG!("[Debug] ppn: {:?}",ppn);
         }
         result
     }
 
     //下方的代码用来手动查
     // 找页表项
-    //未知作用？
-    pub fn from_token(&self, stap: usize) -> Self {
+
+    pub fn from_token(stap: usize) -> Self {
         Self {
             root_ppn: PhysPageNum::from(stap & ((1 << 44) - 1)),
             frames: Vec::new(),
         }
     }
+    pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static [u8]> {
+        //在内核打印字符时需要访问用户地址空间缓冲区的内容
+        let page_table = PageTable::from_token(token);
+        let mut start_addr = ptr as usize; //起始地址
+        let end = start_addr + len; //结束地址
+        let mut contents = Vec::new();
+        while start_addr < end {
+            let start_viraddr = VirtAddr::from(start_addr);
+            let mut vpn = start_viraddr.floor();
+            let ppn = page_table.translate(vpn).unwrap().ppn();
+            vpn.step();
+            let mut end_viraddr: VirtAddr = vpn.into();
+            end_viraddr = end_viraddr.min(VirtAddr::from(end));
+            contents.push(
+                &ppn.get_bytes_array()[start_viraddr.page_offset()..end_viraddr.page_offset()],
+            );
+            start_addr = vpn.into();
+        }
+        contents
+    }
+
     fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
         //根据虚拟页号找到页表项
         let idxs = vpn.index(); //将虚拟页表号划分

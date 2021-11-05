@@ -2,7 +2,8 @@ pub mod context;
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 
-use crate::task::suspend_current_run_next;
+use crate::config::TRAMPLINE;
+use crate::task::{current_trap_cx, current_user_token, suspend_current_run_next};
 use crate::{println, ERROR};
 use context::TrapFrame;
 use riscv::register::{
@@ -28,14 +29,56 @@ pub fn init() {
     }
     println!("++++ setup trap! ++++");
 }
-
-///根据不同类型的中断选择不同的处理
-/// 在trap.asm中我们将x10-a0的值设置为sp的值，即内核栈地址
-/// 此时我们以及按照TrapFrame的布局设置好了各个寄存器的值
-/// tf 就是trap里面保存好的东西
-/// 而函数原样返回传入的tf，因此a0寄存器仍然是进入函数时的值
+pub fn set_kernel_trap_entry() {
+    unsafe {
+        stvec::write(trap_from_kernel as usize, stvec::TrapMode::Direct);
+    }
+}
 #[no_mangle]
-pub fn trap_handler(tf: &mut TrapFrame) -> &mut TrapFrame {
+fn trap_from_kernel() -> ! {
+    panic!("[kernel] trap from kernel")
+}
+pub fn set_user_trap_entry() {
+    //设置用户态trap处理入口
+    unsafe {
+        stvec::write(TRAMPLINE, stvec::TrapMode::Direct);
+    }
+}
+#[no_mangle]
+pub fn trap_return() -> ! {
+    //返回用户态继续执行
+    set_user_trap_entry();
+    let trap_cx = current_trap_cx();
+    let user_satp = current_user_token();
+    extern "C" {
+        fn _alltraps();
+        fn _restore();
+    }
+    let restore_viraddress = (_restore as usize - _alltraps as usize) + TRAMPLINE;
+    unsafe {
+        asm!(
+            "fence.i",
+            "jr {restore_viraddress}",
+            restore_viraddress = in(reg) restore_viraddress,
+            in("a0") trap_cx,
+            in("a1") user_satp,
+            options(nostack)
+        );
+    }
+    panic!("")
+}
+///根据不同类型的中断选择不同的处理
+/// 在trap.asm中我们将x10=a0的值设置为sp的值，即内核栈地址
+/// 此时我们已经按照TrapFrame的布局设置好了各个寄存器的值
+/// tf 就是trap里面保存好的东西
+///
+#[no_mangle]
+pub fn trap_handler() -> ! {
+    //在进入内核后，会有可能再次触发中断或者其它异常
+    //此时我们直接panic而不做其它处理
+    set_kernel_trap_entry();
+    let tf = current_trap_cx();
+
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
@@ -70,7 +113,7 @@ pub fn trap_handler(tf: &mut TrapFrame) -> &mut TrapFrame {
             )
         }
     }
-    tf
+    trap_return()
 }
 fn breakpoint_handler(sepc: &mut usize) {
     println!("Breakpoint is setted @0x{:x}", sepc);
