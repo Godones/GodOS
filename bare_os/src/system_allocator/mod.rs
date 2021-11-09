@@ -5,14 +5,14 @@ use crate::system_allocator::linked_list::LinkedListAllocator;
 use crate::INFO;
 mod buddy;
 /// 实现自己的堆分配器
-mod bump_allocator;
+pub mod bump_allocator;
 mod common;
 mod linked_list;
 
 static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];
 
 #[global_allocator]
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+pub static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 // static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 //
 pub fn init_heap() {

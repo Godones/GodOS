@@ -119,7 +119,7 @@ pub struct VirPageIter {
 impl VirPageIter {
     pub fn new(start: VirtPageNum, end: VirtPageNum) -> Self {
         Self {
-            current: VirtPageNum::from(0),
+            current: start,
             l: start,
             r: end,
         }
@@ -140,9 +140,10 @@ impl StepByOne for VirPageIter {
 impl Iterator for VirPageIter {
     type Item = VirtPageNum;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current.0 <= self.r.0 {
+        if self.current.0 < self.r.0 {
+            let value = Some(self.current);
             self.current.step();
-            Some(self.current)
+            value
         } else {
             None
         }

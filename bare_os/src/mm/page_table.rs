@@ -5,7 +5,7 @@ use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::bitflags;
-use crate::DEBUG;
+use crate::{println,DEBUG};
 //页表项标志位
 bitflags! {
     pub struct PTEFlags:u8{
@@ -19,7 +19,7 @@ bitflags! {
         const D = 1<<7;//修改位
     }
 }
-#[derive(Copy, Clone)]
+#[derive(Debug,Copy, Clone)]
 #[repr(C)]
 pub struct PageTableEntry {
     pub bits: usize, //页表项
@@ -38,7 +38,10 @@ impl PageTableEntry {
     }
     pub fn ppn(&self) -> PhysPageNum {
         //ppn占据 10-53位
-        (self.bits >> 10 & (1usize << 44 - 1)).into()
+        // println!("[Debug] ppn: {}",self.bits);
+        let answer:PhysPageNum = (self.bits >> 10 & ((1usize << 44) - 1)).into();
+        // println!("[Debug] PhysPageNum: {:?}",answer);
+        answer
     }
     pub fn flags(&self) -> PTEFlags {
         //截断低8位
@@ -68,6 +71,7 @@ impl PageTable {
     pub fn new() -> Self {
         //为根页表申请一个物理页帧
         let root_frame = frame_alloc().unwrap();
+
         PageTable {
             root_ppn: root_frame.ppn,
             frames: vec![root_frame],
@@ -80,10 +84,8 @@ impl PageTable {
     }
     pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
         //添加一个虚拟页号到物理页号的映射
-        DEBUG!("[Debug] map");
         let pte = self.find_pte_create(vpn).unwrap();
         //查找虚拟页号是否已经被映射过了
-        DEBUG!("[Debug] map end");
         assert!(!pte.is_valid(), "vpn: {:?} is mapped before mapping", vpn);
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V); //建立一个映射
     }
@@ -96,7 +98,7 @@ impl PageTable {
     fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
         //根据虚拟页号找到页表项
         let idxs = vpn.index(); //将虚拟页表号划分3部分
-        DEBUG!("[Debug] idxs: {:?} root_ppn: {:?}",idxs,self.root_ppn);
+        // DEBUG!("[Debug] idxs: {:?} root_ppn: {:?}",idxs,self.root_ppn);
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
         for i in 0..3 {
@@ -106,14 +108,11 @@ impl PageTable {
                 return result;
             }
             if !pte.is_valid() {
-                DEBUG!("[Debug] !pte is valid");
                 let new_frame = frame_alloc().unwrap();
                 *pte = PageTableEntry::new(new_frame.ppn, PTEFlags::V);
-                DEBUG!("[Debug] pte's ppn :{}",new_frame.ppn.0);
                 self.frames.push(new_frame);
             }
             ppn = pte.ppn();
-            DEBUG!("[Debug] ppn: {:?}",ppn);
         }
         result
     }

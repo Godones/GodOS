@@ -24,7 +24,6 @@ SECTIONS
         *(.rodata .rodata.*)
         *(.srodata .srodata.*)
     }
-
     . = ALIGN(4K);
     erodata = .;
     sdata = .;

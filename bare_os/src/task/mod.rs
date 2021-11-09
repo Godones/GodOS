@@ -1,4 +1,4 @@
-use crate::config::{BIG_STRIDE, MAX_APP_NUM};
+use crate::config::{BIG_STRIDE};
 use crate::loader::get_num_app;
 use crate::trap::context::TrapFrame;
 use crate::INFO;
@@ -36,7 +36,7 @@ lazy_static! {
      static ref TASK_MANAGER: TaskManager = {
         INFO!("[kernel] init application...");
         let num_app = get_num_app();
-        INFO!("[kernel] The app num :{}",num_app);
+        INFO!("[kernel] The app num: {}",num_app);
 
         let mut tasks :Vec<TaskControlBlock> = Vec::new();
         for i in 0..num_app{

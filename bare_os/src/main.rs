@@ -52,10 +52,11 @@ extern "C" fn rust_main() -> ! {
     //trap初始化，设置stvec的入口地址
     trap::init();
     mm::init();
-    // crate::mm::frame_allocator::frame_test();
+    println!("[kernel] init kernel mapping ok");
+    mm::remap_test();//测试内核映射的正确性
     //运行程序
-    // timer::enable_timer_interrupt(); //使能位
-    // timer::set_next_timetrigger();
-    // task::run_first_task();
+    timer::enable_timer_interrupt(); //使能位
+    timer::set_next_timetrigger();
+    task::run_first_task();
     panic!("The main_end!");
 }

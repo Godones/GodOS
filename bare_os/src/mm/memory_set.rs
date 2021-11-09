@@ -64,10 +64,13 @@ pub struct MemorySet {
 impl MemorySet {
     fn new_bare() -> Self {
         //空的地址空间
+        println!("[kernel] new_bare...");
+
         Self {
             page_table: PageTable::new(),
-            areas: Vec::new(),
+            areas:Vec::new(),
         }
+
     }
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
@@ -164,9 +167,9 @@ impl MemorySet {
         memoryset.push(
             MapArea::new(
                 (ekernel as usize).into(),
-                (MEMORY_END as usize).into(),
+                MEMORY_END.into(),
                 MapType::Identical,
-                MapPermission::R | MapPermission::X,
+                MapPermission::R | MapPermission::W,
             ),
             None,
         );
@@ -174,14 +177,16 @@ impl MemorySet {
     }
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
         //解析elf文件，生成应用程序的地址空间
+        INFO!("[kernel] from_elf...");
         let mut memoryset = MemorySet::new_bare();
-
+        INFO!("[kernel] mapping trampoline...");
         memoryset.map_trampoline(); //映射跳板
 
         let elf = ElfFile::new(elf_data).unwrap();
         let elf_header = elf.header; //elf头
         let elf_magic = elf_header.pt1.magic; //魔数，用来判断是否是elf文件
         assert_eq!(elf_magic, [0x7f, 0x45, 0x4c, 0x46], "This is not elf file");
+        INFO!("[kernel] elf_magic is ok");
         //program header内的信息有大小，偏移量
         //以程序执行的角度看待文件
         let ph_count = elf_header.pt2.ph_count(); //program header数量
@@ -207,7 +212,12 @@ impl MemorySet {
                     map_perm |= MapPermission::X;
                 }
                 //申请段空间来存储
-                let map_area = MapArea::new(start_addr, end_addr, MapType::Framed, map_perm);
+                let map_area = MapArea::new(
+                    start_addr,
+                    end_addr,
+                    MapType::Framed,
+                    map_perm);
+
                 max_end_vpn = map_area.vpn_range.get_end();
                 memoryset.push(
                     map_area,
@@ -254,7 +264,7 @@ impl MemorySet {
             VirtAddr::from(TRAMPLINE).into(),
             PhysAddr::from(strampoline as usize).into(),
             PTEFlags::R | PTEFlags::X,
-        )
+        );
     }
 }
 
@@ -271,6 +281,8 @@ impl MapArea {
         let start_page_num = start_addr.floor();
         //结束地址对应的虚拟页号
         let end_page_num = end_addr.ceil();
+        println!("[kernel] start_page_num: {:?},end_page_num: {:?}",start_page_num,end_page_num);
+
         Self {
             vpn_range: VPNRange::new(start_page_num, end_page_num),
             data_frames: BTreeMap::new(),
@@ -351,7 +363,6 @@ lazy_static! {
 pub fn remap_test() {
     //测试内核映射的正确性
     //这里会使用在page_table中定义find_pte函数
-
     let mut kernel_space = KERNEL_SPACE.lock();
     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
     let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();

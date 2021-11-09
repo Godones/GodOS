@@ -13,12 +13,13 @@ lazy_static! {
     pub static ref FRAME_ALLOCATOR: Mutex<StackFrameAllocator> =
         Mutex::new(StackFrameAllocator::new());
 }
+extern "C" {
+    fn ekernel();
+}
 
 pub fn init_frame_allocator() {
     //初始化分配器
-    extern "C" {
-        fn ekernel();
-    }
+
     FRAME_ALLOCATOR.lock().init(
         PhysAddr::from(ekernel as usize).ceil(),
         PhysAddr::from(MEMORY_END).floor(),
@@ -57,6 +58,7 @@ impl FrameAllocator for StackFrameAllocator {
                 self.current += 1;
                 Some((self.current - 1).into())
             } else {
+                INFO!("[kernel] PPN current: {},end :{}",self.current,self.end);
                 None
             }
         }
@@ -78,6 +80,7 @@ impl StackFrameAllocator {
     fn init(&mut self, begin: PhysPageNum, end: PhysPageNum) {
         self.current = begin.into();
         self.end = end.into();
+        INFO!("[kernel] FrameAllocator begin: {:?}, end: {:?}",self.current,self.end);
     }
 }
 #[derive(Debug)]
