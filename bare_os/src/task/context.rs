@@ -10,6 +10,7 @@ pub struct TaskContext {
     //ra: 此寄存器存储的是函数返回时跳转的地址
     //在调用函数返回指令 sret时,Pc指针会取出ra里面的地址
     ra: usize,
+    sp:usize,
     s: [usize; 12],
 }
 
@@ -17,9 +18,17 @@ pub struct TaskContext {
 /// 将ra设置为trap_return的地址，那么在应用执行完__switch后，就会返回到trap_return继续执行
 /// 此时就转变为初始化一个trap上下文的情况了。
 impl TaskContext {
-    pub fn goto_trap_return() -> Self {
+    pub fn zero_init()->Self{
+        Self{
+            ra:0,
+            sp:0,
+            s:[0; 12],
+        }
+    }
+    pub fn goto_trap_return(kstack_ptr:usize) -> Self {
         Self {
             ra: trap_return as usize,
+            sp:kstack_ptr,
             s: [0; 12],
         }
     }

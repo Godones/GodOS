@@ -16,7 +16,7 @@ pub enum TaskStatus {
 }
 
 pub struct TaskControlBlock {
-    pub task_cx_ptr: usize, //任务上下文栈顶地址的位置,位于内核空间中
+    pub task_cx_ptr: TaskContext, //任务上下文栈顶地址的位置,位于内核空间中
     pub task_status: TaskStatus,
     pub memory_set: MemorySet,    //任务地址空间
     pub trap_cx_ppn: PhysPageNum, //trap上下文所在的物理块
@@ -28,9 +28,9 @@ pub struct TaskControlBlock {
 
 impl TaskControlBlock {
     //返回指向task栈顶的指针 -> task_cx_ptr 里面存的是task上下文的地址的地址
-    pub fn get_task_cx_ptr2(&self) -> *const usize {
-        &self.task_cx_ptr as *const usize //指向指针的指针
-    }
+    // pub fn get_task_cx_ptr2(&self) -> *const usize {
+    //     &self.task_cx_ptr as *const usize //指向指针的指针
+    // }
 }
 
 impl TaskControlBlock {
@@ -49,25 +49,23 @@ impl TaskControlBlock {
 
         let (button, top) = kernel_stack_position(app_id);
         //直接插入应用的内核栈位置,以framed形式
-        KERNEL_SPACE.lock().insert_framed_area(
+        KERNEL_SPACE.lock()
+            .insert_framed_area(
             button.into(),
             top.into(),
             MapPermission::W | MapPermission::R,
         );
 
         //应用内核栈顶位置,我们需要放置一个任务上下文来切换到trap处理段
-        let task_cx_ptr = (top - core::mem::size_of::<TaskContext>()) as *mut TaskContext;
+        // let task_cx_ptr = (top - core::mem::size_of::<TaskContext>()) as *mut TaskContext;
         DEBUG!(
-            "[kernel] {} app task_cx_ptr:{}",
-            app_id,
-            task_cx_ptr as usize
-        );
-        unsafe {
-            *task_cx_ptr = TaskContext::goto_trap_return();
-        }
+            "[kernel] {} app",app_id);
+        // unsafe {
+        //     *task_cx_ptr = TaskContext::goto_trap_return();
+        // }
         let task_control_block = TaskControlBlock {
             task_status,
-            task_cx_ptr: task_cx_ptr as usize,
+            task_cx_ptr: TaskContext::goto_trap_return(top),
             memory_set,
             trap_cx_ppn,
             base_size: use_sp, //在应用地址空间的栈顶位置就是整个应用的大小

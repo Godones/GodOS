@@ -7,6 +7,7 @@ use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
+use crate::task::context::TaskContext;
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
@@ -14,6 +15,8 @@ pub mod context;
 mod switch;
 mod task;
 
+
+pub static mut TASKLOADED:bool = false;
 //管理各个任务的任务管理器
 pub struct TaskManager {
     num_app: usize,
@@ -117,19 +120,25 @@ impl TaskManager {
         // self.stride()
     }
     fn run_first_task(&self) {
+        //需要在第一个任务运行前设置第一个时钟周期
         let mut inner = self.inner.borrow_mut();
         inner.tasks[0].task_status = TaskStatus::Running;
         inner.tasks[0].stride += inner.tasks[0].pass;
+        //第一个应用程序的任务上下文
+        let next_task_ptr2 = &inner.tasks[0].task_cx_ptr as *const TaskContext;
 
-        let next_task_ptr2 = inner.tasks[0].get_task_cx_ptr2();
-        let _unused: usize = 0;
+        let _unused = TaskContext::zero_init();
         drop(inner);
         INFO!(
             "[kernel] run the first application, address: {}",
             next_task_ptr2 as usize
         );
+
+        use crate::timer;
+        timer::set_next_timetrigger();
+
         unsafe {
-            __switch(&_unused as *const usize, next_task_ptr2);
+            __switch(&_unused as *const _, next_task_ptr2);
         }
     }
     fn run_next_task(&self) {
@@ -144,8 +153,8 @@ impl TaskManager {
 
             inner.tasks[next].stride += inner.tasks[next].pass;
             //获取两个任务的task上下文指针
-            let current_task_cx_ptr2 = inner.tasks[current_task].get_task_cx_ptr2();
-            let next_task_cx_ptr2 = inner.tasks[next].get_task_cx_ptr2();
+            let current_task_cx_ptr2 = &inner.tasks[current_task].task_cx_ptr as *const TaskContext;
+            let next_task_cx_ptr2 = &inner.tasks[next].task_cx_ptr as *const TaskContext;
 
             //释放可变借用，否则进入下一个任务后将不能获取到inner的使用权
             core::mem::drop(inner);

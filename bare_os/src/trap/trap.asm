@@ -12,7 +12,7 @@
     .align 2
 _alltraps:
     #在trap跳转进入的时候，sscratch保存的是应用地址空间的trap上下文页位置
-    #sp 指向的是用户栈顶地址
+    #sp 指向的是用户栈顶地址,位于内核中
     csrrw sp, sscratch, sp
     # now sp->*TrapContext in user space, sscratch->user stack
     # save other general purpose registers

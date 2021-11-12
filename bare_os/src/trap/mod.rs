@@ -4,7 +4,7 @@ use crate::timer::set_next_timetrigger;
 
 use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
 use crate::task::{current_trap_cx, current_user_token, suspend_current_run_next};
-use crate::{println, ERROR};
+use crate::{println, ERROR, INFO};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     sstatus, stval, stvec,
@@ -121,6 +121,7 @@ fn breakpoint_handler(sepc: &mut usize) {
 
 //S态时钟处理函数
 fn supertimer_handler() {
+    INFO!("[kernel] The supertimer_trap");
     set_next_timetrigger();
     suspend_current_run_next();
 }
