@@ -1,4 +1,4 @@
-use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPLINE, TRAMP_CONTEXT, USER_STACK_SIZE};
+use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAMP_CONTEXT, USER_STACK_SIZE};
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};
@@ -65,12 +65,10 @@ impl MemorySet {
     fn new_bare() -> Self {
         //空的地址空间
         println!("[kernel] new_bare...");
-
         Self {
             page_table: PageTable::new(),
-            areas:Vec::new(),
+            areas: Vec::new(),
         }
-
     }
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.page_table.translate(vpn)
@@ -192,12 +190,19 @@ impl MemorySet {
         let ph_count = elf_header.pt2.ph_count(); //program header数量
                                                   //
         let mut max_end_vpn = VirtPageNum(0);
+
         for i in 0..ph_count {
             let ph = elf.program_header(i).unwrap();
             if ph.get_type().unwrap() == xmas_elf::program::Type::Load {
-                //需要加载的段
+                //需要加载的段我们就加载到内存指定位置
                 let start_addr: VirtAddr = (ph.virtual_addr() as usize).into();
                 let end_addr: VirtAddr = ((ph.virtual_addr() + ph.mem_size()) as usize).into();
+
+                INFO!(
+                    "[kernel] application section began:{:?} end:{:?}",
+                    start_addr,
+                    end_addr
+                );
                 //用户态程序
                 let mut map_perm = MapPermission::U;
                 //执行权限
@@ -212,11 +217,8 @@ impl MemorySet {
                     map_perm |= MapPermission::X;
                 }
                 //申请段空间来存储
-                let map_area = MapArea::new(
-                    start_addr,
-                    end_addr,
-                    MapType::Framed,
-                    map_perm);
+
+                let map_area = MapArea::new(start_addr, end_addr, MapType::Framed, map_perm);
 
                 max_end_vpn = map_area.vpn_range.get_end();
                 memoryset.push(
@@ -241,11 +243,11 @@ impl MemorySet {
             None,
         );
         //映射用户trap上下文
-        //直接硬编码到地址空间的此高位
+        //直接硬编码到地址空间的次高位
         memoryset.push(
             MapArea::new(
                 TRAMP_CONTEXT.into(),
-                TRAMPLINE.into(),
+                TRAMPOLINE.into(),
                 MapType::Framed,
                 MapPermission::R | MapPermission::W,
             ),
@@ -261,7 +263,7 @@ impl MemorySet {
     fn map_trampoline(&mut self) {
         //映射跳板
         self.page_table.map(
-            VirtAddr::from(TRAMPLINE).into(),
+            VirtAddr::from(TRAMPOLINE).into(),
             PhysAddr::from(strampoline as usize).into(),
             PTEFlags::R | PTEFlags::X,
         );
@@ -281,7 +283,10 @@ impl MapArea {
         let start_page_num = start_addr.floor();
         //结束地址对应的虚拟页号
         let end_page_num = end_addr.ceil();
-        println!("[kernel] start_page_num: {:?},end_page_num: {:?}",start_page_num,end_page_num);
+        println!(
+            "[kernel] start_page_num: {:?},end_page_num: {:?}",
+            start_page_num, end_page_num
+        );
 
         Self {
             vpn_range: VPNRange::new(start_page_num, end_page_num),
@@ -318,7 +323,7 @@ impl MapArea {
                 .get_bytes_array()[..src_data.len()];
             dst_data.copy_from_slice(src_data); //拷贝数据
             start += PAGE_SIZE;
-            if start > len {
+            if start >= len {
                 break;
             }
             current_vpn.step();

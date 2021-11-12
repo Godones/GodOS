@@ -58,7 +58,7 @@ impl FrameAllocator for StackFrameAllocator {
                 self.current += 1;
                 Some((self.current - 1).into())
             } else {
-                INFO!("[kernel] PPN current: {},end :{}",self.current,self.end);
+                INFO!("[kernel] PPN current: {},end :{}", self.current, self.end);
                 None
             }
         }
@@ -80,7 +80,11 @@ impl StackFrameAllocator {
     fn init(&mut self, begin: PhysPageNum, end: PhysPageNum) {
         self.current = begin.into();
         self.end = end.into();
-        INFO!("[kernel] FrameAllocator begin: {:?}, end: {:?}",self.current,self.end);
+        INFO!(
+            "[kernel] FrameAllocator begin: {:?}, end: {:?}",
+            self.current,
+            self.end
+        );
     }
 }
 #[derive(Debug)]

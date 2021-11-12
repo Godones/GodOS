@@ -1,4 +1,3 @@
-use crate::trap::context::TrapFrame;
 use crate::trap::trap_return;
 
 /// 任务上下文

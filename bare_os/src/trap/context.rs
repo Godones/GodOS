@@ -23,18 +23,17 @@ impl TrapFrame {
         trap_handler: usize,
     ) -> Self {
         //为启动应用程序而特殊构造的 Trap 上下文，
-        //entry: 0x80400000 + 0x200000 * app_id
         //sp: 用户栈顶地址
         unsafe {
             sstatus::set_spp(SPP::User);
         } //将status的spp位置设置为用户态
         let status = sstatus::read();
-        let mut trap_cx = TrapFrame {
+        let mut trap_cx = Self {
             reg: [0; 32],
             sstatus: status,
-            sepc: entry,
-            kernel_satp,
-            kernel_sp: user_stack_ap,
+            sepc: entry,              //动态链接的应用程序入口
+            kernel_satp,              //内核的satp
+            kernel_sp: user_stack_ap, //应用程序在内核的栈顶地址
             trap_handler,
         };
         trap_cx.set_sp(sp);

@@ -1,4 +1,4 @@
-use crate::config::{BIG_STRIDE};
+use crate::config::BIG_STRIDE;
 use crate::loader::get_num_app;
 use crate::trap::context::TrapFrame;
 use crate::INFO;
@@ -42,6 +42,7 @@ lazy_static! {
         for i in 0..num_app{
             tasks.push(TaskControlBlock::new(i));
         }
+        INFO!("[kernel] all application has loaded done");
         TaskManager{
             num_app,
             inner: RefCell::new(
@@ -119,9 +120,14 @@ impl TaskManager {
         let mut inner = self.inner.borrow_mut();
         inner.tasks[0].task_status = TaskStatus::Running;
         inner.tasks[0].stride += inner.tasks[0].pass;
+
         let next_task_ptr2 = inner.tasks[0].get_task_cx_ptr2();
         let _unused: usize = 0;
         drop(inner);
+        INFO!(
+            "[kernel] run the first application, address: {}",
+            next_task_ptr2 as usize
+        );
         unsafe {
             __switch(&_unused as *const usize, next_task_ptr2);
         }
@@ -130,6 +136,7 @@ impl TaskManager {
         if let Some(next) = self.find_next_task() {
             //查询是否有处于准备的任务，如果有就运行
             //否则退出
+            INFO!("[kernel] run the {} app", next);
             let mut inner = self.inner.borrow_mut();
             let current_task = inner.current_task;
             inner.current_task = next;
@@ -163,7 +170,7 @@ pub fn exit_current_run_next() {
 pub fn current_user_token() -> usize {
     TASK_MANAGER.get_current_token()
 }
-pub fn current_trap_cx() -> & 'static mut TrapFrame {
+pub fn current_trap_cx() -> &'static mut TrapFrame {
     TASK_MANAGER.get_trap_cx()
 }
 pub fn set_priority(priority: usize) -> isize {

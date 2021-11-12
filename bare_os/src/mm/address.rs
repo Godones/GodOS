@@ -118,6 +118,7 @@ pub struct VirPageIter {
 
 impl VirPageIter {
     pub fn new(start: VirtPageNum, end: VirtPageNum) -> Self {
+        assert!(start.0 <= end.0);
         Self {
             current: start,
             l: start,

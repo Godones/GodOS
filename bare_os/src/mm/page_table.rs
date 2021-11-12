@@ -5,7 +5,7 @@ use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::bitflags;
-use crate::{println,DEBUG};
+
 //页表项标志位
 bitflags! {
     pub struct PTEFlags:u8{
@@ -19,7 +19,7 @@ bitflags! {
         const D = 1<<7;//修改位
     }
 }
-#[derive(Debug,Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 #[repr(C)]
 pub struct PageTableEntry {
     pub bits: usize, //页表项
@@ -39,7 +39,7 @@ impl PageTableEntry {
     pub fn ppn(&self) -> PhysPageNum {
         //ppn占据 10-53位
         // println!("[Debug] ppn: {}",self.bits);
-        let answer:PhysPageNum = (self.bits >> 10 & ((1usize << 44) - 1)).into();
+        let answer: PhysPageNum = (self.bits >> 10 & ((1usize << 44) - 1)).into();
         // println!("[Debug] PhysPageNum: {:?}",answer);
         answer
     }
@@ -98,7 +98,7 @@ impl PageTable {
     fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
         //根据虚拟页号找到页表项
         let idxs = vpn.index(); //将虚拟页表号划分3部分
-        // DEBUG!("[Debug] idxs: {:?} root_ppn: {:?}",idxs,self.root_ppn);
+                                // DEBUG!("[Debug] idxs: {:?} root_ppn: {:?}",idxs,self.root_ppn);
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
         for i in 0..3 {
@@ -126,12 +126,17 @@ impl PageTable {
             frames: Vec::new(),
         }
     }
-    pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static [u8]> {
+    pub fn translated_byte_buffer(
+        token: usize,
+        ptr: *const u8,
+        len: usize,
+    ) -> Vec<&'static mut [u8]> {
         //在内核打印字符时需要访问用户地址空间缓冲区的内容
         let page_table = PageTable::from_token(token);
         let mut start_addr = ptr as usize; //起始地址
         let end = start_addr + len; //结束地址
         let mut contents = Vec::new();
+
         while start_addr < end {
             let start_viraddr = VirtAddr::from(start_addr);
             let mut vpn = start_viraddr.floor();
@@ -139,10 +144,17 @@ impl PageTable {
             vpn.step();
             let mut end_viraddr: VirtAddr = vpn.into();
             end_viraddr = end_viraddr.min(VirtAddr::from(end));
-            contents.push(
-                &ppn.get_bytes_array()[start_viraddr.page_offset()..end_viraddr.page_offset()],
-            );
-            start_addr = vpn.into();
+
+            if end_viraddr.page_offset() == 0 {
+                contents.push(&mut ppn.get_bytes_array()[start_viraddr.page_offset()..]);
+            } else {
+                contents.push(
+                    &mut ppn.get_bytes_array()
+                        [start_viraddr.page_offset()..end_viraddr.page_offset()],
+                );
+            }
+
+            start_addr = end_viraddr.into();
         }
         contents
     }

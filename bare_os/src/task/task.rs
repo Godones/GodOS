@@ -1,10 +1,11 @@
-use crate::config::{kernel_stack_position, BIG_STRIDE, TRAMPLINE, TRAMP_CONTEXT};
+use crate::config::{kernel_stack_position, BIG_STRIDE, TRAMP_CONTEXT};
 use crate::loader::get_app_data;
 use crate::mm::address::{PhysPageNum, VirtAddr};
 use crate::mm::memory_set::{MapPermission, MemorySet, KERNEL_SPACE};
 use crate::task::context::TaskContext;
 use crate::trap::context::TrapFrame;
 use crate::trap::trap_handler;
+use crate::DEBUG;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum TaskStatus {
@@ -15,7 +16,7 @@ pub enum TaskStatus {
 }
 
 pub struct TaskControlBlock {
-    pub task_cx_ptr: usize, //任务上下文栈顶地址的位置
+    pub task_cx_ptr: usize, //任务上下文栈顶地址的位置,位于内核空间中
     pub task_status: TaskStatus,
     pub memory_set: MemorySet,    //任务地址空间
     pub trap_cx_ppn: PhysPageNum, //trap上下文所在的物理块
@@ -45,6 +46,7 @@ impl TaskControlBlock {
             .ppn(); //找到任务上下文对应的页表项并获得对应的物理页号
         let task_status = TaskStatus::Ready; //准备状态
                                              //映射用户在内核空间的栈空间
+
         let (button, top) = kernel_stack_position(app_id);
         //直接插入应用的内核栈位置,以framed形式
         KERNEL_SPACE.lock().insert_framed_area(
@@ -52,8 +54,14 @@ impl TaskControlBlock {
             top.into(),
             MapPermission::W | MapPermission::R,
         );
+
         //应用内核栈顶位置,我们需要放置一个任务上下文来切换到trap处理段
         let task_cx_ptr = (top - core::mem::size_of::<TaskContext>()) as *mut TaskContext;
+        DEBUG!(
+            "[kernel] {} app task_cx_ptr:{}",
+            app_id,
+            task_cx_ptr as usize
+        );
         unsafe {
             *task_cx_ptr = TaskContext::goto_trap_return();
         }
@@ -68,20 +76,20 @@ impl TaskControlBlock {
         }; //构造任务控制块
 
         let trap_cx = task_control_block.get_trap_cx();
-        unsafe {
-            *trap_cx = TrapFrame::app_into_context(
-                entry_point,
-                use_sp,
-                KERNEL_SPACE.lock().token(), //内核地址空间的根页表
-                top,
-                trap_handler as usize,
-            );
-        } //构造trap上下文
+
+        *trap_cx = TrapFrame::app_into_context(
+            entry_point,
+            use_sp,
+            KERNEL_SPACE.lock().token(), //内核地址空间的根页表
+            top,
+            trap_handler as usize,
+        );
+        //构造trap上下文写入内存中
         task_control_block
     }
 
     pub fn get_trap_cx(&self) -> &'static mut TrapFrame {
-        //返回应用的trap上下文所在位置
+        //返回应用的trap上下文
         self.trap_cx_ppn.get_mut()
     }
     pub fn get_user_token(&self) -> usize {

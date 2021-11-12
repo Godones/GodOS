@@ -35,8 +35,8 @@ impl BumpAllocator {
             self.end_heap
         );
     }
-    pub fn show_some_into(&self){
-        DEBUG!("The next: {},The end: {}",self.next,self.end_heap);
+    pub fn show_some_into(&self) {
+        DEBUG!("The next: {},The end: {}", self.next, self.end_heap);
     }
 }
 

@@ -6,6 +6,7 @@
 #![feature(alloc_error_handler)]
 #![allow(dead_code)]
 #![feature(const_mut_refs)]
+#![feature(llvm_asm)]
 
 #[macro_use]
 mod panic;
@@ -53,10 +54,10 @@ extern "C" fn rust_main() -> ! {
     trap::init();
     mm::init();
     println!("[kernel] init kernel mapping ok");
-    mm::remap_test();//测试内核映射的正确性
-    //运行程序
-    timer::enable_timer_interrupt(); //使能位
-    timer::set_next_timetrigger();
+    mm::remap_test(); //测试内核映射的正确性
+                      //运行程序
+                      // timer::enable_timer_interrupt(); //使能位
+                      // timer::set_next_timetrigger();
     task::run_first_task();
     panic!("The main_end!");
 }

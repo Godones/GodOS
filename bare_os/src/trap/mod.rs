@@ -2,10 +2,9 @@ pub mod context;
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 
-use crate::config::TRAMPLINE;
+use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
 use crate::task::{current_trap_cx, current_user_token, suspend_current_run_next};
 use crate::{println, ERROR};
-use context::TrapFrame;
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     sstatus, stval, stvec,
@@ -41,31 +40,32 @@ fn trap_from_kernel() -> ! {
 pub fn set_user_trap_entry() {
     //设置用户态trap处理入口
     unsafe {
-        stvec::write(TRAMPLINE, stvec::TrapMode::Direct);
+        stvec::write(TRAMPOLINE, stvec::TrapMode::Direct);
     }
 }
 #[no_mangle]
 pub fn trap_return() -> ! {
     //返回用户态继续执行
-    set_user_trap_entry();
-    let trap_cx = current_trap_cx();
-    let user_satp = current_user_token();
+    // DEBUG!("[kernel] application ready user_space");
+    set_user_trap_entry(); //先设置在用户态发生trap时的入口
+    let trap_cx = TRAMP_CONTEXT; //获取应用程序trapframe
+    let user_satp = current_user_token(); //获取应用程序的satp
     extern "C" {
         fn _alltraps();
         fn _restore();
     }
-    let restore_viraddress = (_restore as usize - _alltraps as usize) + TRAMPLINE;
+    let restore_va = (_restore as usize - _alltraps as usize) + TRAMPOLINE;
+    // DEBUG!("[kernel] application into user_trap");
     unsafe {
         asm!(
             "fence.i",
-            "jr {restore_viraddress}",
-            restore_viraddress = in(reg) restore_viraddress,
+            "jr {restore_va}",
+            restore_va = in(reg) restore_va,
             in("a0") trap_cx,
             in("a1") user_satp,
-            options(nostack)
+            options(noreturn)
         );
-    }
-    panic!("")
+    } //跳转到restore_va的地方执行，这是内核与应用程序均有相同映射的trampoline区域
 }
 ///根据不同类型的中断选择不同的处理
 /// 在trap.asm中我们将x10=a0的值设置为sp的值，即内核栈地址
@@ -78,7 +78,6 @@ pub fn trap_handler() -> ! {
     //此时我们直接panic而不做其它处理
     set_kernel_trap_entry();
     let tf = current_trap_cx();
-
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
