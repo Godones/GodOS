@@ -39,10 +39,6 @@ impl LinkedListAllocator {
     unsafe fn push(&mut self, address: usize, size: usize) {
         //判断是否满足对齐要求
         //是否满足大小要求
-        // DEBUG!("address: {}\nalign: {}",address,core::mem::size_of::<ListNode>());
-        // DEBUG!("align_address: {:}",align_up(address,core::mem::align_of::<ListNode>()));
-        // DEBUG!("address: {}",address);
-
         assert_eq!(
             align_up(address, core::mem::align_of::<ListNode>()),
             address
@@ -103,7 +99,6 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
         //将要申请的对齐方式与listnode比较
         //至少要分配一个能存储listnode大小的区域
         let (size, align) = LinkedListAllocator::size_align(layout);
-
         let mut allocator = self.lock();
         if let Some((region, alloc_start)) = allocator.pop(size, align) {
             let alloc_end = alloc_start + size;

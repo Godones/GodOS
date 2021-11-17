@@ -1,7 +1,7 @@
 use crate::config::BIG_STRIDE;
 use crate::loader::get_num_app;
 use crate::trap::context::TrapFrame;
-use crate::INFO;
+use crate::{DEBUG, INFO, println};
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
@@ -142,14 +142,18 @@ impl TaskManager {
         }
     }
     fn run_next_task(&self) {
+        // DEBUG!("[kernel] run next task");
         if let Some(next) = self.find_next_task() {
             //查询是否有处于准备的任务，如果有就运行
             //否则退出
-            INFO!("[kernel] run the {} app", next);
             let mut inner = self.inner.borrow_mut();
             let current_task = inner.current_task;
+            // if next ==3{
+            //     INFO!("[kernel] run the {} app, pre task {}", next,inner.current_task);
+            // }
             inner.current_task = next;
             inner.tasks[next].task_status = TaskStatus::Running;
+
 
             inner.tasks[next].stride += inner.tasks[next].pass;
             //获取两个任务的task上下文指针

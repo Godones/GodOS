@@ -1,5 +1,5 @@
 use crate::system_allocator::common::{align_up, Locked};
-use crate::DEBUG;
+use crate::INFO;
 use alloc::alloc::{GlobalAlloc, Layout};
 use core::ptr;
 /// bump分配器实现
@@ -29,14 +29,11 @@ impl BumpAllocator {
         self.start_heap = start_heap;
         self.end_heap = start_heap + heap_size;
         self.next = self.start_heap;
-        DEBUG!(
+        INFO!(
             "start:heap: 0x{:x}\nend_heap: 0x{:x}",
             self.start_heap,
             self.end_heap
         );
-    }
-    pub fn show_some_into(&self) {
-        DEBUG!("The next: {},The end: {}", self.next, self.end_heap);
     }
 }
 
@@ -48,7 +45,6 @@ unsafe impl GlobalAlloc for Locked<BumpAllocator> {
         //内存对齐
         let alloc_start = align_up(bump.next, layout.align());
         let alloc_end = alloc_start + layout.size();
-
         if alloc_end > bump.end_heap {
             ptr::null_mut() //空指针
         } else {
