@@ -9,7 +9,7 @@ use riscv::register::{
 
 use crate::{println,ERROR};
 use context::TrapFrame;
-use crate::loader::run_next_app;
+use crate::batch::run_next_app;
 
 global_asm!(include_str!("trap.asm"));
 

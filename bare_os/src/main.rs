@@ -44,7 +44,7 @@ extern "C" fn rust_main() -> ! {
     batch::init();
     //运行程序
     batch::run_next_app();
-    panic!("Stop");
+    // panic!("Stop");
     // loader::init_load();
     // loader::run_next_app();
     // panic!("Stop!")

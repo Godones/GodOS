@@ -124,7 +124,7 @@ impl AppManagerInner {
         );
         let app_dst = core::slice::from_raw_parts_mut(APP_BASE_ADDRESS as *mut u8, app_src.len());
         app_dst.copy_from_slice(app_src); //写入数据
-        // println!("[kernel] batch write data over");
+        println!("[kernel] batch write data over");
     }
 }
 fn print_app_info() {

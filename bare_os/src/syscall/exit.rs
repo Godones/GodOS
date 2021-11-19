@@ -1,4 +1,4 @@
-use crate::loader::run_next_app;
+use crate::batch::run_next_app;
 use crate::INFO;
 
 pub fn sys_exit(xstate:i32)->!{
