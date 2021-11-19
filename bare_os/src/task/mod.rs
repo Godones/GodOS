@@ -135,7 +135,7 @@ impl TaskManager {
         );
 
         use crate::timer;
-        timer::set_next_timetrigger();
+        // timer::set_next_timetrigger();
 
         unsafe {
             __switch(&_unused as *const _, next_task_ptr2);

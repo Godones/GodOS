@@ -179,7 +179,6 @@ impl MemorySet {
         let mut memoryset = MemorySet::new_bare();
         INFO!("[kernel] mapping trampoline...");
         memoryset.map_trampoline(); //映射跳板
-
         let elf = ElfFile::new(elf_data).unwrap();
         let elf_header = elf.header; //elf头
         let elf_magic = elf_header.pt1.magic; //魔数，用来判断是否是elf文件
@@ -188,7 +187,6 @@ impl MemorySet {
         //program header内的信息有大小，偏移量
         //以程序执行的角度看待文件
         let ph_count = elf_header.pt2.ph_count(); //program header数量
-                                                  //
         let mut max_end_vpn = VirtPageNum(0);
 
         for i in 0..ph_count {
@@ -218,7 +216,11 @@ impl MemorySet {
                 }
                 //申请段空间来存储
 
-                let map_area = MapArea::new(start_addr, end_addr, MapType::Framed, map_perm);
+                let map_area = MapArea::new(
+                    start_addr,
+                    end_addr,
+                    MapType::Framed,
+                    map_perm);
 
                 max_end_vpn = map_area.vpn_range.get_end();
                 memoryset.push(
