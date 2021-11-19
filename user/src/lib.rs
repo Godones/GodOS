@@ -2,6 +2,7 @@
 #![feature(linkage)]
 #![feature(panic_info_message)]
 #![feature(asm)]
+#![feature(asm)]
 
 #[macro_use]
 pub mod console;
