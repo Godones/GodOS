@@ -41,11 +41,11 @@ extern "C" fn rust_main() -> ! {
     //trap初始化，设置stvec的入口地址
     trap::init();
     //初始应用管理器，管理应用地址
-    // batch::init();
+    batch::init();
     //运行程序
-    // batch::run_next_app();
-    // panic!("Stop");
-    loader::init_load();
-    loader::run_next_app();
+    batch::run_next_app();
+    panic!("Stop");
+    // loader::init_load();
+    // loader::run_next_app();
     // panic!("Stop!")
 }

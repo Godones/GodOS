@@ -29,7 +29,6 @@ fn main() -> i32 {
 
 fn clear_bss() {
     // 我们需要手动初始化.bss段，因为没有系统库或操作系统提供支持会将其初始化为0
-
     extern "C" {
         fn start_bss();
         fn end_bss();
