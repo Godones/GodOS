@@ -1,6 +1,6 @@
 use crate::system_allocator::common::{align_up, Locked};
 use crate::INFO;
-use alloc::alloc::{GlobalAlloc, Layout};
+use core::alloc::{GlobalAlloc, Layout};
 use core::ptr;
 /// bump分配器实现
 /// bump分配器来自于线性增加

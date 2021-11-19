@@ -2,8 +2,11 @@ const SYSCALL_EXIT: usize = 93;
 const SYSCALL_WRITE: usize = 64;
 const SYSCALL_YIELD: usize = 124;
 const SYSCALL_TIME: usize = 169;
-const SYSCALL_SET_PRIORITY:usize = 140;
-const SYSCALL_FORK:usize = 220;
+const SYSCALL_SET_PRIORITY: usize = 140;
+const SYSCALL_FORK: usize = 220;
+const SYSCALL_WAITPID: usize = 260;
+const SYSCALL_EXEC: usize = 221;
+const SYSCALL_READ: usize = 63;
 
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
@@ -48,13 +51,36 @@ pub fn sys_get_time() -> isize {
     syscall(SYSCALL_TIME, [0, 0, 0])
 }
 /// 功能：负责设置特权级
-pub fn sys_set_priority(priority:isize)->isize{
-    syscall(SYSCALL_SET_PRIORITY,[priority as usize,0,0])
+pub fn sys_set_priority(priority: isize) -> isize {
+    syscall(SYSCALL_SET_PRIORITY, [priority as usize, 0, 0])
 }
 /// 功能：用于进程的创建
 /// 对于父进程来说，其返回值是新创建的子进程的PID，对于子进程来说
 /// 返回0
-pub fn sys_fork()->isize{
+/// syscall id 220
+pub fn sys_fork() -> isize {
     todo!()
 }
 
+/// 功能：用于子进程的回收工作
+/// 通过收集子进程的返回状态，决定是否回收相关的资源
+/// `pid`表示子进程的pid,exit_code保存子进程返回值的地址
+/// 子进程不存在返回-1，所有子进程均未结束返回-2,成功返回子进程的pid
+/// syscall id 260
+pub fn sys_waitpid(pid: isize, exit_code: *mut i32) -> isize {
+    todo!()
+}
+
+/// 功能：清空当前进程的内容并将新的应用程序加载到地址空间中
+/// 返回用户态开始执行此进程
+/// syscall id 221
+pub fn sys_exec(path: &str) -> isize {
+    syscall(SYSCALL_EXEC, [path.as_ptr() as usize, 0, 0])
+}
+
+/// 功能：从文件中或屏幕读取内容到缓冲区内
+/// fd 是文件描述符，指向文件或者是屏幕，buffer未缓冲区
+/// 出错时返回-1，否则返回读取的长度
+pub fn sys_read(fd: usize, buffer: &mut [u8]) -> isize {
+    syscall(SYSCALL_READ, [fd, buffer.as_mut_ptr() as usize, buffer.len()])
+}
