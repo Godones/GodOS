@@ -56,8 +56,9 @@ extern "C" fn rust_main() -> ! {
     println!("[kernel] init kernel mapping ok");
     mm::remap_test(); //测试内核映射的正确性
                       //运行程序
-    timer::enable_timer_interrupt(); //使能位
 
+    loader::show_apps();
+    timer::enable_timer_interrupt(); //使能位
     task::run_first_task();
     panic!("The main_end!");
 }

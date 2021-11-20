@@ -13,6 +13,15 @@ _num_app:
     .quad app_5_start
   .quad app_5_end
 
+    .global _app_name
+_app_name:
+    .string "00writeA"
+    .string "01wirteB"
+    .string "02writeC"
+    .string "03sleep"
+    .string "initproc"
+    .string "user_shell"
+
     .section .data
     .global app_0_start
     .global app_0_end

@@ -82,5 +82,8 @@ pub fn sys_exec(path: &str) -> isize {
 /// fd 是文件描述符，指向文件或者是屏幕，buffer未缓冲区
 /// 出错时返回-1，否则返回读取的长度
 pub fn sys_read(fd: usize, buffer: &mut [u8]) -> isize {
-    syscall(SYSCALL_READ, [fd, buffer.as_mut_ptr() as usize, buffer.len()])
+    syscall(
+        SYSCALL_READ,
+        [fd, buffer.as_mut_ptr() as usize, buffer.len()],
+    )
 }

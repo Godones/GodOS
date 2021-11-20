@@ -7,12 +7,13 @@ use lib::{fork, wait, wait_pid, exec};
 use lib::{println, yield_};
 
 #[no_mangle]
-fn main()->isize {
+fn main() -> isize {
     if fork() == 0 {
         exec("user_shell\0");
     } else {
         loop {
             let mut exit_code: i32 = 0;
+            //初始进程为根进程，需要等待其它进程任意一个子进程结束
             let pid = wait(&mut exit_code);
             match pid {
                 -1 => {

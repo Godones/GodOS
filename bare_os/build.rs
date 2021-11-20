@@ -36,6 +36,15 @@ _num_app:
         writeln!(link_app, r#"    .quad app_{}_start"#, i)?;
     }
     writeln!(link_app, r#"  .quad app_{}_end"#, apps.len() - 1)?;
+    writeln!(
+        link_app,
+        r#"
+    .global _app_name
+_app_name:"#
+    )?;
+    for app in apps.iter() {
+        writeln!(link_app, r#"    .string "{}""#, app)?;
+    }
 
     for (index, app) in apps.iter().enumerate() {
         writeln!(

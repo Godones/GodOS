@@ -9,11 +9,11 @@ mod lang_items;
 pub mod syscall;
 mod system_allocator;
 
-use system_allocator::init;
 use crate::syscall::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_read, sys_set_priority, sys_waitpid, sys_write,
     sys_yield,
 };
+use system_allocator::init;
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
     sys_write(fd, buf)
@@ -71,7 +71,6 @@ pub fn wait_pid(pid: usize, exit_code: &mut i32) -> isize {
 fn main() -> i32 {
     panic!("Cannot find main!");
 }
-
 
 #[no_mangle]
 #[link_section = ".text.entry"]

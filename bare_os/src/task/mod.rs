@@ -1,22 +1,22 @@
 use crate::config::BIG_STRIDE;
 use crate::loader::get_num_app;
+use crate::task::context::TaskContext;
 use crate::trap::context::TrapFrame;
-use crate::{DEBUG, INFO, println};
+use crate::{println, DEBUG, INFO};
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
-use crate::task::context::TaskContext;
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
 pub mod context;
 mod switch;
 mod task;
+mod pid;
 
-
-pub static mut TASKLOADED:bool = false;
+pub static mut TASKLOADED: bool = false;
 //管理各个任务的任务管理器
 pub struct TaskManager {
     num_app: usize,
@@ -153,7 +153,6 @@ impl TaskManager {
             // }
             inner.current_task = next;
             inner.tasks[next].task_status = TaskStatus::Running;
-
 
             inner.tasks[next].stride += inner.tasks[next].pass;
             //获取两个任务的task上下文指针

@@ -30,8 +30,7 @@ impl BumpAllocator {
         self.next = self.start_heap;
         println!(
             "start:heap: 0x{:x}\nend_heap: 0x{:x}",
-            self.start_heap,
-            self.end_heap
+            self.start_heap, self.end_heap
         );
     }
 }
