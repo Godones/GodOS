@@ -9,7 +9,7 @@
 #![feature(llvm_asm)]
 
 #[macro_use]
-mod panic;
+pub mod panic;
 mod config;
 mod loader;
 mod mm;

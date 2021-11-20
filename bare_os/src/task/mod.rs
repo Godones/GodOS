@@ -154,14 +154,13 @@ impl TaskManager {
             inner.current_task = next;
             inner.tasks[next].task_status = TaskStatus::Running;
 
-
             inner.tasks[next].stride += inner.tasks[next].pass;
             //获取两个任务的task上下文指针
             let current_task_cx_ptr2 = &inner.tasks[current_task].task_cx_ptr as *const TaskContext;
             let next_task_cx_ptr2 = &inner.tasks[next].task_cx_ptr as *const TaskContext;
 
             //释放可变借用，否则进入下一个任务后将不能获取到inner的使用权
-            core::mem::drop(inner);
+            drop(inner);
             unsafe {
                 __switch(current_task_cx_ptr2, next_task_cx_ptr2);
             }
