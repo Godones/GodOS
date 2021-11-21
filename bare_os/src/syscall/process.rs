@@ -2,7 +2,7 @@ use crate::mm::page_table::PageTable;
 use crate::task::set_priority;
 use crate::task::suspend_current_run_next;
 use crate::task::{current_user_token, exit_current_run_next};
-use crate::{print, INFO, println, DEBUG};
+use crate::{print, INFO};
 const FUNCTION_STDOUT: usize = 1;
 pub fn sys_exit(xstate: i32) -> ! {
     INFO!("[kernel] Application exited with code {}", xstate);
@@ -28,7 +28,6 @@ pub fn sys_write(function: usize, buf: *const u8, len: usize) -> isize {
     }
 }
 pub fn sys_yield() -> isize {
-    // DEBUG!("[kernel]Debug sys_yield");
     suspend_current_run_next(); //暂停当前任务运行下一个任务
     0
 }

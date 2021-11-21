@@ -5,11 +5,11 @@ use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 
 use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
-use crate::task::{current_trap_cx, current_user_token, suspend_current_run_next};
-use crate::{println, ERROR, INFO};
+use crate::task::{current_trap_cx, current_user_token, exit_current_run_next, suspend_current_run_next};
+use crate::{println, ERROR};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
-    sstatus, stval, stvec,
+    stval, stvec,
 };
 
 global_asm!(include_str!("trap.asm"));
@@ -21,14 +21,8 @@ global_asm!(include_str!("trap.asm"));
 /// 在_alltraps 的最后会调用trap_handler函数对不同的错误进行处理
 /// 处理完成 后在调用_restore恢复上下文
 pub fn init() {
-    unsafe {
-        extern "C" {
-            fn _alltraps();
-        }
-        stvec::write(_alltraps as usize, stvec::TrapMode::Direct);
-        sstatus::set_sie(); //s态全局使能位
-    }
-    println!("++++ setup trap! ++++");
+    set_kernel_trap_entry();
+    println!("++++ setup trap ++++");
 }
 pub fn set_kernel_trap_entry() {
     unsafe {
@@ -68,7 +62,7 @@ pub fn trap_return() -> ! {
             options(noreturn)
         );
     } //跳转到restore_va的地方执行，这是内核与应用程序均有相同映射的trampoline区域
-    panic!("Unreachable in back_to_user!");
+    // panic!("Unreachable in back_to_user!");
 }
 ///根据不同类型的中断选择不同的处理
 /// 在trap.asm中我们将x10=a0的值设置为sp的值，即内核栈地址
@@ -87,19 +81,20 @@ pub fn trap_handler() -> ! {
         //系统调用
         Trap::Exception(Exception::UserEnvCall) => {
             //指令地址 需要跳转到下一句执行，否则就处于死循环中
-            // println!("[kernel] UserEnvCall in application.");
             tf.sepc += 4;
             tf.reg[10] = syscall(tf.reg[17], [tf.reg[10], tf.reg[11], tf.reg[12]]) as usize;
         }
         //页错误，应该是内存泄露什么的？
         Trap::Exception(Exception::StorePageFault | Exception::StoreFault) => {
             ERROR!("[kernel] PageFault in application, core dumped.");
-            panic!("StorePageFault");
+            // panic!("StorePageFault");
+            exit_current_run_next();
         }
         //非法指令
         Trap::Exception(Exception::IllegalInstruction) => {
             ERROR!("[kernel]  IllegalInstruction in application, core dumped.");
-            panic!();
+            // panic!();
+            exit_current_run_next();
         }
         //断点中断
         Trap::Exception(Exception::Breakpoint) => breakpoint_handler(&mut tf.sepc),
@@ -124,7 +119,6 @@ fn breakpoint_handler(sepc: &mut usize) {
 
 //S态时钟处理函数
 fn supertimer_handler() {
-    INFO!("[kernel] The supertimer_trap");
     set_next_timetrigger();
     suspend_current_run_next();
 }
