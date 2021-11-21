@@ -1,4 +1,4 @@
-use crate::config::{kernel_stack_position, BIG_STRIDE, TRAMP_CONTEXT};
+use crate::config::{ BIG_STRIDE, TRAMP_CONTEXT};
 use crate::loader::get_app_data;
 use crate::mm::address::{PhysPageNum, VirtAddr};
 use crate::mm::memory_set::{MapPermission, MemorySet, KERNEL_SPACE};
@@ -53,7 +53,7 @@ impl TaskControlBlock {
         // unsafe {
         //     *task_cx_ptr = TaskContext::goto_trap_return();
         // }
-        let task_control_block = TaskControlBlock {
+        let task_control_block = Self {
             task_status,
             task_cx_ptr: TaskContext::goto_trap_return(top),
             memory_set,
@@ -71,8 +71,8 @@ impl TaskControlBlock {
             KERNEL_SPACE.lock().token(), //内核地址空间的根页表
             top,
             trap_handler as usize,
-        );
-        //构造trap上下文写入内存中
+        );//构造trap上下文写入内存中
+
         task_control_block
     }
 

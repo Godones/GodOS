@@ -91,6 +91,7 @@ impl PageTable {
     }
     pub fn unmap(&mut self, vpn: VirtPageNum) {
         //删除一个虚拟页号对应的页表项
+        // todo!(应该使用find_pte)
         let pte = self.find_pte_create(vpn).unwrap();
         assert!(pte.is_valid(), "vpn: {:?} is invalid before unmapping", vpn);
         *pte = PageTableEntry::empty(); //空项
@@ -166,13 +167,15 @@ impl PageTable {
         let mut result: Option<&PageTableEntry> = None;
         for i in 0..3 {
             let pte = &ppn.get_pte_array()[idxs[i]];
+
+            if !pte.is_valid() {
+                return None;
+            }
             if i == 2 {
                 result = Some(pte);
                 return result;
             }
-            if !pte.is_valid() {
-                return None;
-            }
+
             ppn = pte.ppn();
         }
         result

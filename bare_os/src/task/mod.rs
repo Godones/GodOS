@@ -2,7 +2,8 @@ use crate::config::BIG_STRIDE;
 use crate::loader::get_num_app;
 use crate::task::context::TaskContext;
 use crate::trap::context::TrapFrame;
-use crate::{println, DEBUG, INFO};
+use crate::{INFO};
+
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
@@ -66,7 +67,7 @@ impl TaskManager {
     fn get_trap_cx(&self) -> &'static mut TrapFrame {
         //获取用户trap上下文所在位置
         let current_task = self.inner.borrow().current_task;
-        self.inner.borrow().tasks[current_task].get_trap_cx()
+        self.inner.borrow_mut().tasks[current_task].get_trap_cx()
     }
     fn mark_current_suspended(&self) {
         //将当前任务变成暂停状态
@@ -127,22 +128,19 @@ impl TaskManager {
         //第一个应用程序的任务上下文
         let next_task_ptr2 = &inner.tasks[0].task_cx_ptr as *const TaskContext;
 
-        let _unused = TaskContext::zero_init();
+        let mut _unused = TaskContext::zero_init();
         drop(inner);
         INFO!(
             "[kernel] run the first application, address: {}",
             next_task_ptr2 as usize
         );
 
-        use crate::timer;
-        // timer::set_next_timetrigger();
 
         unsafe {
-            __switch(&_unused as *const _, next_task_ptr2);
+            __switch(&mut _unused as *mut _, next_task_ptr2);
         }
     }
     fn run_next_task(&self) {
-        // DEBUG!("[kernel] run next task");
         if let Some(next) = self.find_next_task() {
             //查询是否有处于准备的任务，如果有就运行
             //否则退出
@@ -156,11 +154,11 @@ impl TaskManager {
 
             inner.tasks[next].stride += inner.tasks[next].pass;
             //获取两个任务的task上下文指针
-            let current_task_cx_ptr2 = &inner.tasks[current_task].task_cx_ptr as *const TaskContext;
+            let current_task_cx_ptr2 = &mut inner.tasks[current_task].task_cx_ptr as *mut TaskContext;
             let next_task_cx_ptr2 = &inner.tasks[next].task_cx_ptr as *const TaskContext;
 
             //释放可变借用，否则进入下一个任务后将不能获取到inner的使用权
-            core::mem::drop(inner);
+            drop(inner);
             unsafe {
                 __switch(current_task_cx_ptr2, next_task_cx_ptr2);
             }

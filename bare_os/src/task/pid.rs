@@ -1,4 +1,6 @@
 use alloc::vec::Vec;
+use core::borrow::BorrowMut;
+use core::cell::RefCell;
 use lazy_static::lazy_static;
 use spin::Mutex;
 use crate::mm::KERNEL_SPACE;
@@ -24,7 +26,9 @@ pub struct PidAllocator{
     recycled:Vec<usize>
 }
 
+
 pub struct PidHandle(pub usize);
+
 impl PidAlloc for PidAllocator {
     fn new() -> Self {
         Self{
@@ -37,9 +41,8 @@ impl PidAlloc for PidAllocator {
             PidHandle(val)
         }
         else {
-            let pid_handle = PidHandle(self.current);
             self.current +=1;
-            pid_handle
+            PidHandle(self.current-1)
         }
     }
     fn dealloc(&mut self, pid:usize) {
@@ -54,20 +57,18 @@ impl PidAlloc for PidAllocator {
 }
 
 lazy_static!{
-    static ref PIDALLOCATOR: Mutex<PidAllocator> = {
-        Mutex::new(PidAllocator::new())
+    static ref PIDALLOCATOR: RefCell<PidAllocator> = {
+        RefCell::new(PidAllocator::new())
     };
 }
 pub fn pid_alloc()->PidHandle{
-    PIDALLOCATOR.lock().alloc()
+    PIDALLOCATOR.borrow().alloc()
 }
-
 impl Drop for PidHandle {
     fn drop(&mut self) {
-        PIDALLOCATOR.lock().dealloc(self.0);
+        PIDALLOCATOR.borrow().dealloc(self.0);
     }
 }
-
 //返回应用程序在内核的内核栈位置
 fn kernel_stack_position(pid: usize) -> (usize, usize) {
     let top = TRAMPOLINE - pid * (KERNEL_STACK_SIZE + PAGE_SIZE);
@@ -119,6 +120,6 @@ impl Drop for KernelStack {
     fn drop(&mut self) {
         let stack_button = self.get_stack_button();
         let button_viradd :VirtAddr = stack_button.into();
-        KERNEL_SPACE.lock().remove_from_startaddr();
+        KERNEL_SPACE.lock().remove_from_startaddr(button_viradd);
     }
 }

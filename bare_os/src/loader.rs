@@ -1,8 +1,4 @@
 use crate::println;
-use alloc::boxed::Box;
-use alloc::slice;
-use alloc::string::String;
-use alloc::vec;
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
 ///将应用程序全部加载到内存中

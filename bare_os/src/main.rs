@@ -6,10 +6,9 @@
 #![feature(alloc_error_handler)]
 #![allow(dead_code)]
 #![feature(const_mut_refs)]
-#![feature(llvm_asm)]
 
 #[macro_use]
-mod panic;
+pub mod panic;
 mod config;
 mod loader;
 mod mm;
@@ -35,7 +34,8 @@ fn clear_bss() {
             fn sbss();
             fn ebss();
         }
-        (sbss as usize..ebss as usize).for_each(|a| (a as *mut u8).write_volatile(0));
+        core::slice::from_raw_parts_mut(sbss as usize as *mut u8,ebss as usize- sbss as usize)
+            .fill(0);
     }
 }
 
@@ -59,6 +59,7 @@ extern "C" fn rust_main() -> ! {
 
     loader::show_apps();
     timer::enable_timer_interrupt(); //使能位
+    timer::set_next_timetrigger();
     task::run_first_task();
     panic!("The main_end!");
 }
