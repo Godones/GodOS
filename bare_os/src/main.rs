@@ -12,6 +12,7 @@ pub mod panic;
 mod config;
 mod loader;
 mod mm;
+mod my_struct;
 mod sbi;
 mod syscall;
 mod system_allocator;
@@ -34,7 +35,7 @@ fn clear_bss() {
             fn sbss();
             fn ebss();
         }
-        core::slice::from_raw_parts_mut(sbss as usize as *mut u8,ebss as usize- sbss as usize)
+        core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
             .fill(0);
     }
 }

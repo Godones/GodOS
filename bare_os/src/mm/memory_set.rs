@@ -104,15 +104,18 @@ impl MemorySet {
             None,
         );
     }
-    pub fn remove_from_startaddr(&mut self,startaddr:VirtAddr){
+    pub fn remove_from_startaddr(&mut self, startaddr: VirtAddr) {
         //从一个起始地址找到对应的段，将这个段对应的页删除
-        let virtpage:VirtPageNum = startaddr.into();
-        if let Some((index,area)) = self.areas.iter_mut().enumerate()
-            .find(|(index,maparea)| maparea.vpn_range.get_start()==virtpage){
+        let virtpage: VirtPageNum = startaddr.into();
+        if let Some((index, area)) = self
+            .areas
+            .iter_mut()
+            .enumerate()
+            .find(|(index, maparea)| maparea.vpn_range.get_start() == virtpage)
+        {
             area.unmap(&mut self.page_table);
             self.areas.remove(index);
         }
-
     }
     fn new_kernel() -> Self {
         //生成内核的地址空间

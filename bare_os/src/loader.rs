@@ -37,14 +37,14 @@ pub fn get_app_data(app_id: usize) -> &'static [u8] {
 pub fn get_data_by_name(app_name: &str) -> &'static [u8] {
     (0..get_num_app())
         .find(|&x| APP_NAMES[x] == app_name)
-        .map(|x|get_app_data(x))
+        .map(|x| get_app_data(x))
         .unwrap()
 }
 
-pub fn show_apps(){
+pub fn show_apps() {
     println!("****APP****");
-    for i in APP_NAMES.iter(){
-        println!("{}",i);
+    for i in APP_NAMES.iter() {
+        println!("{}", i);
     }
     println!("***********");
 }

@@ -17,4 +17,3 @@ pub const CLOCK_FREQ: usize = 12500000;
 
 #[cfg(feature = "LOG")]
 pub const MINIEST_INFO: usize = 0;
-
