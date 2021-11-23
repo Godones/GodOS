@@ -59,8 +59,8 @@ extern "C" fn rust_main() -> ! {
                       //运行程序
 
     loader::show_apps();
-    timer::enable_timer_interrupt(); //使能位
-    timer::set_next_timetrigger();
-    task::run_first_task();
+    // timer::enable_timer_interrupt(); //使能位
+    // timer::set_next_timetrigger();
+    // task::run_first_task();
     panic!("The main_end!");
 }

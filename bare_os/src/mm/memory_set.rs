@@ -15,7 +15,7 @@ use xmas_elf::ElfFile;
 /// 对于任意一个应用程序(后面成为进程）来说，其由多个
 /// 段构成，每个段对应于一段虚拟的逻辑地址空间
 /// 而管理应用程序就是管理一系列逻辑段
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum MapType {
     Identical, //恒等映射==>logical address = physaddress
     Framed,    //其它映射
@@ -104,6 +104,7 @@ impl MemorySet {
             None,
         );
     }
+
     pub fn remove_from_startaddr(&mut self, startaddr: VirtAddr) {
         //从一个起始地址找到对应的段，将这个段对应的页删除
         let virtpage: VirtPageNum = startaddr.into();
@@ -271,6 +272,24 @@ impl MemorySet {
             elf.header.pt2.entry_point() as usize,
         )
     }
+
+    pub fn from_existed_memset(src_memset: &MemorySet) -> Self {
+        //从一个已经存在的地址空间拷贝一份
+        let mut memoryset = MemorySet::new_bare();
+        memoryset.map_trampoline(); //映射跳板页
+        for area in src_memset.areas.iter() {
+            let new_area = MapArea::copy_from_other(area);
+            memoryset.push(new_area, None);
+            for vpn in area.vpn_range {
+                let src_data = src_memset.translate(vpn).unwrap().ppn();
+                let dis_data = memoryset.translate(vpn).unwrap().ppn();
+                dis_data
+                    .get_bytes_array()
+                    .copy_from_slice(src_data.get_bytes_array());
+            }
+        }
+        memoryset
+    }
     fn map_trampoline(&mut self) {
         //映射跳板
         self.page_table.map(
@@ -304,6 +323,20 @@ impl MapArea {
             data_frames: BTreeMap::new(),
             map_type,
             map_perm,
+        }
+    }
+
+    pub fn copy_from_other(old_maparea: &MapArea) -> Self {
+        //拷贝另一个地址段的相关信息
+        //包括读写权限，映射方式
+        Self {
+            vpn_range: VPNRange::new(
+                old_maparea.vpn_range.get_start(),
+                old_maparea.vpn_range.get_end(),
+            ),
+            data_frames: BTreeMap::new(),
+            map_perm: old_maparea.map_perm,
+            map_type: old_maparea.map_type,
         }
     }
     fn map(&mut self, page_table: &mut PageTable) {

@@ -11,7 +11,7 @@ use spin::Mutex;
 ///完成进程描述符的创建于分配
 trait PidAlloc {
     fn new() -> Self;
-    fn alloc(&mut self) -> Option<usize>;
+    fn alloc(&mut self) -> PidHandle;
     fn dealloc(&mut self, ppn: usize);
 }
 struct PidAllocator {
@@ -51,9 +51,9 @@ lazy_static! {
     static ref PIDALLOCATOR: Mutex<PidAllocator> = unsafe { Mutex::new(PidAllocator::new()) };
 }
 
-//todo!()
+
 pub fn pid_alloc() -> PidHandle {
-    PIDALLOCATOR.lock().borrow_mut().alloc()
+    PIDALLOCATOR.lock().alloc()
 }
 impl Drop for PidHandle {
     fn drop(&mut self) {
@@ -73,7 +73,7 @@ pub struct KernelStack {
 }
 
 impl KernelStack {
-    pub fn new(pidhandle: PidHandle) -> Self {
+    pub fn new(pidhandle: &PidHandle) -> Self {
         //为进程分配一个内核栈
         let (stack_button, stack_top) = kernel_stack_position(pidhandle.0);
         //直接插入应用的内核栈位置,以framed形式
@@ -89,17 +89,17 @@ impl KernelStack {
         T: Sized,
     {
         let stack_top = self.get_stack_top();
-        let mut start_ptr = (stack_top - core::mem::size_of::<T>()) as *mut T;
+        let start_ptr = (stack_top - core::mem::size_of::<T>()) as *mut T;
         unsafe {
             *start_ptr = val;
         }
         start_ptr
     }
-    fn get_stack_top(&self) -> usize {
+    pub fn get_stack_top(&self) -> usize {
         let (_, top) = kernel_stack_position(self.pid);
         top
     }
-    fn get_stack_button(&self) -> usize {
+    pub fn get_stack_button(&self) -> usize {
         let (button, _) = kernel_stack_position(self.pid);
         button
     }

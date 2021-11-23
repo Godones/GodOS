@@ -1,12 +1,12 @@
+use crate::sbi::Console;
 use crate::task::context::TaskContext;
+use crate::task::manager::fetch_task;
+use crate::task::switch::__switch;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use crate::trap::context::TrapFrame;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::sbi::Console;
-use crate::task::manager::fetch_task;
-use crate::task::switch::__switch;
 
 lazy_static! {
     static ref PROCESSOR: Mutex<Processor> = Mutex::new(Processor::new());
@@ -18,7 +18,6 @@ pub struct Processor {
     //进程切换上下文
     //这是一个特殊的进程切换上下文，用于从当前的任务管理器中选择一个任务进行执行
     idle_task_cx_ptr: TaskContext,
-
 }
 
 impl Processor {
@@ -36,8 +35,8 @@ impl Processor {
         //用于fork()调用
         self.current.as_ref().map(|task| Arc::clone(task))
     }
-    fn get_idle_task_cx_ptr(&self)->*mut TaskContext{
-        &self.idle_task_cx_ptr as *mut _
+    fn get_idle_task_cx_ptr(&mut self) -> * mut TaskContext {
+        &mut self.idle_task_cx_ptr as *mut _
     }
 }
 
@@ -63,29 +62,26 @@ pub fn current_trap_cx_ptr() -> &'static mut TrapFrame {
 }
 ///idle控制流的作用是将进程切换隔离开来，这样换入换出进程时所用的栈是不一样的
 /// idle控制流用于进程调度，其位于内核进程的栈上，而换入换出是在应用的内核栈进行
-pub fn began_run_task(){
+pub fn run() {
     //在内核初始化完成之后需要开始运行
     loop {
         let mut processor = PROCESSOR.lock();
-        if let Some(task) = fetch_task(){
+        if let Some(task) = fetch_task() {
             //从任务管理器成功弹出一个任务
-            let task_inner = task.get_inner_access();
+            let mut task_inner = task.get_inner_access();
             let next_task_cx_ptr = &task_inner.task_cx_ptr as *const TaskContext;
             task_inner.task_status = TaskStatus::Running;
-            drop(task_inner);//释放掉获取的引用，因为要切换进程了
+            drop(task_inner); //释放掉获取的引用，因为要切换进程了
             processor.current = Some(task);
             let idle_task_cx_ptr = processor.get_idle_task_cx_ptr();
-            drop(processor);//释放引用
+            drop(processor); //释放引用
             unsafe {
-               __switch(
-                   idle_task_cx_ptr,next_task_cx_ptr
-               );
-           }
-
+                __switch(idle_task_cx_ptr, next_task_cx_ptr);
+            }
         }
     }
 }
-pub fn schedule(last_task_cx_ptr:*mut TaskContext){
+pub fn schedule(last_task_cx_ptr: *mut TaskContext) {
     //当时间片用完或者是进程自行放弃cpu时，需要切换进程
     // 这时需要切换到内核进行进程切换的idle控制流上，在
     //上面的began_run_task中，当内核开始运行第一个进程时，
@@ -95,9 +91,6 @@ pub fn schedule(last_task_cx_ptr:*mut TaskContext){
     let idle_task_cx_ptr = &processor.idle_task_cx_ptr as *const TaskContext;
     drop(processor);
     unsafe {
-        __switch(
-            last_task_cx_ptr,
-            idle_task_cx_ptr,
-        );
+        __switch(last_task_cx_ptr, idle_task_cx_ptr);
     }
 }

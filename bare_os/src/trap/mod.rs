@@ -1,18 +1,14 @@
 pub mod context;
-
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
-
 use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
-use crate::task::{
-    current_trap_cx, current_user_token, exit_current_run_next, suspend_current_run_next,
-};
+use crate::task::{current_trap_cx_ptr,current_user_token};
 use crate::{println, ERROR};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     stval, stvec,
 };
-
+use crate::task::mark_current_suspended;
 global_asm!(include_str!("trap.asm"));
 
 /// 批处理操作系统初始化
@@ -52,7 +48,6 @@ pub fn trap_return() -> ! {
         fn _restore();
     }
     let restore_va = (_restore as usize - _alltraps as usize) + TRAMPOLINE;
-    // DEBUG!("[kernel] application into user_trap");
     unsafe {
         asm!(
             "fence.i",
@@ -75,7 +70,7 @@ pub fn trap_handler() -> ! {
     //在进入内核后，会有可能再次触发中断或者其它异常
     //此时我们直接panic而不做其它处理
     set_kernel_trap_entry();
-    let tf = current_trap_cx();
+    let tf = current_trap_cx_ptr();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
@@ -89,13 +84,11 @@ pub fn trap_handler() -> ! {
         Trap::Exception(Exception::StorePageFault | Exception::StoreFault) => {
             ERROR!("[kernel] PageFault in application, core dumped.");
             // panic!("StorePageFault");
-            exit_current_run_next();
         }
         //非法指令
         Trap::Exception(Exception::IllegalInstruction) => {
             ERROR!("[kernel]  IllegalInstruction in application, core dumped.");
             // panic!();
-            exit_current_run_next();
         }
         //断点中断
         Trap::Exception(Exception::Breakpoint) => breakpoint_handler(&mut tf.sepc),
@@ -121,5 +114,5 @@ fn breakpoint_handler(sepc: &mut usize) {
 //S态时钟处理函数
 fn supertimer_handler() {
     set_next_timetrigger();
-    suspend_current_run_next();
+    mark_current_suspended ();
 }

@@ -1,53 +1,58 @@
+use task::TaskControlBlock;
+/// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
+///任务的运行状态：未初始化->准备执行->正在执行->已退出
 pub mod context;
 mod manager;
 mod pid;
-mod process;
+pub mod process;
 mod switch;
 mod task;
 
-impl TaskManager {
-    fn get_current_token(&self) -> usize {
-        //获取用户地址空间的satp
-        let current_task = self.inner.borrow().current_task;
-        self.inner.borrow().tasks[current_task].get_user_token()
-    }
-    fn get_trap_cx(&self) -> &'static mut TrapFrame {
-        //获取用户trap上下文所在位置
-        let current_task = self.inner.borrow().current_task;
-        self.inner.borrow_mut().tasks[current_task].get_trap_cx()
-    }
-    fn mark_current_suspended(&self) {
-        //将当前任务变成暂停状态
-        let current_task = self.inner.borrow().current_task;
-        self.inner.borrow_mut().tasks[current_task].task_status = TaskStatus::Ready;
-    }
-    fn mark_current_exited(&self) {
-        // 退出当前任务
-        let current_task = self.inner.borrow().current_task;
-        self.inner.borrow_mut().tasks[current_task].task_status = TaskStatus::Exited;
-    }
-    fn set_priority(&self, priority: usize) -> isize {
-        //设置优先级就等价于更改增长量
-        let mut inner = self.inner.borrow_mut();
-        let current_task = inner.current_task;
-        inner.tasks[current_task].pass = BIG_STRIDE / priority;
+use crate::task::context::TaskContext;
+use crate::task::manager::add_task;
+use crate::task::process::{schedule};
+use crate::task::task::TaskStatus;
+use alloc::sync::Arc;
+use lazy_static::lazy_static;
+pub use process::{current_user_token,current_trap_cx_ptr,take_current_task};
+lazy_static! {
+    pub static ref INITPROC:Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new("initproc"));
+    //初始化初始进程
+}
 
-        priority as isize
-    }
+pub fn add_initproc() {
+    //将初始进程加入任务管理器中
+    add_task(INITPROC.clone());
+}
 
-    fn stride(&self) -> Option<usize> {
-        //stride调度算法
-        let mut miniest = usize::MAX;
-        let mut index = 0;
-        for i in 0..self.num_app {
-            if self.inner.borrow().tasks[i].stride < miniest
-                && self.inner.borrow().tasks[i].task_status == TaskStatus::Ready
-            {
-                miniest = self.inner.borrow().tasks[i].stride;
-                index = i;
-            }
-        }
-        // DEBUG!("[kernel debug] {} {}",miniest,index);
-        Some(index)
-    }
+pub fn mark_current_suspended() {
+    //将当前任务变成暂停状态
+    //将cpu执行的任务剥夺
+    let task = take_current_task().unwrap();
+    let mut task_inner = task.get_inner_access();
+    //改变其状态
+    task_inner.task_status = TaskStatus::Ready;
+    //获取任务上下文指针
+    let task_cx_ptr = &mut task_inner.task_cx_ptr as *mut TaskContext;
+    drop(task_inner); //释放引用
+    add_task(task); //加入到任务管理器中
+                    //进行任务切换
+    schedule(task_cx_ptr);
+}
+
+fn mark_current_exited() {
+    // 退出当前任务
+}
+// fn set_priority( priority: usize) -> isize {
+//     //设置优先级就等价于更改增长量
+//     let task =
+//
+//     inner.tasks[current_task].pass = BIG_STRIDE / priority;
+//
+//     priority as isize
+// }
+
+fn stride() -> Option<usize> {
+    //stride调度算法
+    todo!("完成基于特权级的调度算法")
 }

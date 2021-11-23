@@ -1,5 +1,4 @@
 use crate::task::task::TaskControlBlock;
-use crate::task::TASK_MANAGER;
 use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
