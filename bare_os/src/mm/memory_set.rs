@@ -15,7 +15,7 @@ use xmas_elf::ElfFile;
 /// 对于任意一个应用程序(后面成为进程）来说，其由多个
 /// 段构成，每个段对应于一段虚拟的逻辑地址空间
 /// 而管理应用程序就是管理一系列逻辑段
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub enum MapType {
     Identical, //恒等映射==>logical address = physaddress
     Framed,    //其它映射
@@ -64,7 +64,6 @@ pub struct MemorySet {
 impl MemorySet {
     fn new_bare() -> Self {
         //空的地址空间
-        println!("[kernel] new_bare...");
         Self {
             page_table: PageTable::new(),
             areas: Vec::new(),
@@ -104,11 +103,24 @@ impl MemorySet {
             None,
         );
     }
+
+    pub fn remove_from_startaddr(&mut self, startaddr: VirtAddr) {
+        //从一个起始地址找到对应的段，将这个段对应的页删除
+        let virtpage: VirtPageNum = startaddr.into();
+        if let Some((index, area)) = self
+            .areas
+            .iter_mut()
+            .enumerate()
+            .find(|(_index, maparea)| maparea.vpn_range.get_start() == virtpage)
+        {
+            area.unmap(&mut self.page_table);
+            self.areas.remove(index);
+        }
+    }
     fn new_kernel() -> Self {
         //生成内核的地址空间
         let mut memoryset = MemorySet::new_bare();
         //映射跳板
-        println!("[Debug] new_kernel");
         memoryset.map_trampoline();
 
         //恒等映射各个逻辑段
@@ -175,15 +187,15 @@ impl MemorySet {
     }
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
         //解析elf文件，生成应用程序的地址空间
-        INFO!("[kernel] from_elf...");
+        // INFO!("[kernel] from_elf...");
         let mut memoryset = MemorySet::new_bare();
-        INFO!("[kernel] mapping trampoline...");
+        // INFO!("[kernel] mapping trampoline...");
         memoryset.map_trampoline(); //映射跳板
         let elf = ElfFile::new(elf_data).unwrap();
         let elf_header = elf.header; //elf头
         let elf_magic = elf_header.pt1.magic; //魔数，用来判断是否是elf文件
         assert_eq!(elf_magic, [0x7f, 0x45, 0x4c, 0x46], "This is not elf file");
-        INFO!("[kernel] elf_magic is ok");
+        // INFO!("[kernel] elf_magic is ok");
         //program header内的信息有大小，偏移量
         //以程序执行的角度看待文件
         let ph_count = elf_header.pt2.ph_count(); //program header数量
@@ -196,11 +208,11 @@ impl MemorySet {
                 let start_addr: VirtAddr = (ph.virtual_addr() as usize).into();
                 let end_addr: VirtAddr = ((ph.virtual_addr() + ph.mem_size()) as usize).into();
 
-                INFO!(
-                    "[kernel] application section began:{:?} end:{:?}",
-                    start_addr,
-                    end_addr
-                );
+                // INFO!(
+                //     "[kernel] application section began:{:?} end:{:?}",
+                //     start_addr,
+                //     end_addr
+                // );
                 //用户态程序
                 let mut map_perm = MapPermission::U;
                 //执行权限
@@ -216,11 +228,7 @@ impl MemorySet {
                 }
                 //申请段空间来存储
 
-                let map_area = MapArea::new(
-                    start_addr,
-                    end_addr,
-                    MapType::Framed,
-                    map_perm);
+                let map_area = MapArea::new(start_addr, end_addr, MapType::Framed, map_perm);
 
                 max_end_vpn = map_area.vpn_range.get_end();
                 memoryset.push(
@@ -262,6 +270,25 @@ impl MemorySet {
             elf.header.pt2.entry_point() as usize,
         )
     }
+
+    pub fn from_existed_memset(src_memset: &MemorySet) -> Self {
+        //从一个已经存在的地址空间拷贝一份
+        let mut memoryset = MemorySet::new_bare();
+        memoryset.map_trampoline(); //映射跳板页
+        for area in src_memset.areas.iter() {
+
+            let new_area = MapArea::copy_from_other(area);
+            memoryset.push(new_area, None);
+            for vpn in area.vpn_range {
+                let src_data = src_memset.translate(vpn).unwrap().ppn();
+                let dis_data = memoryset.translate(vpn).unwrap().ppn();
+                dis_data
+                    .get_bytes_array()
+                    .copy_from_slice(src_data.get_bytes_array());
+            }
+        }
+        memoryset
+    }
     fn map_trampoline(&mut self) {
         //映射跳板
         self.page_table.map(
@@ -269,6 +296,9 @@ impl MemorySet {
             PhysAddr::from(strampoline as usize).into(),
             PTEFlags::R | PTEFlags::X,
         );
+    }
+    pub fn clear_area_data(&mut self){
+        self.areas.clear()//回收所有的段
     }
 }
 
@@ -285,16 +315,26 @@ impl MapArea {
         let start_page_num = start_addr.floor();
         //结束地址对应的虚拟页号
         let end_page_num = end_addr.ceil();
-        println!(
-            "[kernel] start_page_num: {:?},end_page_num: {:?}",
-            start_page_num, end_page_num
-        );
 
         Self {
             vpn_range: VPNRange::new(start_page_num, end_page_num),
             data_frames: BTreeMap::new(),
             map_type,
             map_perm,
+        }
+    }
+
+    pub fn copy_from_other(old_maparea: &MapArea) -> Self {
+        //拷贝另一个地址段的相关信息
+        //包括读写权限，映射方式
+        Self {
+            vpn_range: VPNRange::new(
+                old_maparea.vpn_range.get_start(),
+                old_maparea.vpn_range.get_end(),
+            ),
+            data_frames: BTreeMap::new(),
+            map_perm: old_maparea.map_perm,
+            map_type: old_maparea.map_type,
         }
     }
     fn map(&mut self, page_table: &mut PageTable) {

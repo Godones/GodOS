@@ -1,10 +1,11 @@
 extern crate bitflags;
 
-use crate::mm::address::{PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
+use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::bitflags;
+use alloc::string::String;
 
 //页表项标志位
 bitflags! {
@@ -127,38 +128,18 @@ impl PageTable {
             frames: Vec::new(),
         }
     }
-    pub fn translated_byte_buffer(
-        token: usize,
-        ptr: *const u8,
-        len: usize,
-    ) -> Vec<&'static mut [u8]> {
-        //在内核打印字符时需要访问用户地址空间缓冲区的内容
-        let page_table = PageTable::from_token(token);
-        let mut start_addr = ptr as usize; //起始地址
-        let end = start_addr + len; //结束地址
-        let mut contents = Vec::new();
-
-        while start_addr < end {
-            let start_viraddr = VirtAddr::from(start_addr);
-            let mut vpn = start_viraddr.floor();
-            let ppn = page_table.translate(vpn).unwrap().ppn();
-            vpn.step();
-            let mut end_viraddr: VirtAddr = vpn.into();
-            end_viraddr = end_viraddr.min(VirtAddr::from(end));
-
-            if end_viraddr.page_offset() == 0 {
-                contents.push(&mut ppn.get_bytes_array()[start_viraddr.page_offset()..]);
-            } else {
-                contents.push(
-                    &mut ppn.get_bytes_array()
-                        [start_viraddr.page_offset()..end_viraddr.page_offset()],
-                );
-            }
-
-            start_addr = end_viraddr.into();
-        }
-        contents
+    pub fn translated_va(&self,va:VirtAddr)->Option<PhysAddr>{
+        //将一个虚拟地址转换为一个物理地址
+        self.find_pte(va.floor())
+            .map(|pte|{
+                //找到对应的页表项
+                let phyaddr:PhysAddr = pte.ppn().into();
+                let offset = va.page_offset();
+                let align_phyaddr:usize = phyaddr.into();
+                (align_phyaddr+offset).into()
+            })
     }
+
 
     fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
         //根据虚拟页号找到页表项
@@ -183,4 +164,63 @@ impl PageTable {
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.find_pte(vpn).map(|pte| pte.clone())
     }
+}
+
+pub fn translated_byte_buffer(
+    token: usize,
+    ptr: *const u8,
+    len: usize,
+) -> Vec<&'static mut [u8]> {
+    //在内核打印字符时需要访问用户地址空间缓冲区的内容
+    let page_table = PageTable::from_token(token);
+    let mut start_addr = ptr as usize; //起始地址
+    let end = start_addr + len; //结束地址
+    let mut contents = Vec::new();
+
+    while start_addr < end {
+        let start_viraddr = VirtAddr::from(start_addr);
+        let mut vpn = start_viraddr.floor();
+        let ppn = page_table.translate(vpn).unwrap().ppn();
+        vpn.step();
+        let mut end_viraddr: VirtAddr = vpn.into();
+        end_viraddr = end_viraddr.min(VirtAddr::from(end));
+
+        if end_viraddr.page_offset() == 0 {
+            contents.push(&mut ppn.get_bytes_array()[start_viraddr.page_offset()..]);
+        } else {
+            contents.push(
+                &mut ppn.get_bytes_array()
+                    [start_viraddr.page_offset()..end_viraddr.page_offset()],
+            );
+        }
+
+        start_addr = end_viraddr.into();
+    }
+    contents
+}
+pub fn translated_str(token:usize,ptr: *const u8)->String{
+    //根据token和字符串指针在应用地址空间中查找
+    //应用程序的名称
+    let page_table = PageTable::from_token(token);
+    let mut name = String::new();
+    let mut start = ptr as usize;
+    loop {
+        let ch:u8 = *(page_table
+            .translated_va(VirtAddr::from(start))
+            .unwrap()
+            .get_mut());//将虚拟地址转化为物理地址，再从物理地址取出相应的内容
+        if ch==0 {
+            break;
+        }
+        else {
+            name.push(ch as char);
+            start +=1;
+        }
+    }
+    name
+}
+pub fn translated_refmut<T>(token:usize,ptr:*mut T) ->&'static mut T{
+    let page_table = PageTable::from_token(token);
+    let start = ptr as usize;
+    page_table.translated_va(start.into()).unwrap().get_mut()
 }
