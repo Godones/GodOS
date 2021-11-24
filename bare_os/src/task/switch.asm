@@ -18,7 +18,7 @@ __switch:
     #addi sp, sp, -13*8
     sd sp, 8(a0) #将sp的值放入a0中,
     # fill TaskContext with ra & s0-s11
-    sd ra, 0(a0) #将ra返回地址保存在sp指向的栈顶上，ra的地址其实就是要接着指向的位置
+    sd ra, 0(a0) #将ra返回地址保存在任务上下文中，ra的地址其实就是要接着指向的位置
     .set n, 0 #保存s0-s11
     .rept 12
         SAVE_SN %n

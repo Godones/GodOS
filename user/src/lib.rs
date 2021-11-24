@@ -47,6 +47,7 @@ pub fn wait(exit_code: &mut i32) -> isize {
     loop {
         match sys_waitpid(-1, exit_code as *mut _) {
             -2 => {
+                // println!("[user] no child process");
                 yield_();
             } //如果返回值是-2，说明子进程全部没有结束
             exit_pid => return exit_pid,

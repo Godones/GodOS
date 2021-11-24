@@ -3,6 +3,7 @@ use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use crate::{INFO, println};
 
 pub struct TaskManager {
     //进程管理器，负责管理所有的进程
@@ -32,7 +33,10 @@ lazy_static! {
 
 pub fn add_task(task: Arc<TaskControlBlock>) {
     TASKMANAGER.lock().add(task);
+    INFO!("[kernel] There is {} task",TASKMANAGER.lock().task_ready_queue.len());
 }
 pub fn fetch_task() -> Option<Arc<TaskControlBlock>> {
-    TASKMANAGER.lock().pop()
+    let next = TASKMANAGER.lock().pop();
+    INFO!("[kernel] Get the pid: {} task",next.as_ref().unwrap().get_pid());
+    next
 }

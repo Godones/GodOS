@@ -2,7 +2,7 @@ use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAMP_CONTEXT, USER_STACK
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};
-use crate::{println, INFO};
+use crate::{println, INFO, DEBUG};
 use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -64,7 +64,6 @@ pub struct MemorySet {
 impl MemorySet {
     fn new_bare() -> Self {
         //空的地址空间
-        println!("[kernel] new_bare...");
         Self {
             page_table: PageTable::new(),
             areas: Vec::new(),
@@ -122,7 +121,6 @@ impl MemorySet {
         //生成内核的地址空间
         let mut memoryset = MemorySet::new_bare();
         //映射跳板
-        println!("[Debug] new_kernel");
         memoryset.map_trampoline();
 
         //恒等映射各个逻辑段
@@ -278,6 +276,7 @@ impl MemorySet {
         let mut memoryset = MemorySet::new_bare();
         memoryset.map_trampoline(); //映射跳板页
         for area in src_memset.areas.iter() {
+            DEBUG!("[kernel] began copy area");
             let new_area = MapArea::copy_from_other(area);
             memoryset.push(new_area, None);
             for vpn in area.vpn_range {
@@ -298,6 +297,9 @@ impl MemorySet {
             PTEFlags::R | PTEFlags::X,
         );
     }
+    pub fn clear_area_data(&mut self){
+        self.areas.clear()//回收所有的段
+    }
 }
 
 impl MapArea {
@@ -313,10 +315,6 @@ impl MapArea {
         let start_page_num = start_addr.floor();
         //结束地址对应的虚拟页号
         let end_page_num = end_addr.ceil();
-        println!(
-            "[kernel] start_page_num: {:?},end_page_num: {:?}",
-            start_page_num, end_page_num
-        );
 
         Self {
             vpn_range: VPNRange::new(start_page_num, end_page_num),

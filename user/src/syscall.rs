@@ -59,7 +59,7 @@ pub fn sys_set_priority(priority: isize) -> isize {
 /// 返回0
 /// syscall id 220
 pub fn sys_fork() -> isize {
-    todo!()
+    syscall(SYSCALL_FORK,[0,0,0])
 }
 
 /// 功能：用于子进程的回收工作
@@ -68,7 +68,7 @@ pub fn sys_fork() -> isize {
 /// 子进程不存在返回-1，所有子进程均未结束返回-2,成功返回子进程的pid
 /// syscall id 260
 pub fn sys_waitpid(pid: isize, exit_code: *mut i32) -> isize {
-    todo!()
+    syscall(SYSCALL_WAITPID,[pid as usize,exit_code as usize,0])
 }
 
 /// 功能：清空当前进程的内容并将新的应用程序加载到地址空间中

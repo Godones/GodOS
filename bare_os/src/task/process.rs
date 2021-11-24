@@ -7,6 +7,7 @@ use crate::trap::context::TrapFrame;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use crate::{DEBUG, INFO, println};
 
 lazy_static! {
     static ref PROCESSOR: Mutex<Processor> = Mutex::new(Processor::new());
@@ -71,6 +72,8 @@ pub fn run() {
             let mut task_inner = task.get_inner_access();
             let next_task_cx_ptr = &task_inner.task_cx_ptr as *const TaskContext;
             task_inner.task_status = TaskStatus::Running;
+
+            INFO!("[kernel] find the nex task PID:{}",task.get_pid());
             drop(task_inner); //释放掉获取的引用，因为要切换进程了
             processor.current = Some(task);
             let idle_task_cx_ptr = processor.get_idle_task_cx_ptr();
@@ -90,6 +93,7 @@ pub fn schedule(last_task_cx_ptr: *mut TaskContext) {
     let processor = PROCESSOR.lock();
     let idle_task_cx_ptr = &processor.idle_task_cx_ptr as *const TaskContext;
     drop(processor);
+    // DEBUG!("[kernel] schedule");
     unsafe {
         __switch(last_task_cx_ptr, idle_task_cx_ptr);
     }

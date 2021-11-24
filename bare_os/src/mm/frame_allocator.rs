@@ -2,7 +2,7 @@
 use crate::config::MEMORY_END;
 use crate::mm::address::{PhysAddr, PhysPageNum};
 use crate::INFO;
-use alloc::prelude::v1::Vec;
+use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::option::Option;
 use lazy_static::lazy_static;
@@ -58,7 +58,6 @@ impl FrameAllocator for StackFrameAllocator {
                 self.current += 1;
                 Some((self.current - 1).into())
             } else {
-                INFO!("[kernel] PPN current: {},end :{}", self.current, self.end);
                 None
             }
         }
@@ -80,11 +79,6 @@ impl StackFrameAllocator {
     fn init(&mut self, begin: PhysPageNum, end: PhysPageNum) {
         self.current = begin.into();
         self.end = end.into();
-        INFO!(
-            "[kernel] FrameAllocator begin: {:?}, end: {:?}",
-            self.current,
-            self.end
-        );
     }
 }
 #[derive(Debug)]
@@ -130,13 +124,11 @@ pub fn frame_test() {
     let mut framepages: Vec<FrameTracker> = Vec::new();
     for i in 0..5 {
         let temp = frame_alloc().unwrap();
-        INFO!("frame: {:?}", temp);
         // framepages.push(temp);
     }
     framepages.clear();
     for i in 0..5 {
         let temp = frame_alloc().unwrap();
-        INFO!("frame: {:?}", temp);
         framepages.push(temp);
     }
     drop(framepages);

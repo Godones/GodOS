@@ -2,13 +2,13 @@ pub mod context;
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
-use crate::task::{current_trap_cx_ptr,current_user_token};
+use crate::task::{current_trap_cx_ptr, current_user_token, exit_current_run_next};
 use crate::{println, ERROR};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     stval, stvec,
 };
-use crate::task::mark_current_suspended;
+use crate::task::suspend_current_run_next;
 global_asm!(include_str!("trap.asm"));
 
 /// 批处理操作系统初始化
@@ -39,7 +39,6 @@ pub fn set_user_trap_entry() {
 #[no_mangle]
 pub fn trap_return() -> ! {
     //返回用户态继续执行
-    // DEBUG!("[kernel] application ready user_space");
     set_user_trap_entry(); //先设置在用户态发生trap时的入口
     let trap_cx = TRAMP_CONTEXT; //获取应用程序trapframe
     let user_satp = current_user_token(); //获取应用程序的satp
@@ -70,28 +69,45 @@ pub fn trap_handler() -> ! {
     //在进入内核后，会有可能再次触发中断或者其它异常
     //此时我们直接panic而不做其它处理
     set_kernel_trap_entry();
-    let tf = current_trap_cx_ptr();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
         //系统调用
         Trap::Exception(Exception::UserEnvCall) => {
             //指令地址 需要跳转到下一句执行，否则就处于死循环中
+            //由于sys_exec()调用会替换掉原来的trap上下文内容
+            //因此需要在执行系统调用后重新对其赋值
+            let mut  tf = current_trap_cx_ptr();
             tf.sepc += 4;
-            tf.reg[10] = syscall(tf.reg[17], [tf.reg[10], tf.reg[11], tf.reg[12]]) as usize;
+            let answer= syscall(tf.reg[17], [tf.reg[10], tf.reg[11], tf.reg[12]]) as usize;
+            tf = current_trap_cx_ptr();
+            tf.reg[10] = answer;
         }
         //页错误，应该是内存泄露什么的？
-        Trap::Exception(Exception::StorePageFault | Exception::StoreFault) => {
-            ERROR!("[kernel] PageFault in application, core dumped.");
-            // panic!("StorePageFault");
+        Trap::Exception(Exception::StorePageFault |
+                        Exception::StoreFault|
+                        Exception::InstructionFault|
+                        Exception::InstructionPageFault|
+                        Exception::LoadPageFault|
+                        Exception::LoadFault
+        ) => {
+            ERROR!("[kernel] {:?} occured in application, error_address:{:#x}, error_instruction:{:#x}, core dumped.",
+                scause.cause(),
+                stval,
+                current_trap_cx_ptr().sepc
+            );
+            exit_current_run_next(-2);
         }
         //非法指令
         Trap::Exception(Exception::IllegalInstruction) => {
             ERROR!("[kernel]  IllegalInstruction in application, core dumped.");
-            // panic!();
+            exit_current_run_next(-3);
         }
         //断点中断
-        Trap::Exception(Exception::Breakpoint) => breakpoint_handler(&mut tf.sepc),
+        Trap::Exception(Exception::Breakpoint) =>{
+            let tf= current_trap_cx_ptr();
+            breakpoint_handler(tf.sepc-4);
+        }
         //s态时钟中断
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             supertimer_handler();
@@ -106,13 +122,12 @@ pub fn trap_handler() -> ! {
     }
     trap_return()
 }
-fn breakpoint_handler(sepc: &mut usize) {
+fn breakpoint_handler(sepc: usize) {
     println!("Breakpoint is setted @0x{:x}", sepc);
-    *sepc += 4;
 }
 
 //S态时钟处理函数
 fn supertimer_handler() {
     set_next_timetrigger();
-    mark_current_suspended ();
+    suspend_current_run_next ();
 }

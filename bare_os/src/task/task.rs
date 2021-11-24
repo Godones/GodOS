@@ -11,6 +11,7 @@ use crate::trap::trap_handler;
 use alloc::sync::{Arc,Weak};
 use alloc::vec::Vec;
 use core::cell::RefMut;
+use crate::DEBUG;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum TaskStatus {
@@ -27,12 +28,12 @@ pub struct TaskControlBlock {
     inner: MyRefCell<TaskControlBlockInner>,
 }
 pub struct TaskControlBlockInner {
-    pub task_cx_ptr: TaskContext, //任务上下文栈顶地址的位置,位于内核空间中
+    pub task_cx_ptr: TaskContext,               //任务上下文栈顶地址的位置,位于内核空间中
     pub task_status: TaskStatus,
     pub memory_set: MemorySet,                  //任务地址空间
     pub trap_cx_ppn: PhysPageNum,               //trap上下文所在的物理块
     pub base_size: usize,                       //应用程序的大小
-    pub exit_code: usize,                       //保存退出码
+    pub exit_code: isize,                       //保存退出码
     pub parent: Option<Weak<TaskControlBlock>>, //父进程
     pub children: Vec<Arc<TaskControlBlock>>,   //子进程需要引用计数
 
@@ -61,7 +62,7 @@ impl TaskControlBlockInner {
 
 impl TaskControlBlock {
     pub fn new(task_name: &str) -> Self {
-        let data = get_data_by_name(task_name);
+        let data = get_data_by_name(task_name).unwrap();
         //构造用户地址空间
         let (memory_set, use_sp, entry_point) = MemorySet::from_elf(data);
         //trap上下文所在物理页帧
@@ -102,7 +103,6 @@ impl TaskControlBlock {
             kernel_stack_top,
             trap_handler as usize,
         ); //构造trap上下文写入内存中
-
         task_control_block
     }
     pub fn get_inner_access(&self) -> RefMut<'_, TaskControlBlockInner> {
@@ -113,7 +113,26 @@ impl TaskControlBlock {
         self.pid.0
     }
     pub fn exec(&self, elf_data: &[u8]) {
-        todo!("完成执行程序");
+        //更换当前进程的数据
+        let (memoryset,user_sp,entry_point) = MemorySet::from_elf(elf_data);
+        let trap_cx_ppn = memoryset
+            .translate(VirtAddr::from(TRAMP_CONTEXT).into())
+            .unwrap()
+            .ppn();
+        let mut inner = self.get_inner_access();
+        //更换地址空间和
+        inner.memory_set = memoryset;
+        inner.trap_cx_ppn = trap_cx_ppn;
+        inner.base_size = user_sp;
+
+        let trap_cx = inner.get_trap_cx();
+        *trap_cx = TrapFrame::app_into_context(
+            entry_point,//新的入口
+            user_sp,//新的用户栈
+            KERNEL_SPACE.lock().token(),
+            self.kernel_stack.get_stack_top(),//原有的内核栈
+            trap_handler as usize
+        )
     }
     pub fn fork(self:&Arc<TaskControlBlock>) -> Arc<TaskControlBlock> {
         //fork一个新的进程
@@ -157,4 +176,5 @@ impl TaskControlBlock {
         task_control_block
         //todo!("为什么子进程的用户栈不需要更改")
     }
+
 }
