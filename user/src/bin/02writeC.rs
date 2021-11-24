@@ -11,7 +11,6 @@ const LEN: usize = 100;
 #[no_mangle]
 fn main() -> i32 {
     assert_eq!(32, set_priority(32));
-
     let p = 3u64;
     let m = 998244353u64;
     let iter: usize = 200000;

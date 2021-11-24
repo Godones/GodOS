@@ -171,7 +171,7 @@ impl PhysPageNum {
     }
     pub fn get_mut<T>(&self) -> &'static mut T {
         let phyaddress: PhysAddr = self.clone().into();
-        unsafe { phyaddress.get_mut() }
+        phyaddress.get_mut()
     }
 }
 

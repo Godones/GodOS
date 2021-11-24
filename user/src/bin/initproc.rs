@@ -2,8 +2,8 @@
 #![no_std]
 #![feature(asm)]
 #![allow(non_snake_case)]
-#[macro_use]
-use lib::{fork, wait, wait_pid, exec};
+
+use lib::{fork, wait, exec};
 use lib::{println, yield_};
 
 #[no_mangle]

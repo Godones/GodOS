@@ -51,8 +51,8 @@ impl FrameAllocator for StackFrameAllocator {
     fn alloc(&mut self) -> Option<PhysPageNum> {
         //先从回收的页帧中分配出去，若找不到再从未分配的里面分配出去
         // INFO!("[kernel] mm::FrameAllocator::alloc");
-        if let Some(T) = self.recycled.pop() {
-            Some(T.into())
+        if let Some(page) = self.recycled.pop() {
+            Some(page.into())
         } else {
             if self.current < self.end {
                 self.current += 1;

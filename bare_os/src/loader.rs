@@ -26,10 +26,6 @@ pub fn get_app_data(app_id: usize) -> &'static [u8] {
             app_start[app_id] as *const u8,
             app_start[app_id + 1] - app_start[app_id],
         );
-        println!(
-            "[kernel] app_data_size: {}",
-            core::mem::size_of_val(content)
-        );
         content
     }
 }
@@ -42,11 +38,11 @@ pub fn get_data_by_name(app_name: &str) -> Option<&'static [u8]> {
 }
 
 pub fn show_apps() {
-    println!("****APP****");
+    println!("*****APP*****");
     for i in APP_NAMES.iter() {
         println!("{}", i);
     }
-    println!("***********");
+    println!("*************");
 }
 lazy_static! {
     static ref APP_NAMES: Vec<&'static str> = {
@@ -58,7 +54,7 @@ lazy_static! {
         let mut start = _app_name as usize as *const u8;
         let mut name = Vec::new();
         unsafe {
-            for i in 0..app_nums{
+            for _ in 0..app_nums{
                 let mut end = start;
                 while end.read_volatile() !='\0' as u8{
                     end = end.add(1);//地址加1

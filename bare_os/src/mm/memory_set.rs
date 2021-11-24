@@ -2,7 +2,7 @@ use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAMP_CONTEXT, USER_STACK
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};
-use crate::{println, INFO, DEBUG};
+use crate::{println, INFO};
 use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -111,7 +111,7 @@ impl MemorySet {
             .areas
             .iter_mut()
             .enumerate()
-            .find(|(index, maparea)| maparea.vpn_range.get_start() == virtpage)
+            .find(|(_index, maparea)| maparea.vpn_range.get_start() == virtpage)
         {
             area.unmap(&mut self.page_table);
             self.areas.remove(index);
@@ -187,15 +187,15 @@ impl MemorySet {
     }
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
         //解析elf文件，生成应用程序的地址空间
-        INFO!("[kernel] from_elf...");
+        // INFO!("[kernel] from_elf...");
         let mut memoryset = MemorySet::new_bare();
-        INFO!("[kernel] mapping trampoline...");
+        // INFO!("[kernel] mapping trampoline...");
         memoryset.map_trampoline(); //映射跳板
         let elf = ElfFile::new(elf_data).unwrap();
         let elf_header = elf.header; //elf头
         let elf_magic = elf_header.pt1.magic; //魔数，用来判断是否是elf文件
         assert_eq!(elf_magic, [0x7f, 0x45, 0x4c, 0x46], "This is not elf file");
-        INFO!("[kernel] elf_magic is ok");
+        // INFO!("[kernel] elf_magic is ok");
         //program header内的信息有大小，偏移量
         //以程序执行的角度看待文件
         let ph_count = elf_header.pt2.ph_count(); //program header数量
@@ -208,11 +208,11 @@ impl MemorySet {
                 let start_addr: VirtAddr = (ph.virtual_addr() as usize).into();
                 let end_addr: VirtAddr = ((ph.virtual_addr() + ph.mem_size()) as usize).into();
 
-                INFO!(
-                    "[kernel] application section began:{:?} end:{:?}",
-                    start_addr,
-                    end_addr
-                );
+                // INFO!(
+                //     "[kernel] application section began:{:?} end:{:?}",
+                //     start_addr,
+                //     end_addr
+                // );
                 //用户态程序
                 let mut map_perm = MapPermission::U;
                 //执行权限
@@ -276,7 +276,7 @@ impl MemorySet {
         let mut memoryset = MemorySet::new_bare();
         memoryset.map_trampoline(); //映射跳板页
         for area in src_memset.areas.iter() {
-            DEBUG!("[kernel] began copy area");
+
             let new_area = MapArea::copy_from_other(area);
             memoryset.push(new_area, None);
             for vpn in area.vpn_range {

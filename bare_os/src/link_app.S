@@ -16,7 +16,7 @@ _num_app:
     .global _app_name
 _app_name:
     .string "00writeA"
-    .string "01wirteB"
+    .string "01cal"
     .string "02writeC"
     .string "03sleep"
     .string "initproc"
@@ -35,7 +35,7 @@ app_0_end:
     .global app_1_end
     .align 3
 app_1_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/01wirteB"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/01cal"
 app_1_end:
 
     .section .data

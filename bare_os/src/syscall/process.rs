@@ -1,7 +1,8 @@
 use alloc::sync::Arc;
-use crate::mm::page_table::{PageTable, translated_byte_buffer, translated_refmut, translated_str};
+use crate::mm::page_table::{translated_byte_buffer, translated_refmut, translated_str};
 use crate::task::{suspend_current_run_next, current_user_token, add_task, exit_current_run_next};
-use crate::{print, INFO, DEBUG, println};
+use crate::{print, INFO};
+use crate::config::BIG_STRIDE;
 use crate::loader::get_data_by_name;
 use crate::task::process::copy_current_task;
 use crate::sbi::console_getchar;
@@ -67,8 +68,9 @@ pub fn sys_get_time() -> isize {
 }
 pub fn sys_set_priority(priority: usize) -> isize {
     //设置应用的特权级
-    // set_priority(priority)
-    -1
+    let current_task = copy_current_task().unwrap();
+    current_task.get_inner_access().pass = BIG_STRIDE/priority;
+    priority as isize
 }
 pub fn sys_fork()->isize{
     //拷贝一份
@@ -104,7 +106,7 @@ pub fn sys_waitpid(pid:isize,exit_code_ptr:*mut i32)->isize{
     }//查找是否有对应的子进程或者是pid=-1
     let pair = task_inner.children.iter()
         .enumerate()
-        .find(|(index,val)|{
+        .find(|(_index,val)|{
             val.get_inner_access().is_zombie()&&(pid==-1||pid as usize==val.get_pid())
         });
     if let Some((idx,_)) = pair{

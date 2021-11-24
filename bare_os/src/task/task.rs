@@ -3,7 +3,7 @@ use crate::loader::get_data_by_name;
 use crate::mm::address::{PhysPageNum, VirtAddr};
 use crate::mm::memory_set::MemorySet;
 use crate::mm::KERNEL_SPACE;
-use crate::my_struct::MyRefCell::MyRefCell;
+use crate::my_struct::my_ref_cell::MyRefCell;
 use crate::task::context::TaskContext;
 use crate::task::pid::{pid_alloc, KernelStack, PidHandle};
 use crate::trap::context::TrapFrame;
@@ -11,7 +11,6 @@ use crate::trap::trap_handler;
 use alloc::sync::{Arc,Weak};
 use alloc::vec::Vec;
 use core::cell::RefMut;
-use crate::DEBUG;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum TaskStatus {

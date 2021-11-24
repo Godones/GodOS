@@ -1,10 +1,8 @@
-use crate::config::{KERNEL_STACK_SIZE, PAGE_SIZE, TRAMPOLINE, TRAMP_CONTEXT, USER_STACK_SIZE};
+use crate::config::{KERNEL_STACK_SIZE, PAGE_SIZE, TRAMPOLINE};
 use crate::mm::address::VirtAddr;
 use crate::mm::memory_set::MapPermission;
 use crate::mm::KERNEL_SPACE;
-use crate::my_struct::MyRefCell::MyRefCell;
 use alloc::vec::Vec;
-use core::borrow::BorrowMut;
 use lazy_static::lazy_static;
 use spin::Mutex;
 
@@ -48,7 +46,7 @@ impl PidAlloc for PidAllocator {
 }
 
 lazy_static! {
-    static ref PIDALLOCATOR: Mutex<PidAllocator> = unsafe { Mutex::new(PidAllocator::new()) };
+    static ref PIDALLOCATOR: Mutex<PidAllocator> =  Mutex::new(PidAllocator::new());
 }
 
 

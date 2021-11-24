@@ -14,9 +14,6 @@ use alloc::sync::Arc;
 use lazy_static::lazy_static;
 pub use manager::add_task;
 pub use process::{current_user_token,current_trap_cx_ptr,take_current_task,run,schedule};
-use crate::DEBUG;
-
-
 
 
 lazy_static! {
@@ -39,7 +36,7 @@ pub fn suspend_current_run_next() {
     //获取任务上下文指针
     let task_cx_ptr = &mut task_inner.task_cx_ptr as *mut TaskContext;
     drop(task_inner); //释放引用
-    DEBUG!("[kernel] suspend_last pid :{}",task.get_pid());
+    // DEBUG!("[kernel] suspend_last pid :{}",task.get_pid());
     add_task(task); //加入到任务管理器中
                     //进行任务切换
     schedule(task_cx_ptr);

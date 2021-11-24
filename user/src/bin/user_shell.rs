@@ -4,7 +4,7 @@
 extern crate alloc;
 use alloc::string::String;
 use lib::console::getchar;
-use lib::{exec, fork, print, println, wait_pid, yield_};
+use lib::{exec, fork, print, println, wait_pid};
 
 const LF: u8 = 10; //换行键
 const CR: u8 = 13; //回车键
@@ -21,8 +21,10 @@ fn main() -> isize {
         match ch {
             LF | CR => {
                 //回车或换行时
+                println!("");//换行
                 if !process_name.is_empty() {
                     process_name.push('\0');
+                    println!("Run the {}",process_name);
                     let pid = fork();
                     if pid == 0 {
                         //子进程
@@ -41,14 +43,19 @@ fn main() -> isize {
                             println!("Shell: Process {} exited with code {}", pid, exit_code);
                         }
                     }
+                    process_name.clear();
                 }
+                print!(">>");
             }
             DEL | BS => {
                 //退格键
-                process_name.pop(); //删除最后一个字符
-                print!("{}", BS as char); //移动光标往前一个字符
-                print!("_");
-                println!("{}", BS as char);
+                if !process_name.is_empty() {
+                    process_name.pop(); //删除最后一个字符
+                    print!("{}", BS as char); //移动光标往前一个字符
+                    print!(" ");
+                    print!("{}", BS as char);
+                }
+
             }
             _ => {
                 process_name.push(ch as char);
