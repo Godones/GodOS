@@ -2,6 +2,7 @@ use crate::mm::page_table::PageTable;
 use crate::task::set_priority;
 use crate::task::suspend_current_run_next;
 use crate::task::{current_user_token, exit_current_run_next};
+use crate::timer::Time;
 use crate::{print, INFO};
 const FUNCTION_STDOUT: usize = 1;
 pub fn sys_exit(xstate: i32) -> ! {
@@ -31,8 +32,15 @@ pub fn sys_yield() -> isize {
     suspend_current_run_next(); //暂停当前任务运行下一个任务
     0
 }
-pub fn sys_get_time() -> isize {
-    crate::timer::get_costtime() as isize
+pub fn sys_get_time(time: *mut Time) -> isize {
+    let current_time = crate::timer::get_cost_time(); //获取微秒
+    unsafe {
+        *time = Time {
+            s: current_time / 1000_1000,
+            us: current_time % 1000_1000,
+        };
+    }
+    0
 }
 pub fn sys_set_priority(priority: usize) -> isize {
     //设置应用的特权级

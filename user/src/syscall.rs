@@ -1,8 +1,11 @@
+use crate::time::Time;
+
 const SYSCALL_EXIT: usize = 93;
 const SYSCALL_WRITE: usize = 64;
 const SYSCALL_YIELD: usize = 124;
 const SYSCALL_TIME: usize = 169;
 const SYSCALL_SET_PRIORITY:usize = 140;
+
 /// 功能：将内存中缓冲区中的数据写入文件。
 /// 参数：`fd` 表示待写入文件的文件描述符；
 ///      `buf` 表示内存中缓冲区的起始地址；
@@ -26,8 +29,8 @@ pub fn sys_yield() -> isize {
     syscall(SYSCALL_YIELD, [0, 0, 0])
 }
 
-pub fn sys_get_time() -> isize {
-    syscall(SYSCALL_TIME, [0, 0, 0])
+pub fn sys_get_time(time:&Time) -> isize {
+    syscall(SYSCALL_TIME, [time as usize, 0, 0])
 }
 
 pub fn sys_set_priority(priority:isize)->isize{

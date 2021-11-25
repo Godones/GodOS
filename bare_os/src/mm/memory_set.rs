@@ -216,11 +216,7 @@ impl MemorySet {
                 }
                 //申请段空间来存储
 
-                let map_area = MapArea::new(
-                    start_addr,
-                    end_addr,
-                    MapType::Framed,
-                    map_perm);
+                let map_area = MapArea::new(start_addr, end_addr, MapType::Framed, map_perm);
 
                 max_end_vpn = map_area.vpn_range.get_end();
                 memoryset.push(

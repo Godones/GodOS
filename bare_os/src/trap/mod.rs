@@ -1,11 +1,12 @@
 pub mod context;
 
-
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 
 use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
-use crate::task::{current_trap_cx, current_user_token, exit_current_run_next, suspend_current_run_next};
+use crate::task::{
+    current_trap_cx, current_user_token, exit_current_run_next, suspend_current_run_next,
+};
 use crate::{println, ERROR};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
@@ -62,7 +63,7 @@ pub fn trap_return() -> ! {
             options(noreturn)
         );
     } //跳转到restore_va的地方执行，这是内核与应用程序均有相同映射的trampoline区域
-    // panic!("Unreachable in back_to_user!");
+      // panic!("Unreachable in back_to_user!");
 }
 ///根据不同类型的中断选择不同的处理
 /// 在trap.asm中我们将x10=a0的值设置为sp的值，即内核栈地址

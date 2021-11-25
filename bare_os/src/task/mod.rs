@@ -1,13 +1,13 @@
 use crate::config::BIG_STRIDE;
 use crate::loader::get_num_app;
+use crate::task::context::TaskContext;
 use crate::trap::context::TrapFrame;
-use crate::{INFO};
+use crate::INFO;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
-use crate::task::context::TaskContext;
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
@@ -15,8 +15,7 @@ pub mod context;
 mod switch;
 mod task;
 
-
-pub static mut TASKLOADED:bool = false;
+pub static mut TASKLOADED: bool = false;
 //管理各个任务的任务管理器
 pub struct TaskManager {
     num_app: usize,
@@ -134,7 +133,6 @@ impl TaskManager {
             next_task_ptr2 as usize
         );
 
-
         unsafe {
             __switch(&mut _unused as *mut _, next_task_ptr2);
         }
@@ -153,7 +151,8 @@ impl TaskManager {
 
             inner.tasks[next].stride += inner.tasks[next].pass;
             //获取两个任务的task上下文指针
-            let current_task_cx_ptr2 = &mut inner.tasks[current_task].task_cx_ptr as *mut TaskContext;
+            let current_task_cx_ptr2 =
+                &mut inner.tasks[current_task].task_cx_ptr as *mut TaskContext;
             let next_task_cx_ptr2 = &inner.tasks[next].task_cx_ptr as *const TaskContext;
 
             //释放可变借用，否则进入下一个任务后将不能获取到inner的使用权

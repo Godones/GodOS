@@ -7,6 +7,7 @@
 pub mod console;
 mod lang_items;
 pub mod syscall;
+mod time;
 
 use crate::syscall::{
     sys_exit,
@@ -15,6 +16,7 @@ use crate::syscall::{
     sys_yield,
     sys_set_priority
 };
+pub use crate::time::Time;
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
     sys_write(fd, buf)
@@ -23,8 +25,8 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
 pub fn exit(exit_code: i32) -> isize {
     sys_exit(exit_code)
 }
-pub fn get_time() -> isize {
-    sys_get_time()
+pub fn get_time(time:&Time) -> isize {
+    sys_get_time(time)
 }
 pub fn yield_() -> isize {
     sys_yield()

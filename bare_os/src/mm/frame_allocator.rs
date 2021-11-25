@@ -2,7 +2,7 @@
 use crate::config::MEMORY_END;
 use crate::mm::address::{PhysAddr, PhysPageNum};
 use crate::INFO;
-use alloc::prelude::v1::Vec;
+use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::option::Option;
 use lazy_static::lazy_static;

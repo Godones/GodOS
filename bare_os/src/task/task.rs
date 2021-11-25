@@ -49,8 +49,7 @@ impl TaskControlBlock {
 
         let (button, top) = kernel_stack_position(app_id);
         //直接插入应用的内核栈位置,以framed形式
-        KERNEL_SPACE.lock()
-            .insert_framed_area(
+        KERNEL_SPACE.lock().insert_framed_area(
             button.into(),
             top.into(),
             MapPermission::W | MapPermission::R,
@@ -58,8 +57,7 @@ impl TaskControlBlock {
 
         //应用内核栈顶位置,我们需要放置一个任务上下文来切换到trap处理段
         // let task_cx_ptr = (top - core::mem::size_of::<TaskContext>()) as *mut TaskContext;
-        DEBUG!(
-            "[kernel] {} app",app_id);
+        DEBUG!("[kernel] {} app", app_id);
         // unsafe {
         //     *task_cx_ptr = TaskContext::goto_trap_return();
         // }
@@ -81,7 +79,7 @@ impl TaskControlBlock {
             KERNEL_SPACE.lock().token(), //内核地址空间的根页表
             top,
             trap_handler as usize,
-        );//构造trap上下文写入内存中
+        ); //构造trap上下文写入内存中
 
         task_control_block
     }
