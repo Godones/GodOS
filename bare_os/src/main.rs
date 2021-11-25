@@ -44,25 +44,23 @@ fn clear_bss() {
 extern "C" fn rust_main() -> ! {
     clear_bss();
     INFO!("[kernel] Godone OS");
+    use crate::tests::print_test;
+    print_test::color_output_test();
     //test
-    {
-        // color_output_test();
-        crate::system_allocator::heap_test();
-        // crate::mm::frame_allocator::frame_test();
-    }
-
+    // {
+    //     // color_output_test();
+    //     crate::system_allocator::heap_test();
+    //     // crate::mm::frame_allocator::frame_test();
+    // }
     //trap初始化，设置stvec的入口地址
-
-    mm::init();
-    mm::remap_test(); //测试内核映射的正确性
-                      //运行程序
-
-    loader::show_apps();
-    task::add_initproc();
-    trap::init();
-    timer::enable_timer_interrupt(); //使能位
-    timer::set_next_timetrigger();
-    task::run();
-
+    // mm::init();
+    // mm::remap_test(); //测试内核映射的正确性
+    //                   //运行程序
+    // loader::show_apps();
+    // task::add_initproc();
+    // trap::init();
+    // timer::enable_timer_interrupt(); //使能位
+    // timer::set_next_timetrigger();
+    // task::run();
     panic!("The main_end!");
 }
