@@ -4,11 +4,10 @@
     .global _num_app
 _num_app:
     .quad 3
-    
     .quad app_0_start
     .quad app_1_start
     .quad app_2_start
-  .quad app_2_end
+    .quad app_2_end
 
     .section .data
     .global app_0_start
