@@ -1,6 +1,6 @@
 extern crate bitflags;
 
-use crate::mm::address::{PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
+use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -183,4 +183,21 @@ impl PageTable {
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.find_pte(vpn).map(|pte| pte.clone())
     }
+    pub fn translated_va(&self,va:VirtAddr)->Option<PhysAddr>{
+        //将一个虚拟地址转换为一个物理地址
+        self.find_pte(va.floor())
+            .map(|pte|{
+                //找到对应的页表项
+                let phyaddr:PhysAddr = pte.ppn().into();
+                let offset = va.page_offset();
+                let align_phyaddr:usize = phyaddr.into();
+                (align_phyaddr+offset).into()
+            })
+    }
+}
+
+pub fn translated_refmut<T>(token:usize,ptr:*mut T) ->&'static mut T{
+    let page_table = PageTable::from_token(token);
+    let start = ptr as usize;
+    page_table.translated_va(start.into()).unwrap().get_mut()
 }

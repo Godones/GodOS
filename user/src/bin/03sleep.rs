@@ -9,11 +9,12 @@ use lib::{get_time, Time, yield_};
 #[no_mangle]
 fn main() -> i32 {
     let mut time = Time::new();
-    get_time(&time);
-    let wait_for = time.s*1000 + 3000;
+    get_time(&mut time);
+    let wait_for = time.s*1000 + 3000;//等待3s+..
+    println!("wait_for: {}",wait_for);
     loop {
-        get_time(&time);
-        if time.s * 1000 < wait_for {
+        get_time(&mut time);
+        if time.s * 1000 > wait_for {
             break
         }
         yield_();

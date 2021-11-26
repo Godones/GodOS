@@ -1,9 +1,9 @@
-use crate::mm::page_table::PageTable;
+use crate::mm::page_table::{PageTable, translated_refmut};
 use crate::task::set_priority;
 use crate::task::suspend_current_run_next;
 use crate::task::{current_user_token, exit_current_run_next};
 use crate::timer::Time;
-use crate::{print, INFO};
+use crate::{print, INFO, println};
 const FUNCTION_STDOUT: usize = 1;
 pub fn sys_exit(xstate: i32) -> ! {
     INFO!("[kernel] Application exited with code {}", xstate);
@@ -34,10 +34,11 @@ pub fn sys_yield() -> isize {
 }
 pub fn sys_get_time(time: *mut Time) -> isize {
     let current_time = crate::timer::get_cost_time(); //获取微秒
+    // println!("current: {}",current_time);
     unsafe {
-        *time = Time {
-            s: current_time / 1000_1000,
-            us: current_time % 1000_1000,
+        *(translated_refmut(current_user_token(),time)) = Time {
+            s: current_time / 1000_000,
+            us: current_time % 1000_000,
         };
     }
     0
