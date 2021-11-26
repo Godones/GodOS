@@ -86,8 +86,8 @@ pub fn trap_handler() -> ! {
             tf.reg[10] = syscall(tf.reg[17], [tf.reg[10], tf.reg[11], tf.reg[12]]) as usize;
         }
         //页错误，应该是内存泄露什么的？
-        Trap::Exception(Exception::StorePageFault | Exception::StoreFault) => {
-            ERROR!("[kernel] PageFault in application, core dumped.");
+        Trap::Exception(Exception::StorePageFault | Exception::StoreFault|Exception::LoadFault|Exception::LoadPageFault) => {
+            ERROR!("[kernel] {:?} in application, core dumped.",scause.cause());
             // panic!("StorePageFault");
             exit_current_run_next();
         }
@@ -120,6 +120,6 @@ fn breakpoint_handler(sepc: &mut usize) {
 
 //S态时钟处理函数
 fn supertimer_handler() {
-    set_next_timetrigger();
+    // set_next_timetrigger();
     suspend_current_run_next();
 }

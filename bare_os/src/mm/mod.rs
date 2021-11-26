@@ -5,7 +5,7 @@ pub mod page_table;
 
 use crate::println;
 pub use memory_set::remap_test;
-pub use memory_set::KERNEL_SPACE;
+pub use memory_set::{KERNEL_SPACE,MapPermission};
 pub fn init() {
     frame_allocator::init_frame_allocator();
     frame_allocator::frame_test();

@@ -84,7 +84,7 @@ impl MemorySet {
             asm!("sfence.vma", options(nostack))
         }
     }
-    fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
+    pub fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
         //插入一个段,并可以在映射的物理页帧上写入数据
         //map方法会 在页表中添加这个段对应的虚拟页号和物理页号
         map_area.map(&mut self.page_table);
@@ -93,6 +93,11 @@ impl MemorySet {
         }
         self.areas.push(map_area); //插入段管理器中
     }
+
+    pub fn delete_some_page(&mut self,taget:VirtPageNum){
+        self.page_table.unmap(taget);
+    }
+
     pub fn insert_framed_area(
         &mut self,
         start_addr: VirtAddr,
@@ -269,7 +274,7 @@ impl MemorySet {
 }
 
 impl MapArea {
-    fn new(
+    pub fn new(
         start_addr: VirtAddr,
         end_addr: VirtAddr,
         map_type: MapType,

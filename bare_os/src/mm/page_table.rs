@@ -71,7 +71,6 @@ impl PageTable {
     pub fn new() -> Self {
         //为根页表申请一个物理页帧
         let root_frame = frame_alloc().unwrap();
-
         PageTable {
             root_ppn: root_frame.ppn,
             frames: vec![root_frame],
@@ -99,7 +98,6 @@ impl PageTable {
     fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
         //根据虚拟页号找到页表项
         let idxs = vpn.index(); //将虚拟页表号划分3部分
-                                // DEBUG!("[Debug] idxs: {:?} root_ppn: {:?}",idxs,self.root_ppn);
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
         for i in 0..3 {
@@ -160,14 +158,13 @@ impl PageTable {
         contents
     }
 
-    fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
+    pub fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
         //根据虚拟页号找到页表项
         let idxs = vpn.index(); //将虚拟页表号划分
         let mut ppn = self.root_ppn;
         let mut result: Option<&PageTableEntry> = None;
         for i in 0..3 {
             let pte = &ppn.get_pte_array()[idxs[i]];
-
             if !pte.is_valid() {
                 return None;
             }
@@ -175,7 +172,6 @@ impl PageTable {
                 result = Some(pte);
                 return result;
             }
-
             ppn = pte.ppn();
         }
         result

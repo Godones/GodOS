@@ -81,13 +81,16 @@ impl PhysAddr {
 impl VirtAddr {
     pub fn page_offset(&self) -> usize {
         //地址偏移
-        self.0 & (PAGE_SIZE - 1) //通过&运算确定物理地址是否和页大小对齐
+        self.0 & (PAGE_SIZE - 1) //通过&运算确定虚拟地址是否和页大小对齐，计算页的偏移量
     }
     pub fn floor(&self) -> VirtPageNum {
         VirtPageNum::from(self.0 / PAGE_SIZE)
     }
     pub fn ceil(&self) -> VirtPageNum {
         VirtPageNum::from((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
+    }
+    pub fn aligned(&self)->bool{
+        self.page_offset()==0 //判断是否与页对齐
     }
 }
 

@@ -1,4 +1,6 @@
 use core::panic::PanicInfo;
+use crate::exit;
+
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     if let Some(location) = _info.location() {
@@ -12,5 +14,8 @@ fn panic(_info: &PanicInfo) -> ! {
         println!("Panicked :{}", _info.message().unwrap())
     }
 
-    loop {}
+    exit(-2);
+    loop {
+
+    }
 }

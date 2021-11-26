@@ -7,7 +7,7 @@ const SYSCALL_TIME: usize = 169;
 const SYSCALL_SET_PRIORITY:usize = 140;
 
 const SYSCALL_MMAP:usize = 222;
-
+const SYSCALL_MUNMAP:usize = 215;
 
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
@@ -60,3 +60,4 @@ pub fn sys_set_priority(priority:isize)->isize{
 pub fn sys_mmap(start:usize,len:usize,port:usize)->isize{
     syscall(SYSCALL_MMAP,[start,len,port])
 }
+

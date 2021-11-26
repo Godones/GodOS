@@ -9,13 +9,8 @@ mod lang_items;
 pub mod syscall;
 mod time;
 
-use crate::syscall::{
-    sys_exit,
-    sys_get_time,
-    sys_write,
-    sys_yield,
-    sys_set_priority
-};
+use core::task::Poll;
+use crate::syscall::{sys_exit, sys_get_time, sys_write, sys_yield, sys_set_priority, sys_mmap};
 pub use crate::time::Time;
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
@@ -35,7 +30,9 @@ pub fn yield_() -> isize {
 pub fn set_priority(priority:isize)->isize{
     sys_set_priority(priority)
 }
-
+pub fn mmap(start:usize,len:usize,port:usize)->isize{
+    sys_mmap(start,len,port)
+}
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]
 #[no_mangle]

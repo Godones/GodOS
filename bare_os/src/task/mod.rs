@@ -5,9 +5,12 @@ use crate::trap::context::TrapFrame;
 use crate::INFO;
 use alloc::vec::Vec;
 use core::cell::RefCell;
+use core::iter::Map;
 use lazy_static::lazy_static;
 use switch::__switch;
 use task::{TaskControlBlock, TaskStatus};
+use crate::mm::address::VirtPageNum;
+use crate::mm::memory_set::MapArea;
 
 /// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
 ///任务的运行状态：未初始化->准备执行->正在执行->已退出
@@ -67,6 +70,11 @@ impl TaskManager {
         let current_task = self.inner.borrow().current_task;
         self.inner.borrow_mut().tasks[current_task].get_trap_cx()
     }
+    fn add_area(&self,mut area: MapArea){
+        let current_task = self.inner.borrow().current_task;
+        self.inner.borrow_mut().tasks[current_task].memory_set.push(area,None);
+    }
+
     fn mark_current_suspended(&self) {
         //将当前任务变成暂停状态
         let current_task = self.inner.borrow().current_task;
@@ -181,6 +189,17 @@ pub fn current_user_token() -> usize {
 pub fn current_trap_cx() -> &'static mut TrapFrame {
     TASK_MANAGER.get_trap_cx()
 }
+pub fn current_add_area(mut area: MapArea)->isize{
+    //添加一些页
+    TASK_MANAGER.add_area(area);
+    0
+}
+pub fn current_delete_page(page:VirtPageNum)->isize{
+    TASK_MANAGER
+    0
+}
+
+
 pub fn set_priority(priority: usize) -> isize {
     //设置特权级
     TASK_MANAGER.set_priority(priority)
