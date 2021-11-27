@@ -1,6 +1,6 @@
 use core::task::Poll;
 use crate::mm::page_table::{PageTable, translated_refmut};
-use crate::task::{current_add_area, set_priority};
+use crate::task::{current_add_area, current_delete_page, set_priority};
 use crate::task::suspend_current_run_next;
 use crate::task::{current_user_token, exit_current_run_next};
 use crate::timer::Time;
@@ -85,15 +85,18 @@ pub fn sys_munmap(start:usize,len:usize)->isize{
     if !start_vir.aligned() {
         return -1;
     }
+    DEBUG!("[kernel] here");
     let start_vpn = start_vir.floor();//起始页
     let end_vpn = VirtAddr::from(start+len).ceil();//向上取整结束页
     let current_user_token = current_user_token();//获取当前用户程序的satp
     let temp_page_table = PageTable::from_token(current_user_token);
     for vpn in start_vpn.0..end_vpn.0{
-        if let Some(val) = temp_page_table.find_pte(vpn.into()){
+        if temp_page_table.find_pte(vpn.into()).is_none(){
             return -1;
         }//提前返回错误值,如果这些页存在不位于内存的则错误返回
-
+    }
+    for vpn in start_vpn.0..end_vpn.0 {
+        current_delete_page(vpn.into());
     }
     0
 }

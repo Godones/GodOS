@@ -10,7 +10,7 @@ pub mod syscall;
 mod time;
 
 use core::task::Poll;
-use crate::syscall::{sys_exit, sys_get_time, sys_write, sys_yield, sys_set_priority, sys_mmap};
+use crate::syscall::{sys_exit, sys_get_time, sys_write, sys_yield, sys_set_priority, sys_mmap, sys_munmap};
 pub use crate::time::Time;
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
@@ -29,6 +29,9 @@ pub fn yield_() -> isize {
 
 pub fn set_priority(priority:isize)->isize{
     sys_set_priority(priority)
+}
+pub fn munmap(start:usize,len:usize)->isize{
+    sys_munmap(start,len)
 }
 pub fn mmap(start:usize,len:usize,port:usize)->isize{
     sys_mmap(start,len,port)

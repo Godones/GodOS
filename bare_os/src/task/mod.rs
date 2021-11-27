@@ -74,6 +74,10 @@ impl TaskManager {
         let current_task = self.inner.borrow().current_task;
         self.inner.borrow_mut().tasks[current_task].memory_set.push(area,None);
     }
+    fn delete_page(&self,vpn:VirtPageNum){
+        let current_task = self.inner.borrow().current_task;
+        self.inner.borrow_mut().tasks[current_task].memory_set.delete_some_page(vpn);
+    }
 
     fn mark_current_suspended(&self) {
         //将当前任务变成暂停状态
@@ -195,7 +199,7 @@ pub fn current_add_area(mut area: MapArea)->isize{
     0
 }
 pub fn current_delete_page(page:VirtPageNum)->isize{
-    TASK_MANAGER
+    TASK_MANAGER.delete_page(page);
     0
 }
 
