@@ -224,3 +224,8 @@ pub fn translated_refmut<T>(token:usize,ptr:*mut T) ->&'static mut T{
     let start = ptr as usize;
     page_table.translated_va(start.into()).unwrap().get_mut()
 }
+
+
+pub struct UserBuffer{
+    pub buffer:Vec<&'static [u8]>,
+}

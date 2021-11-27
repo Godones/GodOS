@@ -20,6 +20,7 @@ mod task;
 mod tests;
 mod timer;
 mod trap;
+mod file;
 
 extern crate alloc;
 
