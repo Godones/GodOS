@@ -1,4 +1,4 @@
-use crate::{DEBUG, ERROR, INFO, println, TRACE, WARN};
+use crate::{println, DEBUG, ERROR, INFO, TRACE, WARN};
 pub fn color_output_test() {
     extern "C" {
         fn stext();
@@ -19,7 +19,8 @@ pub fn color_output_test() {
     DEBUG!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
     TRACE!(
         "boot_stack [{:#x}, {:#x})",
-        boot_stack as usize, boot_stack_top as usize
+        boot_stack as usize,
+        boot_stack_top as usize
     );
     println!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
 }

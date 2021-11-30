@@ -1,4 +1,5 @@
 use crate::config::{BIG_STRIDE, TRAMP_CONTEXT};
+use crate::file::{File, Stdin, Stdout};
 use crate::loader::get_data_by_name;
 use crate::mm::address::{PhysPageNum, VirtAddr};
 use crate::mm::MemorySet;
@@ -8,7 +9,8 @@ use crate::task::context::TaskContext;
 use crate::task::pid::{pid_alloc, KernelStack, PidHandle};
 use crate::trap::context::TrapFrame;
 use crate::trap::trap_handler;
-use alloc::sync::{Arc,Weak};
+use alloc::sync::{Arc, Weak};
+use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefMut;
 
@@ -27,15 +29,16 @@ pub struct TaskControlBlock {
     inner: MyRefCell<TaskControlBlockInner>,
 }
 pub struct TaskControlBlockInner {
-    pub task_cx_ptr: TaskContext,               //任务上下文栈顶地址的位置,位于内核空间中
+    pub task_cx_ptr: TaskContext, //任务上下文栈顶地址的位置,位于内核空间中
     pub task_status: TaskStatus,
-    pub memory_set: MemorySet,                  //任务地址空间
-    pub trap_cx_ppn: PhysPageNum,               //trap上下文所在的物理块
-    pub base_size: usize,                       //应用程序的大小
-    pub exit_code: isize,                       //保存退出码
-    pub parent: Option<Weak<TaskControlBlock>>, //父进程
-    pub children: Vec<Arc<TaskControlBlock>>,   //子进程需要引用计数
-
+    pub memory_set: MemorySet,                              //任务地址空间
+    pub trap_cx_ppn: PhysPageNum,                           //trap上下文所在的物理块
+    pub base_size: usize,                                   //应用程序的大小
+    pub exit_code: isize,                                   //保存退出码
+    pub parent: Option<Weak<TaskControlBlock>>,             //父进程
+    pub children: Vec<Arc<TaskControlBlock>>,               //子进程需要引用计数
+    pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>, //文件描述符表
+    // 文件描述符 (File Descriptor) 代表了一个特定读写属性的I/O资源。
     pub stride: usize, //已走步长
     pub pass: usize,   //每一步的步长，只与特权级相关
 }
@@ -60,7 +63,7 @@ impl TaskControlBlockInner {
 }
 
 impl TaskControlBlock {
-    pub fn new(data:&[u8]) -> Self {
+    pub fn new(data: &[u8]) -> Self {
         // let data = get_data_by_name(task_name).unwrap();
         //构造用户地址空间
         let (memory_set, use_sp, entry_point) = MemorySet::from_elf(data);
@@ -69,7 +72,7 @@ impl TaskControlBlock {
             .translate(VirtAddr::from(TRAMP_CONTEXT).into())
             .unwrap()
             .ppn(); //找到任务上下文对应的页表项并获得对应的物理页号
-        //为进程分配pid
+                    //为进程分配pid
         let pid = pid_alloc();
         //根据pid为进程分配内核栈
         let kernel_stack = KernelStack::new(&pid);
@@ -87,6 +90,11 @@ impl TaskControlBlock {
                 exit_code: 0,
                 parent: None,
                 children: Vec::new(),
+                fd_table: vec![
+                    Some(Arc::new(Stdin)),
+                    Some(Arc::new(Stdout)),
+                    Some(Arc::new(Stdout)),
+                ],
                 stride: 0,
                 pass: BIG_STRIDE / 2,
             }),
@@ -110,24 +118,22 @@ impl TaskControlBlock {
     pub fn get_pid(&self) -> usize {
         self.pid.0
     }
-    pub fn spawn(self:&Arc<TaskControlBlock>,path:&str)->isize{
+    pub fn spawn(self: &Arc<TaskControlBlock>, path: &str) -> isize {
         //直接创建一个新的子进程，并且执行程序
         let data = get_data_by_name(path);
-        if let Some(data) = data{
+        if let Some(data) = data {
             let task_control_block = TaskControlBlock::new(data);
             //修改其父进程的引用
             let mut inner = task_control_block.get_inner_access();
             inner.parent = Some(Arc::downgrade(self));
             0
-        }else{
+        } else {
             return -1;
         }
-        
-
     }
     pub fn exec(&self, elf_data: &[u8]) {
         //更换当前进程的数据
-        let (memoryset,user_sp,entry_point) = MemorySet::from_elf(elf_data);
+        let (memoryset, user_sp, entry_point) = MemorySet::from_elf(elf_data);
         let trap_cx_ppn = memoryset
             .translate(VirtAddr::from(TRAMP_CONTEXT).into())
             .unwrap()
@@ -140,14 +146,14 @@ impl TaskControlBlock {
 
         let trap_cx = inner.get_trap_cx();
         *trap_cx = TrapFrame::app_into_context(
-            entry_point,//新的入口
-            user_sp,//新的用户栈
+            entry_point, //新的入口
+            user_sp,     //新的用户栈
             KERNEL_SPACE.lock().token(),
-            self.kernel_stack.get_stack_top(),//原有的内核栈
-            trap_handler as usize
+            self.kernel_stack.get_stack_top(), //原有的内核栈
+            trap_handler as usize,
         )
     }
-    pub fn fork(self:&Arc<TaskControlBlock>) -> Arc<TaskControlBlock> {
+    pub fn fork(self: &Arc<TaskControlBlock>) -> Arc<TaskControlBlock> {
         //fork一个新的进程
         //构造用户地址空间
         let mut parent_inner = self.get_inner_access();
@@ -166,7 +172,17 @@ impl TaskControlBlock {
         //获取内核栈顶
         let kernel_stack_top = kernel_stack.get_stack_top();
 
-        let task_control_block = Arc::new(Self{
+        //copy父进程的文件描述符表
+        let mut new_fdtable: Vec<Option<Arc<dyn File + Send + Sync>>> = Vec::new();
+        for fd in parent_inner.fd_table.iter() {
+            if let Some(f) = fd {
+                new_fdtable.push(Some(Arc::clone(f)));
+            } else {
+                new_fdtable.push(None); //文件描述符为空，代表此类型资源不可用
+            }
+        }
+
+        let task_control_block = Arc::new(Self {
             pid,
             kernel_stack,
             inner: MyRefCell::new(TaskControlBlockInner {
@@ -174,19 +190,19 @@ impl TaskControlBlock {
                 task_cx_ptr: TaskContext::goto_trap_return(kernel_stack_top),
                 memory_set,
                 trap_cx_ppn,
-                base_size:parent_inner.base_size,
+                base_size: parent_inner.base_size,
                 exit_code: 0,
-                parent: Some(Arc::downgrade(self)),//弱引用
-                children:Vec::new(),
+                parent: Some(Arc::downgrade(self)), //弱引用
+                children: Vec::new(),
+                fd_table: new_fdtable,
                 stride: 0,
                 pass: BIG_STRIDE / 2,
             }),
         }); //构造任务控制块
         parent_inner.children.push(task_control_block.clone());
         let trap_cx = task_control_block.get_inner_access().get_trap_cx();
-         //构造trap上下文写入内存中
+        //构造trap上下文写入内存中
         trap_cx.kernel_sp = kernel_stack_top;
         task_control_block
     }
-
 }

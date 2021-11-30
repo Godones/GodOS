@@ -1,9 +1,9 @@
-use alloc::collections::btree_map::BTreeMap;
 use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAMP_CONTEXT, USER_STACK_SIZE};
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};
 use crate::{println, INFO};
+use alloc::collections::btree_map::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use bitflags::bitflags;
@@ -106,15 +106,15 @@ impl MemorySet {
 
     pub fn remove_from_startaddr(&mut self, startaddr: VirtAddr) {
         //从一个起始地址找到对应的段，将这个段对应的页删除
-        let virtpage: VirtPageNum = startaddr.into();//转换为虚拟页号
+        let virtpage: VirtPageNum = startaddr.into(); //转换为虚拟页号
         if let Some((index, area)) = self
             .areas
             .iter_mut()
-            .enumerate()//根据每一个内存区域的起始页号找到对应的area
+            .enumerate() //根据每一个内存区域的起始页号找到对应的area
             .find(|(_index, maparea)| maparea.vpn_range.get_start() == virtpage)
         {
-            area.unmap(&mut self.page_table);//解除原来的映射
-            self.areas.remove(index);//从area中将其删除
+            area.unmap(&mut self.page_table); //解除原来的映射
+            self.areas.remove(index); //从area中将其删除
         }
     }
     fn new_kernel() -> Self {
@@ -276,14 +276,14 @@ impl MemorySet {
         let mut memoryset = MemorySet::new_bare();
         memoryset.map_trampoline(); //映射跳板页，跳板页并没有加入到地址空间中，需要单独映射
         for area in src_memset.areas.iter() {
-            let new_area = MapArea::copy_from_other(area);//拷贝一个maparea
-            memoryset.push(new_area, None);//
+            let new_area = MapArea::copy_from_other(area); //拷贝一个maparea
+            memoryset.push(new_area, None); //
             for vpn in area.vpn_range {
-                let src_data = src_memset.translate(vpn).unwrap().ppn();//获取父进程的虚拟页的对应的物理页
-                let dis_data = memoryset.translate(vpn).unwrap().ppn();//获取子进程虚拟页对应的物理页
+                let src_data = src_memset.translate(vpn).unwrap().ppn(); //获取父进程的虚拟页的对应的物理页
+                let dis_data = memoryset.translate(vpn).unwrap().ppn(); //获取子进程虚拟页对应的物理页
                 dis_data
-                    .get_bytes_array()//获取字节数组
-                    .copy_from_slice(src_data.get_bytes_array());//拷贝数据
+                    .get_bytes_array() //获取字节数组
+                    .copy_from_slice(src_data.get_bytes_array()); //拷贝数据
             }
         }
         memoryset
@@ -296,8 +296,8 @@ impl MemorySet {
             PTEFlags::R | PTEFlags::X,
         );
     }
-    pub fn clear_area_data(&mut self){
-        self.areas.clear()//回收所有的段
+    pub fn clear_area_data(&mut self) {
+        self.areas.clear() //回收所有的段
     }
 }
 

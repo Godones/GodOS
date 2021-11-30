@@ -4,6 +4,7 @@ make: Entering directory '/home/MyOS/GodOS/bare_os'
 cargo install cargo-binutils
 rustup component add rust-src
 rustup component add llvm-tools-preview
+ 
 cd ../user && make build
 echo Platform: qemu
 cp src/linker-qemu.ld src/linker.ld

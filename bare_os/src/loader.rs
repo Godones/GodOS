@@ -34,7 +34,6 @@ pub fn get_data_by_name(app_name: &str) -> Option<&'static [u8]> {
     (0..get_num_app())
         .find(|&x| APP_NAMES[x] == app_name)
         .map(|x| get_app_data(x))
-
 }
 
 pub fn show_apps() {

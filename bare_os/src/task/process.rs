@@ -1,6 +1,5 @@
-
-use crate::mm::address::{ VirtAddr};
-use crate::mm::{MapPermission};
+use crate::mm::address::VirtAddr;
+use crate::mm::MapPermission;
 use crate::task::context::TaskContext;
 use crate::task::manager::fetch_task;
 use crate::task::switch::__switch;
@@ -37,7 +36,7 @@ impl Processor {
         //用于fork()调用
         self.current.as_ref().map(|task| Arc::clone(task))
     }
-    fn get_idle_task_cx_ptr(&mut self) -> * mut TaskContext {
+    fn get_idle_task_cx_ptr(&mut self) -> *mut TaskContext {
         &mut self.idle_task_cx_ptr as *mut _
     }
 }
@@ -63,7 +62,11 @@ pub fn current_trap_cx_ptr() -> &'static mut TrapFrame {
         .get_trap_cx()
 }
 
-pub fn current_add_area(start_addr:VirtAddr,end_addr:VirtAddr,permission:MapPermission)->isize{
+pub fn current_add_area(
+    start_addr: VirtAddr,
+    end_addr: VirtAddr,
+    permission: MapPermission,
+) -> isize {
     //向当前进程添加一些物理内存区域
     copy_current_task()
         .unwrap()
@@ -73,7 +76,7 @@ pub fn current_add_area(start_addr:VirtAddr,end_addr:VirtAddr,permission:MapPerm
     0
 }
 
-pub fn current_delete_page(start_addr:VirtAddr)->isize{
+pub fn current_delete_page(start_addr: VirtAddr) -> isize {
     copy_current_task()
         .unwrap()
         .get_inner_access()

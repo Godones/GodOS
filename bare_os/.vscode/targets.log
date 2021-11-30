@@ -1,6 +1,4 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
-make: *** No rule to make target 'all'.  Stop.
- 
 # GNU Make 4.2.1
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2016 Free Software Foundation, Inc.
@@ -8,7 +6,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Tue Nov 30 17:01:35 2021
+# Make data base, printed on Tue Nov 30 22:22:01 2021
 
 # Variables
 
@@ -63,7 +61,7 @@ DISASM = -x
 # environment
 VSCODE_LOG_STACK = false
 # environment
-VSCODE_IPC_HOOK_CLI = /mnt/wslg/runtime-dir/vscode-ipc-fbec16a3-a630-43f8-a422-ea4ec99c3385.sock
+VSCODE_IPC_HOOK_CLI = /mnt/wslg/runtime-dir/vscode-ipc-97096862-5dd6-47c9-903b-3dfad410043a.sock
 # default
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
 # environment
@@ -83,7 +81,7 @@ MODE := release
 # default
 .LOADED := 
 # environment
-WSL_INTEROP = /run/WSL/9711_interop
+WSL_INTEROP = /run/WSL/1704_interop
 # environment
 PULSE_SERVER = /mnt/wslg/PulseServer
 # environment
@@ -281,12 +279,14 @@ build: env target/riscv64gc-unknown-none-elf/release/bare_os.bin
 .DEFAULT:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
+ 
+make: *** No rule to make target 'all'.  Stop.
+ 
 #  File has not been updated.
 
 run: run-inner
 #  Implicit rule search has not been done.
 #  Modification time never checked.
- 
 #  File has not been updated.
 
 clean:
@@ -340,6 +340,6 @@ env:
 # strcache performance: lookups = 58 / hit rate = 51%
 # hash-table stats:
 # Load=28/8192=0%, Rehash=0, Collisions=1/58=2%
-# Finished Make data base on Tue Nov 30 17:01:35 2021
+# Finished Make data base on Tue Nov 30 22:22:02 2021
 
  

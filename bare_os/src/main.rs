@@ -10,6 +10,7 @@
 #[macro_use]
 pub mod panic;
 mod config;
+mod file;
 mod loader;
 mod mm;
 mod my_struct;
@@ -20,7 +21,6 @@ mod task;
 mod tests;
 pub mod timer;
 mod trap;
-mod file;
 
 extern crate alloc;
 

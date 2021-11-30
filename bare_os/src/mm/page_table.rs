@@ -2,11 +2,11 @@ extern crate bitflags;
 
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::bitflags;
-use alloc::string::String;
-
+use core::iter::IntoIterator;
 //页表项标志位
 bitflags! {
     pub struct PTEFlags:u8{
@@ -128,18 +128,16 @@ impl PageTable {
             frames: Vec::new(),
         }
     }
-    pub fn translated_va(&self,va:VirtAddr)->Option<PhysAddr>{
+    pub fn translated_va(&self, va: VirtAddr) -> Option<PhysAddr> {
         //将一个虚拟地址转换为一个物理地址
-        self.find_pte(va.floor())
-            .map(|pte|{
-                //找到对应的页表项
-                let phyaddr:PhysAddr = pte.ppn().into();
-                let offset = va.page_offset();
-                let align_phyaddr:usize = phyaddr.into();
-                (align_phyaddr+offset).into()
-            })
+        self.find_pte(va.floor()).map(|pte| {
+            //找到对应的页表项
+            let phyaddr: PhysAddr = pte.ppn().into();
+            let offset = va.page_offset();
+            let align_phyaddr: usize = phyaddr.into();
+            (align_phyaddr + offset).into()
+        })
     }
-
 
     pub fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
         //根据虚拟页号找到页表项
@@ -166,11 +164,7 @@ impl PageTable {
     }
 }
 
-pub fn translated_byte_buffer(
-    token: usize,
-    ptr: *const u8,
-    len: usize,
-) -> Vec<&'static mut [u8]> {
+pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
     //在内核打印字符时需要访问用户地址空间缓冲区的内容
     let page_table = PageTable::from_token(token);
     let mut start_addr = ptr as usize; //起始地址
@@ -189,8 +183,7 @@ pub fn translated_byte_buffer(
             contents.push(&mut ppn.get_bytes_array()[start_viraddr.page_offset()..]);
         } else {
             contents.push(
-                &mut ppn.get_bytes_array()
-                    [start_viraddr.page_offset()..end_viraddr.page_offset()],
+                &mut ppn.get_bytes_array()[start_viraddr.page_offset()..end_viraddr.page_offset()],
             );
         }
 
@@ -198,34 +191,76 @@ pub fn translated_byte_buffer(
     }
     contents
 }
-pub fn translated_str(token:usize,ptr: *const u8)->String{
+pub fn translated_str(token: usize, ptr: *const u8) -> String {
     //根据token和字符串指针在应用地址空间中查找
     //应用程序的名称
     let page_table = PageTable::from_token(token);
     let mut name = String::new();
     let mut start = ptr as usize;
     loop {
-        let ch:u8 = *(page_table
+        let ch: u8 = *(page_table
             .translated_va(VirtAddr::from(start))
             .unwrap()
-            .get_mut());//将虚拟地址转化为物理地址，再从物理地址取出相应的内容
-        if ch==0 {
+            .get_mut()); //将虚拟地址转化为物理地址，再从物理地址取出相应的内容
+        if ch == 0 {
             break;
-        }
-        else {
+        } else {
             name.push(ch as char);
-            start +=1;
+            start += 1;
         }
     }
     name
 }
-pub fn translated_refmut<T>(token:usize,ptr:*mut T) ->&'static mut T{
+pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
     let page_table = PageTable::from_token(token);
     let start = ptr as usize;
     page_table.translated_va(start.into()).unwrap().get_mut()
 }
 
-
-pub struct UserBuffer{
-    pub buffer:Vec<&'static [u8]>,
+pub struct UserBuffer {
+    pub buffer: Vec<&'static mut [u8]>,
+}
+impl UserBuffer {
+    pub fn new(buffer: Vec<&'static mut [u8]>) -> Self {
+        Self { buffer }
+    }
+    pub fn len(&self) -> usize {
+        let mut length = 0;
+        for buf in self.buffer.iter() {
+            length += buf.len();
+        }
+        length
+    }
+}
+pub struct UserBufferItertor {
+    buffer: Vec<&'static mut [u8]>,
+    current: usize,
+    index: usize,
+}
+impl Iterator for UserBufferItertor {
+    type Item = *mut u8;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current >= self.buffer.len() {
+            None
+        } else {
+            let val = &mut self.buffer[self.current][self.index] as *mut u8;
+            if self.index + 1 >= self.buffer[self.current].len() {
+                self.current += 1;
+            } else {
+                self.index += 1;
+            }
+            Some(val)
+        }
+    }
+}
+impl IntoIterator for UserBuffer {
+    type Item = *mut u8;
+    type IntoIter = UserBufferItertor;
+    fn into_iter(self) -> Self::IntoIter {
+        UserBufferItertor {
+            buffer: self.buffer,
+            current: 0,
+            index: 0,
+        }
+    }
 }

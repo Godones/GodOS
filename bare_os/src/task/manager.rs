@@ -1,5 +1,5 @@
-use alloc::collections::vec_deque::VecDeque;
 use crate::task::task::TaskControlBlock;
+use alloc::collections::vec_deque::VecDeque;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::Mutex;

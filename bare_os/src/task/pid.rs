@@ -46,9 +46,8 @@ impl PidAlloc for PidAllocator {
 }
 
 lazy_static! {
-    static ref PIDALLOCATOR: Mutex<PidAllocator> =  Mutex::new(PidAllocator::new());
+    static ref PIDALLOCATOR: Mutex<PidAllocator> = Mutex::new(PidAllocator::new());
 }
-
 
 pub fn pid_alloc() -> PidHandle {
     PIDALLOCATOR.lock().alloc()

@@ -1,16 +1,16 @@
 pub mod context;
 
+use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
-use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
 
+use crate::task::suspend_current_run_next;
 use crate::task::{current_trap_cx_ptr, current_user_token, exit_current_run_next};
-use crate::{ ERROR,  println};
+use crate::{println, ERROR};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     stval, stvec,
 };
-use crate::task::suspend_current_run_next;
 global_asm!(include_str!("trap.asm"));
 
 /// 批处理操作系统初始化
@@ -60,7 +60,7 @@ pub fn trap_return() -> ! {
         );
     } //跳转到restore_va的地方执行，这是内核与应用程序均有相同映射的trampoline区域
 
-      // panic!("Unreachable in back_to_user!");
+    // panic!("Unreachable in back_to_user!");
 }
 ///根据不同类型的中断选择不同的处理
 /// 在trap.asm中我们将x10=a0的值设置为sp的值，即内核栈地址
@@ -80,19 +80,20 @@ pub fn trap_handler() -> ! {
             //指令地址 需要跳转到下一句执行，否则就处于死循环中
             //由于sys_exec()调用会替换掉原来的trap上下文内容
             //因此需要在执行系统调用后重新对其赋值
-            let mut  tf = current_trap_cx_ptr();
+            let mut tf = current_trap_cx_ptr();
             tf.sepc += 4;
-            let answer= syscall(tf.reg[17], [tf.reg[10], tf.reg[11], tf.reg[12]]) as usize;
+            let answer = syscall(tf.reg[17], [tf.reg[10], tf.reg[11], tf.reg[12]]) as usize;
             tf = current_trap_cx_ptr();
             tf.reg[10] = answer;
         }
         //页错误，应该是内存泄露什么的？
-        Trap::Exception(Exception::StorePageFault |
-                        Exception::StoreFault|
-                        Exception::InstructionFault|
-                        Exception::InstructionPageFault|
-                        Exception::LoadPageFault|
-                        Exception::LoadFault
+        Trap::Exception(
+            Exception::StorePageFault
+            | Exception::StoreFault
+            | Exception::InstructionFault
+            | Exception::InstructionPageFault
+            | Exception::LoadPageFault
+            | Exception::LoadFault,
         ) => {
             ERROR!("[kernel] {:?} occured in application, error_address:{:#x}, error_instruction:{:#x}, core dumped.",
                 scause.cause(),
@@ -107,9 +108,9 @@ pub fn trap_handler() -> ! {
             exit_current_run_next(-3);
         }
         //断点中断
-        Trap::Exception(Exception::Breakpoint) =>{
-            let tf= current_trap_cx_ptr();
-            breakpoint_handler(tf.sepc-4);
+        Trap::Exception(Exception::Breakpoint) => {
+            let tf = current_trap_cx_ptr();
+            breakpoint_handler(tf.sepc - 4);
         }
         //s态时钟中断
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
@@ -133,5 +134,5 @@ fn breakpoint_handler(sepc: usize) {
 fn supertimer_handler() {
     // DEBUG!("[kernel] timer");
     set_next_timetrigger();
-    suspend_current_run_next ();
+    suspend_current_run_next();
 }

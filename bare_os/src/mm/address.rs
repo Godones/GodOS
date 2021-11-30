@@ -71,13 +71,11 @@ impl PhysAddr {
     pub fn ceil(&self) -> PhysPageNum {
         PhysPageNum::from((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
     }
-    pub fn get_mut<T>(&self)->&'static mut T{
-       unsafe {
-           (self.0 as *mut T).as_mut().unwrap()
-       }
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        unsafe { (self.0 as *mut T).as_mut().unwrap() }
     }
-    pub fn aligned(&self)->bool{
-        self.page_offset()==0 //是否对齐页大小
+    pub fn aligned(&self) -> bool {
+        self.page_offset() == 0 //是否对齐页大小
     }
 }
 
@@ -92,8 +90,8 @@ impl VirtAddr {
     pub fn ceil(&self) -> VirtPageNum {
         VirtPageNum::from((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
     }
-    pub fn aligned(&self)->bool{
-        self.page_offset()==0 //判断是否与页对齐
+    pub fn aligned(&self) -> bool {
+        self.page_offset() == 0 //判断是否与页对齐
     }
 }
 

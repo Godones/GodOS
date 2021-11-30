@@ -2,7 +2,7 @@ use crate::{read, write};
 use core::fmt::{self, Write};
 
 const STDOUT: usize = 1;
-const STDIN: usize = 2;
+const STDIN: usize = 0;
 struct Stdout;
 impl Write for Stdout {
     fn write_str(&mut self, s: &str) -> fmt::Result {
