@@ -15,7 +15,7 @@ const BS: u8 = 8; //退格键
 fn main() -> isize {
     println!("The User Shell");
     let mut process_name = String::new();
-    print!(">>");
+    print!("GodOS#");
     loop {
         let ch = getchar();
         match ch {
@@ -24,7 +24,6 @@ fn main() -> isize {
                 println!("");//换行
                 if !process_name.is_empty() {
                     process_name.push('\0');
-                    println!("Run the {}",process_name);
                     let pid = fork();
                     if pid == 0 {
                         //子进程
@@ -45,7 +44,7 @@ fn main() -> isize {
                     }
                     process_name.clear();
                 }
-                print!(">>");
+                print!("GodOS#");
             }
             DEL | BS => {
                 //退格键

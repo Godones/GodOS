@@ -93,7 +93,6 @@ macro_rules! println {
 
 ///彩色输出，用于不同信息之间的分隔
 ///表示发生严重错误，很可能或者已经导致程序崩溃
-///
 #[macro_export]
 macro_rules! ERROR {
     () => ($crate::print!("\n"));
@@ -103,7 +102,6 @@ macro_rules! ERROR {
 }
 
 // 表示发生不常见情况，但是并不一定导致系统错误
-
 #[macro_export]
 macro_rules! WARN {
     () => (
@@ -114,12 +112,11 @@ macro_rules! WARN {
     ($($arg:tt)*) => {
         #[cfg(any(feature = " WARN ", feature = "INFO", feature = "DEBUG", feature = "TRACE"))]
         ($crate::print!("\x1b[93m{}\x1b[0m\n", format_args!($($arg)*)));
-        $crate::print("");
+        $crate::print!("");
     }
 }
 
 // 比较中庸的选项，输出比较重要的信息，比较常用
-
 #[macro_export]
 macro_rules! INFO {
     () => {
@@ -133,7 +130,6 @@ macro_rules! INFO {
         $crate::print!("");
     }
 }
-
 #[macro_export]
 macro_rules! DEBUG {
     () => {
@@ -149,7 +145,6 @@ macro_rules! DEBUG {
 }
 
 // 最详细的输出，跟踪了每一步关键路径的执行
-
 #[macro_export]
 macro_rules! TRACE {
     () => {

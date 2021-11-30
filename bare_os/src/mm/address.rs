@@ -76,6 +76,9 @@ impl PhysAddr {
            (self.0 as *mut T).as_mut().unwrap()
        }
     }
+    pub fn aligned(&self)->bool{
+        self.page_offset()==0 //是否对齐页大小
+    }
 }
 
 impl VirtAddr {
@@ -88,6 +91,9 @@ impl VirtAddr {
     }
     pub fn ceil(&self) -> VirtPageNum {
         VirtPageNum::from((self.0 + PAGE_SIZE - 1) / PAGE_SIZE)
+    }
+    pub fn aligned(&self)->bool{
+        self.page_offset()==0 //判断是否与页对齐
     }
 }
 

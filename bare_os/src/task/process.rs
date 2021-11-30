@@ -1,4 +1,6 @@
 
+use crate::mm::address::{ VirtAddr};
+use crate::mm::{MapPermission};
 use crate::task::context::TaskContext;
 use crate::task::manager::fetch_task;
 use crate::task::switch::__switch;
@@ -60,6 +62,25 @@ pub fn current_trap_cx_ptr() -> &'static mut TrapFrame {
         .get_inner_access()
         .get_trap_cx()
 }
+
+pub fn current_add_area(start_addr:VirtAddr,end_addr:VirtAddr,permission:MapPermission)->isize{
+    //向当前进程添加一些物理内存区域
+    copy_current_task()
+        .unwrap()
+        .get_inner_access()
+        .memory_set
+        .insert_framed_area(start_addr, end_addr, permission);
+    0
+}
+
+pub fn current_delete_page(start_addr:VirtAddr)->isize{
+    copy_current_task()
+        .unwrap()
+        .get_inner_access()
+        .memory_set
+        .remove_from_startaddr(start_addr);
+    0
+}
 ///idle控制流的作用是将进程切换隔离开来，这样换入换出进程时所用的栈是不一样的
 /// idle控制流用于进程调度，其位于内核进程的栈上，而换入换出是在应用的内核栈进行
 pub fn run() {
@@ -83,6 +104,7 @@ pub fn run() {
         }
     }
 }
+
 pub fn schedule(last_task_cx_ptr: *mut TaskContext) {
     //当时间片用完或者是进程自行放弃cpu时，需要切换进程
     // 这时需要切换到内核进行进程切换的idle控制流上，在

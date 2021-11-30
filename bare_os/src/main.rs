@@ -18,7 +18,7 @@ mod syscall;
 mod system_allocator;
 mod task;
 mod tests;
-mod timer;
+pub mod timer;
 mod trap;
 mod file;
 
@@ -45,19 +45,16 @@ fn clear_bss() {
 extern "C" fn rust_main() -> ! {
     clear_bss();
     INFO!("[kernel] Godone OS");
-    //test
+    // test
     {
         // color_output_test();
         crate::system_allocator::heap_test();
         // crate::mm::frame_allocator::frame_test();
     }
-
-    //trap初始化，设置stvec的入口地址
-
+    // trap初始化，设置stvec的入口地址
     mm::init();
     mm::remap_test(); //测试内核映射的正确性
                       //运行程序
-
     loader::show_apps();
     task::add_initproc();
     trap::init();
