@@ -1,6 +1,6 @@
 use crate::config::{KERNEL_STACK_SIZE, PAGE_SIZE, TRAMPOLINE};
 use crate::mm::address::VirtAddr;
-use crate::mm::memory_set::MapPermission;
+use crate::mm::MapPermission;
 use crate::mm::KERNEL_SPACE;
 use alloc::vec::Vec;
 use lazy_static::lazy_static;

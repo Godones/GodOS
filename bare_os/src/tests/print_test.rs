@@ -1,4 +1,4 @@
-use crate::println;
+use crate::{DEBUG, ERROR, INFO, println, TRACE, WARN};
 pub fn color_output_test() {
     extern "C" {
         fn stext();
@@ -13,11 +13,11 @@ pub fn color_output_test() {
         fn boot_stack_top();
     }
     // clear_bss();
-    println!("Hello, world!");
-    println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-    println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-    println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
-    println!(
+    ERROR!("Hello, world!");
+    WARN!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
+    INFO!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
+    DEBUG!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
+    TRACE!(
         "boot_stack [{:#x}, {:#x})",
         boot_stack as usize, boot_stack_top as usize
     );

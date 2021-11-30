@@ -1,13 +1,11 @@
 pub mod context;
 
-
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
 
 use crate::task::{current_trap_cx_ptr, current_user_token, exit_current_run_next};
-
-use crate::{println, ERROR};
+use crate::{ ERROR,  println};
 use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     stval, stvec,
@@ -133,6 +131,7 @@ fn breakpoint_handler(sepc: usize) {
 
 //S态时钟处理函数
 fn supertimer_handler() {
+    // DEBUG!("[kernel] timer");
     set_next_timetrigger();
     suspend_current_run_next ();
 }
