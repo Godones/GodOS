@@ -76,7 +76,6 @@ pub fn sys_fork()->isize{
     //拷贝一份
     let current_task = copy_current_task().unwrap();
     let new_task = current_task.fork();
-
     let new_pid = new_task.pid.0;
     let trap_cx_ptr= new_task.get_inner_access().get_trap_cx();
     trap_cx_ptr.reg[10] = 0;//对于子进程来说，其返回值为0
@@ -121,4 +120,13 @@ pub fn sys_waitpid(pid:isize,exit_code_ptr:*mut i32)->isize{
     }
     else { -2 }
 
+}
+pub fn sys_spawn(path:*const u8)->isize{
+    //完成新建子进程并执行应用程序的功能，即将exec与fork合并的功能
+    //这里的实现是spawn不必像fork一样复制父进程地址空间和内容
+    let token = current_user_token();
+    let name = translated_str(token,path);//查找是否存在此应用程序
+    let task = copy_current_task().unwrap();
+    task.spawn(name.as_str());
+    -1
 }

@@ -1,7 +1,7 @@
 use crate::config::{BIG_STRIDE, TRAMP_CONTEXT};
 use crate::loader::get_data_by_name;
 use crate::mm::address::{PhysPageNum, VirtAddr};
-use crate::mm::memory_set::MemorySet;
+use crate::mm::memory_set::{self, MemorySet};
 use crate::mm::KERNEL_SPACE;
 use crate::my_struct::my_ref_cell::MyRefCell;
 use crate::task::context::TaskContext;
@@ -60,8 +60,8 @@ impl TaskControlBlockInner {
 }
 
 impl TaskControlBlock {
-    pub fn new(task_name: &str) -> Self {
-        let data = get_data_by_name(task_name).unwrap();
+    pub fn new(data:&[u8]) -> Self {
+        // let data = get_data_by_name(task_name).unwrap();
         //构造用户地址空间
         let (memory_set, use_sp, entry_point) = MemorySet::from_elf(data);
         //trap上下文所在物理页帧
@@ -69,7 +69,6 @@ impl TaskControlBlock {
             .translate(VirtAddr::from(TRAMP_CONTEXT).into())
             .unwrap()
             .ppn(); //找到任务上下文对应的页表项并获得对应的物理页号
-
         //为进程分配pid
         let pid = pid_alloc();
         //根据pid为进程分配内核栈
@@ -111,6 +110,21 @@ impl TaskControlBlock {
     pub fn get_pid(&self) -> usize {
         self.pid.0
     }
+    pub fn spawn(self:&Arc<TaskControlBlock>,path:&str)->isize{
+        //直接创建一个新的子进程，并且执行程序
+        let data = get_data_by_name(path);
+        if let Some(data) = data{
+            let task_control_block = TaskControlBlock::new(data);
+            //修改其父进程的引用
+            let mut inner = task_control_block.get_inner_access();
+            inner.parent = Some(Arc::downgrade(self));
+            0
+        }else{
+            return -1;
+        }
+        
+
+    }
     pub fn exec(&self, elf_data: &[u8]) {
         //更换当前进程的数据
         let (memoryset,user_sp,entry_point) = MemorySet::from_elf(elf_data);
@@ -119,7 +133,7 @@ impl TaskControlBlock {
             .unwrap()
             .ppn();
         let mut inner = self.get_inner_access();
-        //更换地址空间和
+        //更换地址空间和trap上下文所在的物理页帧
         inner.memory_set = memoryset;
         inner.trap_cx_ppn = trap_cx_ppn;
         inner.base_size = user_sp;
@@ -173,7 +187,6 @@ impl TaskControlBlock {
          //构造trap上下文写入内存中
         trap_cx.kernel_sp = kernel_stack_top;
         task_control_block
-        //todo!("为什么子进程的用户栈不需要更改")
     }
 
 }

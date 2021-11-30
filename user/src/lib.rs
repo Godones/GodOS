@@ -14,6 +14,7 @@ use crate::syscall::{
     sys_exec, sys_exit, sys_fork, sys_get_time, sys_read, sys_set_priority, sys_waitpid, sys_write,
     sys_yield,
 };
+use syscall::{sys_getpid, sys_spawn};
 use system_allocator::init;
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
@@ -43,6 +44,21 @@ pub fn fork() -> isize {
 pub fn exec(path: &str) -> isize {
     sys_exec(path)
 }
+
+pub fn spawn(path:&str) ->isize{
+    sys_spawn(path)
+}
+pub fn getpid()->isize{
+    sys_getpid()
+}
+// pub fn getppid()->isize{
+//     sys_ppid()
+// }
+pub fn sleep(ms:usize){
+    //其实是get_time的包装
+    
+}
+
 /// 等待任意一个子进程结束？
 pub fn wait(exit_code: &mut i32) -> isize {
     loop {

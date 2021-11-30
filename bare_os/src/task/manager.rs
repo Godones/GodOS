@@ -1,5 +1,5 @@
+use alloc::collections::vec_deque::VecDeque;
 use crate::task::task::TaskControlBlock;
-use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -32,10 +32,8 @@ lazy_static! {
 
 pub fn add_task(task: Arc<TaskControlBlock>) {
     TASKMANAGER.lock().add(task);
-    // INFO!("[kernel] There is {} task",TASKMANAGER.lock().task_ready_queue.len());
 }
 pub fn fetch_task() -> Option<Arc<TaskControlBlock>> {
     let next = TASKMANAGER.lock().pop();
-    // INFO!("[kernel] Get the pid: {} task",next.as_ref().unwrap().get_pid());
     next
 }

@@ -8,16 +8,16 @@ pub mod process;
 mod switch;
 mod task;
 
-use crate::task::context::TaskContext;
+use crate::{task::context::TaskContext};
 use crate::task::task::TaskStatus;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 pub use manager::add_task;
 pub use process::{current_user_token,current_trap_cx_ptr,take_current_task,run,schedule};
-
+use crate::loader::get_data_by_name;
 
 lazy_static! {
-    pub static ref INITPROC:Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new("initproc"));
+    pub static ref INITPROC:Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(get_data_by_name("initproc").unwrap()));
     //初始化初始进程
 }
 
@@ -27,6 +27,7 @@ pub fn add_initproc() {
 }
 
 pub fn suspend_current_run_next() {
+    // DEBUG!("[kernel] suspend_run_next");
     //将当前任务变成暂停状态
     //将cpu执行的任务剥夺
     let task = take_current_task().unwrap();

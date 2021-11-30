@@ -10,7 +10,7 @@ const SYSCALL_FORK: usize = 220;
 const SYSCALL_WAITPID: usize = 260;
 const SYSCALL_EXEC: usize = 221;
 const SYSCALL_READ: usize = 63;
-
+const SYSCALL_SPAWN:usize = 400;
 
 pub fn syscall(function: usize, args: [usize; 3]) -> isize {
     // crate::println!("function: {}, args: {:?}",function,args);
@@ -24,6 +24,7 @@ pub fn syscall(function: usize, args: [usize; 3]) -> isize {
         SYSCALL_READ => sys_read(args[0],args[1]as *const u8,args[2]),
         SYSCALL_WAITPID => sys_waitpid(args[0] as isize,args[1]as *mut i32),
         SYSCALL_EXEC => sys_exec(args[0] as *const u8),
+        SYSCALL_SPAWN => sys_spawn(args[0] as *const u8),
         _ => {
             panic!("Undefined function for syscallfunction: {}", function);
         }

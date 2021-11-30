@@ -7,6 +7,10 @@ const SYSCALL_FORK: usize = 220;
 const SYSCALL_WAITPID: usize = 260;
 const SYSCALL_EXEC: usize = 221;
 const SYSCALL_READ: usize = 63;
+const SYSCALL_SPAWN: usize = 400;
+const SYSCALL_PID :usize = 172;
+
+
 
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
@@ -86,4 +90,14 @@ pub fn sys_read(fd: usize, buffer: &mut [u8]) -> isize {
         SYSCALL_READ,
         [fd, buffer.as_mut_ptr() as usize, buffer.len()],
     )
+}
+
+/// 功能：新建子进程并执行子进程
+/// 
+pub fn sys_spawn(path:&str)->isize {
+    syscall(SYSCALL_SPAWN,[path.as_ptr() as usize,0,0] )
+}
+
+pub fn sys_getpid()->isize{
+    syscall(SYSCALL_PID,[0,0,0])
 }
