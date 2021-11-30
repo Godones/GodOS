@@ -9,9 +9,10 @@ const SYSCALL_EXEC: usize = 221;
 const SYSCALL_READ: usize = 63;
 const SYSCALL_SPAWN: usize = 400;
 const SYSCALL_PID :usize = 172;
+const SYSCALL_MMAP:usize = 222;
+const SYSCALL_MUNMAP:usize = 215;
 
-
-
+use crate::Time;
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
     unsafe {
@@ -51,8 +52,8 @@ pub fn sys_yield() -> isize {
 }
 
 /// 功能：负责获取当前时间
-pub fn sys_get_time() -> isize {
-    syscall(SYSCALL_TIME, [0, 0, 0])
+pub fn sys_get_time(time:&mut Time) -> isize {
+    syscall(SYSCALL_TIME, [time as *mut Time as usize, 0, 0])
 }
 /// 功能：负责设置特权级
 pub fn sys_set_priority(priority: isize) -> isize {
@@ -100,4 +101,15 @@ pub fn sys_spawn(path:&str)->isize {
 
 pub fn sys_getpid()->isize{
     syscall(SYSCALL_PID,[0,0,0])
+}
+
+//申请一个len长度的物理内存，将其映射到start开始的许村，内存页属性为port
+//其中port等待0位表示是否可读，1位是否可写，2表示是否可执行
+// 成功返回0，错误返回-1
+pub fn sys_mmap(start:usize,len:usize,port:usize)->isize{
+    syscall(SYSCALL_MMAP,[start,len,port])
+}
+
+pub fn sys_munmap(start:usize,len:usize)->isize{
+    syscall(SYSCALL_MUNMAP,[start,len,0])
 }

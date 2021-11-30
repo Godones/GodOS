@@ -9,11 +9,11 @@ pub mod console;
 mod lang_items;
 pub mod syscall;
 mod system_allocator;
+mod time;
+pub use time::Time;
 
-use crate::syscall::{
-    sys_exec, sys_exit, sys_fork, sys_get_time, sys_read, sys_set_priority, sys_waitpid, sys_write,
-    sys_yield,
-};
+
+use crate::syscall::*;
 use syscall::{sys_getpid, sys_spawn};
 use system_allocator::init;
 
@@ -26,8 +26,8 @@ pub fn read(fd: usize, buf: &mut [u8]) -> isize {
 pub fn exit(exit_code: i32) -> isize {
     sys_exit(exit_code)
 }
-pub fn get_time() -> isize {
-    sys_get_time()
+pub fn get_time(time:& mut Time) -> isize {
+    sys_get_time(time)
 }
 pub fn yield_() -> isize {
     sys_yield()
@@ -51,12 +51,30 @@ pub fn spawn(path:&str) ->isize{
 pub fn getpid()->isize{
     sys_getpid()
 }
+
+
+
+pub fn munmap(start:usize,len:usize)->isize{
+    sys_munmap(start,len)
+}
+pub fn mmap(start:usize,len:usize,port:usize)->isize{
+    sys_mmap(start,len,port)
+}
 // pub fn getppid()->isize{
 //     sys_ppid()
 // }
 pub fn sleep(ms:usize){
     //其实是get_time的包装
-    
+    let mut time = Time::new();
+    get_time(&mut time);
+    let wait_for =ms;//等待ms+..
+    loop {
+        get_time(&mut time);
+        if time.s * 1000 > wait_for {
+            break
+        }
+        yield_();
+    }
 }
 
 /// 等待任意一个子进程结束？
