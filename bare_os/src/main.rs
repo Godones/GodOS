@@ -18,7 +18,7 @@ mod syscall;
 mod system_allocator;
 mod task;
 mod tests;
-mod timer;
+pub mod timer;
 mod trap;
 
 extern crate alloc;

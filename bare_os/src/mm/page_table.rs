@@ -141,7 +141,7 @@ impl PageTable {
     }
 
 
-    fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
+    pub fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry> {
         //根据虚拟页号找到页表项
         let idxs = vpn.index(); //将虚拟页表号划分
         let mut ppn = self.root_ppn;

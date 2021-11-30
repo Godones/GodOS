@@ -8,9 +8,9 @@ pub fn get_time() -> usize {
     time::read()
 }
 pub fn get_costtime() -> usize {
-    //以s为单位返回cpu运行时间
+    //以us为单位返回cpu运行时间
     // DEBUG!("[kernel] Debug: Get Time");
-    time::read() / (CLOCK_FREQ / 1000)
+    time::read() / (CLOCK_FREQ / 1000_000)
 }
 pub fn enable_timer_interrupt() {
     unsafe {
@@ -20,4 +20,10 @@ pub fn enable_timer_interrupt() {
 pub fn set_next_timetrigger() {
     //设置10ms产生一个中断
     set_timer(get_time() + CLOCK_FREQ / 100);
+}
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Time {
+    pub s: usize,  //秒
+    pub us: usize, //微秒
 }

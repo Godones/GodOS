@@ -302,7 +302,7 @@ impl MemorySet {
 }
 
 impl MapArea {
-    fn new(
+    pub fn new(
         start_addr: VirtAddr,
         end_addr: VirtAddr,
         map_type: MapType,

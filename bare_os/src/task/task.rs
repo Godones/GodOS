@@ -1,7 +1,7 @@
 use crate::config::{BIG_STRIDE, TRAMP_CONTEXT};
 use crate::loader::get_data_by_name;
 use crate::mm::address::{PhysPageNum, VirtAddr};
-use crate::mm::memory_set::{self, MemorySet};
+use crate::mm::MemorySet;
 use crate::mm::KERNEL_SPACE;
 use crate::my_struct::my_ref_cell::MyRefCell;
 use crate::task::context::TaskContext;
