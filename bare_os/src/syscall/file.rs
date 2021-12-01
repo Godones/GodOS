@@ -1,6 +1,6 @@
 use crate::mm::page_table::{translated_byte_buffer, UserBuffer};
+use crate::task::current_user_token;
 use crate::task::process::copy_current_task;
-use crate::task::{current_user_token};
 
 pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
     let token = current_user_token();

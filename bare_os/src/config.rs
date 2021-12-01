@@ -12,6 +12,8 @@ pub const MEMORY_END: usize = 0x8080_0000; //内存的最大值
 
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 pub const TRAMP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
+pub const RING_BUFFER_SIZE: usize = 512;
+
 #[cfg(feature = "board_qemu")]
 pub const CLOCK_FREQ: usize = 12500000;
 

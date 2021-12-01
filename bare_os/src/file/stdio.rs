@@ -4,7 +4,6 @@ use crate::print;
 use crate::sbi::console_getchar;
 use crate::task::suspend_current_run_next;
 
-
 pub struct Stdin;
 pub struct Stdout;
 impl File for Stdin {

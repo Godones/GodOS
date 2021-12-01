@@ -1,9 +1,11 @@
 use crate::config::BIG_STRIDE;
+use crate::file::Pipe;
 use crate::loader::get_data_by_name;
 use crate::mm::address::VirtAddr;
-use crate::mm::page_table::{ translated_refmut, translated_str, PageTable};
+use crate::mm::page_table::{translated_refmut, translated_str, PageTable};
 use crate::task::{add_task, current_user_token, exit_current_run_next, suspend_current_run_next};
 use alloc::sync::Arc;
+
 const FD_STDOUT: usize = 1;
 const FD_STDIN: usize = 2;
 
@@ -98,8 +100,8 @@ pub fn sys_spawn(path: *const u8) -> isize {
     let token = current_user_token();
     let name = translated_str(token, path); //查找是否存在此应用程序
     let task = copy_current_task().unwrap();
-    task.spawn(name.as_str());
-    -1
+    task.spawn(name.as_str())
+    
 }
 
 pub fn sys_getpid() -> isize {
@@ -154,5 +156,32 @@ pub fn sys_munmap(start: usize, len: usize) -> isize {
         } //提前返回错误值,如果这些页存在不位于内存的则错误返回
     }
     current_delete_page(start_vir);
+    0
+}
+
+pub fn sys_pipe(pipe: *mut usize) -> isize {
+    let current_task = copy_current_task().unwrap();
+    let mut inner = current_task.get_inner_access();
+    let token = current_user_token();
+    let (read_end, write_end) = Pipe::new(); //声请两个文件
+    let fd_read_end = inner.get_one_fd();
+    let fd_write_end = inner.get_one_fd();
+    inner.fd_table[fd_read_end] = Some(read_end);
+    inner.fd_table[fd_write_end] = Some(write_end);
+    *translated_refmut(token, pipe) = fd_read_end;
+    *translated_refmut(token, unsafe { pipe.add(1) }) = fd_write_end;
+    0
+}
+pub fn sys_close(fd: usize) -> isize {
+    // "关闭进程打开的文件描述符
+    let task = copy_current_task().unwrap();
+    let mut task_inner = task.get_inner_access();
+    if fd >= task_inner.fd_table.len() {
+        return -1;
+    }
+    if task_inner.fd_table[fd].is_none() {
+        return -1; //检查是否已经关闭过
+    }
+    task_inner.fd_table[fd].take();
     0
 }

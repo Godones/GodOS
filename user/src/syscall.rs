@@ -11,7 +11,8 @@ const SYSCALL_SPAWN: usize = 400;
 const SYSCALL_PID :usize = 172;
 const SYSCALL_MMAP:usize = 222;
 const SYSCALL_MUNMAP:usize = 215;
-
+const SYSCALL_PIPE:usize = 59;
+const SYSCALL_CLOSE:usize = 57;
 use crate::Time;
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
@@ -112,4 +113,10 @@ pub fn sys_mmap(start:usize,len:usize,port:usize)->isize{
 
 pub fn sys_munmap(start:usize,len:usize)->isize{
     syscall(SYSCALL_MUNMAP,[start,len,0])
+}
+pub fn sys_pipe(pipe:&mut [usize])->isize{
+    syscall(SYSCALL_PIPE,[pipe.as_mut_ptr() as usize,0,0])
+}
+pub fn sys_close(fd:usize)->isize{
+    syscall(SYSCALL_CLOSE,[fd,0,0])
 }

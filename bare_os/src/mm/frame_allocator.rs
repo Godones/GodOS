@@ -19,7 +19,7 @@ extern "C" {
 
 pub fn init_frame_allocator() {
     //初始化分配器
-
+    INFO!("[kernel] frame: {}-{}",ekernel as usize, MEMORY_END);
     FRAME_ALLOCATOR.lock().init(
         PhysAddr::from(ekernel as usize).ceil(),
         PhysAddr::from(MEMORY_END).floor(),
@@ -120,7 +120,7 @@ pub fn frame_dealloc(ppn: PhysPageNum) {
 
 #[allow(unused)]
 pub fn frame_test() {
-    init_frame_allocator();
+    // init_frame_allocator();
     let mut framepages: Vec<FrameTracker> = Vec::new();
     for i in 0..5 {
         let temp = frame_alloc().unwrap();

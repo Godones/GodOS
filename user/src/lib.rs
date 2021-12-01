@@ -60,14 +60,20 @@ pub fn munmap(start:usize,len:usize)->isize{
 pub fn mmap(start:usize,len:usize,port:usize)->isize{
     sys_mmap(start,len,port)
 }
-// pub fn getppid()->isize{
-//     sys_ppid()
-// }
+pub fn pipe(pipe:&mut [usize])->isize{
+    //创建一个管道
+    sys_pipe(pipe)
+}
+pub fn close(fd:usize)->isize{
+    //关闭文件描述符
+    sys_close(fd)
+}
+
 pub fn sleep(ms:usize){
     //其实是get_time的包装
     let mut time = Time::new();
     get_time(&mut time);
-    let wait_for =ms;//等待ms+..
+    let wait_for = ms;//等待ms+..
     loop {
         get_time(&mut time);
         if time.s * 1000 > wait_for {

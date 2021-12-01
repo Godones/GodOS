@@ -14,6 +14,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefMut;
 
+use super::add_task;
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum TaskStatus {
     Ready,   //准备执行
@@ -59,6 +61,15 @@ impl TaskControlBlockInner {
     pub fn is_zombie(&self) -> bool {
         //查看是否是僵尸进程
         self.task_status == TaskStatus::Zombie
+    }
+    pub fn get_one_fd(&mut self) -> usize {
+        //查看文件描述符表获取一个最小的描述符
+        if let Some(fd) = (0..self.fd_table.len()).find(|x| self.fd_table[*x].is_none()) {
+            fd
+        } else {
+            self.fd_table.push(None);
+            self.fd_table.len() - 1
+        }
     }
 }
 
@@ -122,11 +133,15 @@ impl TaskControlBlock {
         //直接创建一个新的子进程，并且执行程序
         let data = get_data_by_name(path);
         if let Some(data) = data {
-            let task_control_block = TaskControlBlock::new(data);
+            let task_control_block =Arc::new( TaskControlBlock::new(data));
             //修改其父进程的引用
             let mut inner = task_control_block.get_inner_access();
             inner.parent = Some(Arc::downgrade(self));
-            0
+            self.get_inner_access().children.push(task_control_block.clone());
+            drop(inner);
+            let pid = task_control_block.get_pid() as isize;
+            add_task(task_control_block);
+            pid
         } else {
             return -1;
         }
