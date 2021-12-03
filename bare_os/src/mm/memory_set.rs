@@ -201,11 +201,11 @@ impl MemorySet {
                 let start_addr: VirtAddr = (ph.virtual_addr() as usize).into();
                 let end_addr: VirtAddr = ((ph.virtual_addr() + ph.mem_size()) as usize).into();
 
-                INFO!(
-                    "[kernel] application section began:{:?} end:{:?}",
-                    start_addr,
-                    end_addr
-                );
+                // INFO!(
+                //     "[kernel] application section began:{:?} end:{:?}",
+                //     start_addr,
+                //     end_addr
+                // );
                 //用户态程序
                 let mut map_perm = MapPermission::U;
                 //执行权限

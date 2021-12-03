@@ -80,11 +80,7 @@ impl StackFrameAllocator {
     fn init(&mut self, begin: PhysPageNum, end: PhysPageNum) {
         self.current = begin.into();
         self.end = end.into();
-        INFO!(
-            "[kernel] FrameAllocator begin: {:?}, end: {:?}",
-            self.current,
-            self.end
-        );
+       
     }
 }
 #[derive(Debug)]
@@ -130,13 +126,13 @@ pub fn frame_test() {
     let mut framepages: Vec<FrameTracker> = Vec::new();
     for i in 0..5 {
         let temp = frame_alloc().unwrap();
-        INFO!("frame: {:?}", temp);
+        // INFO!("frame: {:?}", temp);
         // framepages.push(temp);
     }
     framepages.clear();
     for i in 0..5 {
         let temp = frame_alloc().unwrap();
-        INFO!("frame: {:?}", temp);
+        // INFO!("frame: {:?}", temp);
         framepages.push(temp);
     }
     drop(framepages);

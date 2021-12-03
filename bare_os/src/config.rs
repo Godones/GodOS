@@ -13,7 +13,7 @@ pub const PAGE_SIZE_BITS: usize = 0xc; //页标志位大小
 
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 pub const TRAMP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
-#[cfg(feature = "board_qemu")]
+// #[cfg(feature = "board_qemu")]
 pub const CLOCK_FREQ: usize = 12500000;//cpu时钟频率
 
 #[cfg(feature = "LOG")]
