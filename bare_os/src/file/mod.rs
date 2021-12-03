@@ -2,6 +2,7 @@ use crate::mm::page_table::UserBuffer;
 
 mod pipe;
 mod stdio;
+mod mail;
 
 pub use pipe::Pipe;
 pub use stdio::{Stdin, Stdout};

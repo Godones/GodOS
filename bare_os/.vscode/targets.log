@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Wed Dec  1 20:24:14 2021
+# Make data base, printed on Fri Dec  3 13:35:14 2021
 
 # Variables
 
@@ -63,7 +63,7 @@ DISASM = -x
 # environment
 VSCODE_LOG_STACK = false
 # environment
-VSCODE_IPC_HOOK_CLI = /mnt/wslg/runtime-dir/vscode-ipc-a88336ce-2583-49ae-b370-30a6b10fd38a.sock
+VSCODE_IPC_HOOK_CLI = /mnt/wslg/runtime-dir/vscode-ipc-52cbcf7d-7eaa-4310-a7d6-c9cab32ff90f.sock
 # default
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
 # environment
@@ -83,7 +83,7 @@ MODE := release
 # default
 .LOADED := 
 # environment
-WSL_INTEROP = /run/WSL/10474_interop
+WSL_INTEROP = /run/WSL/18809_interop
 # environment
 PULSE_SERVER = /mnt/wslg/PulseServer
 # environment
@@ -250,7 +250,7 @@ kernel:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2021-11-27 11:44:19.8698088
+#  Last modified 2021-12-02 21:34:30.7473357
 #  File has been updated.
 #  Successfully updated.
 
@@ -280,8 +280,8 @@ build: env target/riscv64gc-unknown-none-elf/release/bare_os.bin
 # Not a target:
 .DEFAULT:
 #  Implicit rule search has not been done.
-#  Modification time never checked.
  
+#  Modification time never checked.
 #  File has not been updated.
 
 run: run-inner
@@ -340,6 +340,6 @@ env:
 # strcache performance: lookups = 58 / hit rate = 51%
 # hash-table stats:
 # Load=28/8192=0%, Rehash=0, Collisions=1/58=2%
-# Finished Make data base on Wed Dec  1 20:24:14 2021
+# Finished Make data base on Fri Dec  3 13:35:14 2021
 
  

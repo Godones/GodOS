@@ -21,7 +21,7 @@ fn main() -> isize {
         match ch {
             LF | CR => {
                 //回车或换行时
-                println!("");//换行
+                println!(""); //换行
                 if !process_name.is_empty() {
                     process_name.push('\0');
                     let pid = fork();
@@ -54,7 +54,6 @@ fn main() -> isize {
                     print!(" ");
                     print!("{}", BS as char);
                 }
-
             }
             _ => {
                 process_name.push(ch as char);

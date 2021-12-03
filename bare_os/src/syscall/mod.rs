@@ -21,6 +21,8 @@ const SYSCALL_MMAP: usize = 222;
 const SYSCALL_MUNMAP: usize = 215;
 const SYSCALL_PIPE: usize = 59;
 const SYSCALL_CLOSE: usize = 57;
+const SYSCALL_MAILREAD:usize = 401;
+const SYSCALL_MAILWRITE:usize = 402;
 
 pub fn syscall(call: usize, args: [usize; 3]) -> isize {
     // crate::println!("function: {}, args: {:?}",function,args);
@@ -40,6 +42,8 @@ pub fn syscall(call: usize, args: [usize; 3]) -> isize {
         SYSCALL_PID => sys_getpid(),
         SYSCALL_PIPE => sys_pipe(args[0] as usize as *mut usize),
         SYSCALL_CLOSE => sys_close(args[0]),
+        SYSCALL_MAILREAD => sys_mail_read(args[0] as *mut u8,args[1]),
+        SYSCALL_MAILWRITE => sys_mail_write(args[0],args[1] as *mut u8,args[2]),
         _ => {
             panic!("Undefined call for syscall: {}", call);
         }

@@ -5,7 +5,7 @@
 use lib::{mmap, println};
 
 #[no_mangle]
-fn main()->i32{
+fn main() -> i32 {
     let start: usize = 0x10000000;
     let len: usize = 4096;
     let prot: usize = 3;

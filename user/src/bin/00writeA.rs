@@ -3,8 +3,6 @@
 #![feature(asm)]
 #![allow(non_snake_case)]
 
-
-
 #[macro_use]
 extern crate lib;
 use lib::set_priority;

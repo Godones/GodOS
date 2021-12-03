@@ -10,7 +10,7 @@ const DEPTH: usize = 4;
 
 fn fork_child(cur: &str, branch: char) {
     let mut next = [0u8; DEPTH + 1];
-    let l = cur.len();//l=0
+    let l = cur.len(); //l=0
     if l >= DEPTH {
         return;
     }

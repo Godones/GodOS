@@ -3,7 +3,7 @@
     .section .data
     .global _num_app
 _num_app:
-    .quad 23
+    .quad 24
     
     .quad app_0_start
     .quad app_1_start
@@ -28,7 +28,8 @@ _num_app:
     .quad app_20_start
     .quad app_21_start
     .quad app_22_start
-  .quad app_22_end
+    .quad app_23_start
+  .quad app_23_end
 
     .global _app_name
 _app_name:
@@ -46,6 +47,7 @@ _app_name:
     .string "mmap1"
     .string "mmap2"
     .string "mmap3"
+    .string "pipetest"
     .string "rich_text"
     .string "spawn"
     .string "spawn1"
@@ -173,7 +175,7 @@ app_13_end:
     .global app_14_end
     .align 3
 app_14_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/rich_text"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/pipetest"
 app_14_end:
 
     .section .data
@@ -181,7 +183,7 @@ app_14_end:
     .global app_15_end
     .align 3
 app_15_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/spawn"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/rich_text"
 app_15_end:
 
     .section .data
@@ -189,7 +191,7 @@ app_15_end:
     .global app_16_end
     .align 3
 app_16_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/spawn1"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/spawn"
 app_16_end:
 
     .section .data
@@ -197,7 +199,7 @@ app_16_end:
     .global app_17_end
     .align 3
 app_17_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/test_exit0"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/spawn1"
 app_17_end:
 
     .section .data
@@ -205,7 +207,7 @@ app_17_end:
     .global app_18_end
     .align 3
 app_18_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/test_exit1"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/test_exit0"
 app_18_end:
 
     .section .data
@@ -213,7 +215,7 @@ app_18_end:
     .global app_19_end
     .align 3
 app_19_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/test_getpid"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/test_exit1"
 app_19_end:
 
     .section .data
@@ -221,7 +223,7 @@ app_19_end:
     .global app_20_end
     .align 3
 app_20_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/unmap"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/test_getpid"
 app_20_end:
 
     .section .data
@@ -229,7 +231,7 @@ app_20_end:
     .global app_21_end
     .align 3
 app_21_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/unmap1"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/unmap"
 app_21_end:
 
     .section .data
@@ -237,5 +239,13 @@ app_21_end:
     .global app_22_end
     .align 3
 app_22_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/user_shell"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/unmap1"
 app_22_end:
+
+    .section .data
+    .global app_23_start
+    .global app_23_end
+    .align 3
+app_23_start:
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/user_shell"
+app_23_end:

@@ -12,7 +12,6 @@ mod system_allocator;
 mod time;
 pub use time::Time;
 
-
 use crate::syscall::*;
 use syscall::{sys_getpid, sys_spawn};
 use system_allocator::init;
@@ -26,7 +25,7 @@ pub fn read(fd: usize, buf: &mut [u8]) -> isize {
 pub fn exit(exit_code: i32) -> isize {
     sys_exit(exit_code)
 }
-pub fn get_time(time:& mut Time) -> isize {
+pub fn get_time(time: &mut Time) -> isize {
     sys_get_time(time)
 }
 pub fn yield_() -> isize {
@@ -45,39 +44,37 @@ pub fn exec(path: &str) -> isize {
     sys_exec(path)
 }
 
-pub fn spawn(path:&str) ->isize{
+pub fn spawn(path: &str) -> isize {
     sys_spawn(path)
 }
-pub fn getpid()->isize{
+pub fn getpid() -> isize {
     sys_getpid()
 }
 
-
-
-pub fn munmap(start:usize,len:usize)->isize{
-    sys_munmap(start,len)
+pub fn munmap(start: usize, len: usize) -> isize {
+    sys_munmap(start, len)
 }
-pub fn mmap(start:usize,len:usize,port:usize)->isize{
-    sys_mmap(start,len,port)
+pub fn mmap(start: usize, len: usize, port: usize) -> isize {
+    sys_mmap(start, len, port)
 }
-pub fn pipe(pipe:&mut [usize])->isize{
+pub fn pipe(pipe: &mut [usize]) -> isize {
     //创建一个管道
     sys_pipe(pipe)
 }
-pub fn close(fd:usize)->isize{
+pub fn close(fd: usize) -> isize {
     //关闭文件描述符
     sys_close(fd)
 }
 
-pub fn sleep(ms:usize){
+pub fn sleep(ms: usize) {
     //其实是get_time的包装
     let mut time = Time::new();
     get_time(&mut time);
-    let wait_for = ms;//等待ms+..
+    let wait_for = ms; //等待ms+..
     loop {
         get_time(&mut time);
         if time.s * 1000 > wait_for {
-            break
+            break;
         }
         yield_();
     }
@@ -105,6 +102,15 @@ pub fn wait_pid(pid: usize, exit_code: &mut i32) -> isize {
             exit_pid => return exit_pid,
         }
     }
+}
+
+//读取进程邮箱内的内容
+pub fn mail_read(buf:& mut [u8])->isize{
+    sys_mail_read(buf)
+}
+// 往指定进程的邮箱块内写入内容
+pub fn mail_write(pid:usize,buf:&mut [u8])->isize{
+    sys_mail_write(pid,buf)
 }
 
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口

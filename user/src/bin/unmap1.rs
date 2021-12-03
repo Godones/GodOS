@@ -1,10 +1,8 @@
 #![no_std]
 #![no_main]
 
-#[macro_use]
-
-use lib::{mmap,munmap};
 use lib::println;
+use lib::{mmap, munmap};
 
 /*
 理想结果：输出 Test 04_6 ummap2 OK!

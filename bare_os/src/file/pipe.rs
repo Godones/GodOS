@@ -2,7 +2,6 @@ use crate::config::RING_BUFFER_SIZE;
 use crate::file::File;
 use crate::mm::page_table::UserBuffer;
 use alloc::sync::{Arc, Weak};
-use core::arch;
 use spin::Mutex;
 use crate::task::suspend_current_run_next;
 
@@ -83,7 +82,7 @@ impl RingBuffer {
 }
 
 impl Pipe {
-    pub fn read_from_buffer(buffer: Arc<Mutex<RingBuffer>>) -> Self {
+    fn read_from_buffer(buffer: Arc<Mutex<RingBuffer>>) -> Self {
         //从环形缓冲区分配读端文件
         Self {
             readable: true,
@@ -91,7 +90,7 @@ impl Pipe {
             buffer,
         }
     }
-    pub fn write_from_buffer(buffer: Arc<Mutex<RingBuffer>>) -> Self {
+    fn write_from_buffer(buffer: Arc<Mutex<RingBuffer>>) -> Self {
         Self {
             readable: false,
             writeable: true,
@@ -108,33 +107,8 @@ impl Pipe {
 }
 
 impl File for Pipe {
-    fn write(&self, buf: UserBuffer) -> usize {
-        assert_eq!(self.writeable,true);
-        let mut write_size = 0 as usize;
-        let mut user_buf_iter = buf.into_iter();
-        loop {
-            let mut buffer = self.buffer.lock();
-            let available_size = buffer.available_write();//查看可读数量
-            if available_size==0 {
-                drop(buffer);
-                suspend_current_run_next();//等待之后的读端往这里面读内容
-                continue;
-            }
-            for _ in 0..available_size{
-                if let Some(val) = user_buf_iter.next(){
-                    unsafe {
-                        buffer.write_byte(*val);
-                        write_size +=1;
-                    }
-                }
-                else {
-                    return write_size;
-                }
-            }
-        }
-    }
     fn read(&self, buf: UserBuffer) -> usize {
-        assert!(self.readable==true);
+        assert_eq!(self.readable, true);
         let mut read_size = 0 as usize;
         let mut bufiter = buf.into_iter();
         loop {
@@ -157,6 +131,31 @@ impl File for Pipe {
                 }
                 else {
                     return read_size;
+                }
+            }
+        }
+    }
+    fn write(&self, buf: UserBuffer) -> usize {
+        assert_eq!(self.writeable,true);
+        let mut write_size = 0 as usize;
+        let mut user_buf_iter = buf.into_iter();
+        loop {
+            let mut buffer = self.buffer.lock();
+            let available_size = buffer.available_write();//查看可读数量
+            if available_size==0 {
+                drop(buffer);
+                suspend_current_run_next();//等待之后的读端往这里面读内容
+                continue;
+            }
+            for _ in 0..available_size{
+                if let Some(val) = user_buf_iter.next(){
+                    unsafe {
+                        buffer.write_byte(*val);
+                        write_size +=1;
+                    }
+                }
+                else {
+                    return write_size;
                 }
             }
         }

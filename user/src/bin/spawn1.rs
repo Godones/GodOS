@@ -23,7 +23,7 @@ pub fn main() -> i32 {
     assert_eq!(exit_pid, cpid, "error exit pid");
     assert_eq!(exit_code, 66778, "error exit code");
     println!("Test wait OK!");
-    
+
     let (cpid0, cpid1) = (spawn("test_exit0\0"), spawn("test_exit1\0"));
     let exit_pid = wait_pid(cpid1 as usize, &mut exit_code);
     assert_eq!(exit_pid, cpid1, "error exit pid");

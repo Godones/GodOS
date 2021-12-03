@@ -4,7 +4,7 @@
 #[macro_use]
 extern crate lib;
 
-use lib::{Time, exit, fork, get_time, getpid, sleep, wait};
+use lib::{exit, fork, get_time, getpid, sleep, wait, Time};
 
 static NUM: usize = 30;
 
@@ -16,7 +16,7 @@ pub fn main() -> i32 {
         if pid == 0 {
             let mut current_time = Time::new();
             get_time(&mut current_time);
-            let sleep_length = current_time.s*1000+ 1000;
+            let sleep_length = current_time.s * 1000 + 1000;
             println!("pid {} sleep for {} ms", getpid(), sleep_length);
             sleep(sleep_length);
             println!("pid {} OK!", getpid());
