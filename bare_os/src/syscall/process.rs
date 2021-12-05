@@ -14,6 +14,8 @@ use crate::mm::MapPermission;
 use crate::task::process::{copy_current_task, current_add_area, current_delete_page};
 use crate::timer::Time;
 
+use super::file::{sys_read, sys_write};
+
 pub fn sys_exit(exit_code: i32) -> ! {
     // INFO!("[kernel] Application exited with code {}", exit_code);
     //函数退出后，运行下一个应用程序
@@ -164,7 +166,7 @@ pub fn sys_pipe(pipe: *mut usize) -> isize {
     let token = current_user_token();
     let current_task = copy_current_task().unwrap();
     let mut inner = current_task.get_inner_access();
-    DEBUG!("[kernel] sys_pipe");
+    // DEBUG!("[kernel] sys_pipe");
     let (read_end, write_end) = Pipe::new(); //声请两个文件
     let fd_read_end = inner.get_one_fd();
     inner.fd_table[fd_read_end] = Some(read_end);
@@ -189,10 +191,8 @@ pub fn sys_close(fd: usize) -> isize {
 }
 
 pub fn sys_mail_read(buf:*mut u8,len:usize)->isize{
-    //todo!()
-    0
+    sys_read(3, buf, len)
 }
 pub fn sys_mail_write(pid:usize,buf:*mut u8,len:usize)->isize{
-    // todo!()
-    0
+    sys_write(3, buf, len)
 }

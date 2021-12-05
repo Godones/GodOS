@@ -15,9 +15,9 @@ pub fn main() -> i32 {
     pipe(&mut pipe_fd);
     // read end
     println!("pipefd {},{}", pipe_fd[0], pipe_fd[1]);
-    assert_eq!(pipe_fd[0], 3);
+    assert_eq!(pipe_fd[0], 4);
     // write end
-    assert_eq!(pipe_fd[1], 4);
+    assert_eq!(pipe_fd[1], 5);
     if fork() == 0 {
         // child process, read from parent
         // close write_end

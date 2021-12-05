@@ -1,7 +1,7 @@
-use alloc::{boxed::Box, collections::VecDeque, vec::Vec};
+
 use spin::Mutex;
 use alloc::sync::{Arc};
-use crate::mm::page_table::UserBuffer;
+use crate::{mm::page_table::UserBuffer, task::suspend_current_run_next};
 use super::File;
 
 const MAX_REPORT_NUMBER :usize = 256;
@@ -9,86 +9,138 @@ const MAX_MAIL_NUMBER:usize = 16;
 pub struct Mail{
     buffer:Arc<Mutex<RingBuffer>>
 }
-
-pub struct RingBuffer{
-    massage:VecDeque<Box<[u8]>>,
+#[derive(Copy, Clone,PartialEq)]
+pub enum RingBufferStatus {
+    FULL,
+    EMPTY,
+    NORMAL,
+}
+pub struct RingBuffer {
+    status: RingBufferStatus,
+    head: usize,
+    tail: usize, //记录队列的头尾下标
+    msg: [u8; MAX_REPORT_NUMBER*MAX_MAIL_NUMBER],
 }
 
 impl RingBuffer {
-    pub fn new()->Self{
-        Self{
-            massage:VecDeque::new(),
+    pub fn new() -> Self {
+        Self {
+            status: RingBufferStatus::EMPTY,
+            head: 0,
+            tail: 0,
+            msg: [0; MAX_MAIL_NUMBER*MAX_REPORT_NUMBER],
         }
     }
-    fn read_report(&mut self)->Box<[u8]>{
-        //从缓冲区弹出一条报文
-        self.massage.pop_front().unwrap()
-    }
-    fn is_availabel_read(&self)->bool{
-        !self.massage.is_empty() //查看是否有报文存在
-    }
-    fn is_availabel_write(&self)->bool{
-        self.massage.len()<MAX_MAIL_NUMBER //判断是否已经达到最大报文数量
-    }
-    fn write_report(&mut self,data:Box<[u8]>)->usize{
-       self.massage.push_back(data);
-       data.len()
-    }
+    pub fn read_byte(&mut self) -> &[u8] {
+        self.status = RingBufferStatus::NORMAL;
+        let began = self.head*MAX_REPORT_NUMBER;
+        let end = began + MAX_REPORT_NUMBER;
+        //读取一个报文长度的内容出来
+        let data =&self.msg[began..end];
 
+        self.head = (self.head + 1) % MAX_MAIL_NUMBER;
+        if self.head == self.tail {
+            self.status = RingBufferStatus::EMPTY;
+        }
+        data
+    }
+    pub fn available_read(&self) -> usize {
+        //返回可读的内容数量
+        if self.status == RingBufferStatus::EMPTY {
+            0
+        } else {
+            if self.tail > self.head {
+                self.tail - self.head
+            } else {
+                self.tail + MAX_MAIL_NUMBER - self.head
+            }
+        }
+    }
+    pub fn write_byte(&mut self,val:&[u8]){
+        self.status = RingBufferStatus::NORMAL;
+        let begin = self.tail*MAX_REPORT_NUMBER;
+        let end  = begin  + MAX_REPORT_NUMBER;
+
+        // self.msg[self.tail] = val;
+        //拷贝报文数据
+        for index in begin..end{
+            if index > val.len(){ break;}
+            self.msg[index] = val[index];
+        }
+        self.tail  = (self.tail+1)%MAX_MAIL_NUMBER;
+        if self.tail ==self.head{
+            self.status = RingBufferStatus::FULL;
+        }
+    }
+    pub fn available_write(&self)->usize{
+        if self.status== RingBufferStatus::FULL { MAX_MAIL_NUMBER }
+        else {
+            MAX_MAIL_NUMBER - self.available_read()
+        }
+    }
 }
 
 impl Mail {
-    pub fn new()->Arc<Mail>{
-        Arc::new(Self{
-            buffer:Arc::new(Mutex::new(RingBuffer::new()))
-        })
+    pub fn new() ->Arc<Mail>{
+        Arc::new(
+            Self{
+                buffer:Arc::new(Mutex::new(RingBuffer::new()))
+            }
+        )
     }
 }
+
 impl File for Mail {
-    fn write(&self, buf:UserBuffer) -> usize {
-        let mut mail_buffer = self.buffer.lock();
-        let mut write_size = 0;
-        let user_buffer_len = buf.len();
-
-        if mail_buffer.is_availabel_write(){
-            let mut user_buffer_iter = buf.into_iter();
-            let mut data = [0 as u8;MAX_REPORT_NUMBER];//先读取缓冲区的内容
+    fn read(&self, buf: UserBuffer) -> usize {
+        let mut read_size = 0 as usize;
+        let mut user_buf_iter = buf.into_iter();
+        loop {
+            let mut buffer = self.buffer.lock();
+            let available_size = buffer.available_read();//查看可读数量
+            if available_size==0 {
+                drop(buffer);
+                suspend_current_run_next();//等待之后的写端往这里面写内容
+                continue;
+            }
+            let data = buffer.read_byte();
             for index in 0..MAX_REPORT_NUMBER{
-                if let Some(val) = user_buffer_iter.next(){
-                    unsafe{data[index] = *val;}
-                }
-            }
-            
-            if user_buffer_len>MAX_REPORT_NUMBER{
-                write_size = mail_buffer.write_report(Box::new(data));
-            }
-            else {
-                
-                write_size = mail_buffer.write_report(Box::new(data));
-            }
-        }
-        write_size
-    }
-
-    fn read(&self, buf:UserBuffer) -> usize {
-        let mail_buffer = self.buffer.lock();
-        let mut read_size=  0;
-        if mail_buffer.is_availabel_read(){
-            let report = mail_buffer.read_report();//获取报文内容
-
-            let mut user_buffer_iter = buf.into_iter();
-            for index in 0..report.len(){
-                if let Some(val) = user_buffer_iter.next(){
+                if let Some(val) = user_buf_iter.next(){
                     unsafe {
-                        *val = report[index];
+                        *val = data[index];
                         read_size +=1;
                     }
                 }
                 else {
-                    return read_size;//没有报文读取
+                    return read_size;
                 }
             }
         }
-        read_size
-    } 
+    }
+    fn write(&self, buf: UserBuffer) -> usize {
+        
+        let mut write_size = 0 as usize;
+        let mut user_buf_iter = buf.into_iter();
+        loop {
+            let mut buffer = self.buffer.lock();
+            let available_size = buffer.available_write();//查看可读数量
+            if available_size==0 {
+                drop(buffer);
+                suspend_current_run_next();//等待之后的读端往这里面读内容
+                continue;
+            }
+            let mut user_buffer_data = [0 as u8;MAX_REPORT_NUMBER];
+            for index in 0..MAX_REPORT_NUMBER{
+                if let Some(val) = user_buf_iter.next(){
+                    unsafe {
+                        user_buffer_data[index] = *val;
+                        write_size +=1;
+                    }
+                }
+                else {
+                    buffer.write_byte(&user_buffer_data);
+                    return write_size;
+                }
+            }
+        }
+    }
 }

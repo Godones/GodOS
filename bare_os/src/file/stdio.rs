@@ -6,6 +6,7 @@ use crate::task::suspend_current_run_next;
 
 pub struct Stdin;
 pub struct Stdout;
+
 impl File for Stdin {
     fn read(&self, mut buf: UserBuffer) -> usize {
         let mut c: usize;

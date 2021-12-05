@@ -1,5 +1,5 @@
 use crate::config::{BIG_STRIDE, TRAMP_CONTEXT};
-use crate::file::{File, Stdin, Stdout};
+use crate::file::{File, Mail, Stdin, Stdout};
 use crate::loader::get_data_by_name;
 use crate::mm::address::{PhysPageNum, VirtAddr};
 use crate::mm::MemorySet;
@@ -105,6 +105,7 @@ impl TaskControlBlock {
                     Some(Arc::new(Stdin)),
                     Some(Arc::new(Stdout)),
                     Some(Arc::new(Stdout)),
+                    Some(Mail::new()),//邮箱文件描述符
                 ],
                 stride: 0,
                 pass: BIG_STRIDE / 2,
