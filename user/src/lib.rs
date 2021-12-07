@@ -11,10 +11,20 @@ pub mod syscall;
 mod system_allocator;
 mod time;
 pub use time::Time;
-
+use bitflags::bitflags;
 use crate::syscall::*;
 use syscall::{sys_getpid, sys_spawn};
 use system_allocator::init;
+
+bitflags!{
+    pub struct OpenFlags:u32 {
+        const RDONLY = 0;//只读
+        const WDONLY = 1<<0;//只写
+        const RDWR = 1<<1;//读写
+        const CREAT = 1<<9;//新建
+        const TRUNC = 1<<10;//打开清空
+    }
+}
 
 pub fn write(fd: usize, buf: &[u8]) -> isize {
     sys_write(fd, buf)
@@ -105,12 +115,16 @@ pub fn wait_pid(pid: usize, exit_code: &mut i32) -> isize {
 }
 
 //读取进程邮箱内的内容
-pub fn mail_read(buf:& mut [u8])->isize{
+pub fn mail_read(buf: &mut [u8]) -> isize {
     sys_mail_read(buf)
 }
 // 往指定进程的邮箱块内写入内容
-pub fn mail_write(pid:usize,buf:&mut [u8])->isize{
-    sys_mail_write(pid,buf)
+pub fn mail_write(pid: usize, buf: &mut [u8]) -> isize {
+    sys_mail_write(pid, buf)
+}
+
+pub fn open(path: &str, flags: OpenFlags) -> isize {
+    sys_opennat(0,path,flags.bits(),OpenFlags::RDWR.bits)
 }
 
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口

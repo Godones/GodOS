@@ -21,6 +21,7 @@ mod task;
 mod tests;
 pub mod timer;
 mod trap;
+mod driver;
 
 extern crate alloc;
 
