@@ -6,5 +6,7 @@ mod block_dev;
 mod config;
 mod layout;
 mod inode;
+mod dir_entry;
+mod efs;
 
 pub use config::*;
