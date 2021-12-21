@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Tue Nov 30 17:01:35 2021
+# Make data base, printed on Fri Dec 17 13:29:43 2021
 
 # Variables
 
@@ -17,7 +17,7 @@ make: *** No rule to make target 'all'.  Stop.
 # automatic
 ?F = $(notdir $?)
 # environment
-WSLENV = VSCODE_WSL_EXT_LOCATION/up
+WSLENV = VSCODE_WSL_EXT_LOCATION/up:VSCODE_SERVER_TAR/up
 # default
 .SHELLFLAGS := -c
 # environment
@@ -39,9 +39,9 @@ CURDIR := /home/MyOS/GodOS/bare_os
 # makefile
 SHELL = /bin/sh
 # environment
-VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"92f61bb58ac5751fbb82c3c2359454f5.zh-cn","_translationsConfigFile":"/root/.vscode-server/data/clp/92f61bb58ac5751fbb82c3c2359454f5.zh-cn/tcf.json","_cacheRoot":"/root/.vscode-server/data/clp/92f61bb58ac5751fbb82c3c2359454f5.zh-cn","_resolvedLanguagePackCoreLocation":"/root/.vscode-server/data/clp/92f61bb58ac5751fbb82c3c2359454f5.zh-cn/ccbaa2d27e38e5afa3e5c21c1c7bef4657064247","_corruptedFile":"/root/.vscode-server/data/clp/92f61bb58ac5751fbb82c3c2359454f5.zh-cn/corrupted.info","_languagePackSupport":true}
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"85dc8b33bfa057e31dfd84e9a10f67e1.zh-cn","_translationsConfigFile":"/root/.vscode-server/data/clp/85dc8b33bfa057e31dfd84e9a10f67e1.zh-cn/tcf.json","_cacheRoot":"/root/.vscode-server/data/clp/85dc8b33bfa057e31dfd84e9a10f67e1.zh-cn","_resolvedLanguagePackCoreLocation":"/root/.vscode-server/data/clp/85dc8b33bfa057e31dfd84e9a10f67e1.zh-cn/899d46d82c4c95423fb7e10e68eba52050e30ba3","_corruptedFile":"/root/.vscode-server/data/clp/85dc8b33bfa057e31dfd84e9a10f67e1.zh-cn/corrupted.info","_languagePackSupport":true}
 # environment
-_ = /root/.vscode-server/bin/ccbaa2d27e38e5afa3e5c21c1c7bef4657064247/node
+_ = /root/.vscode-server/bin/899d46d82c4c95423fb7e10e68eba52050e30ba3/node
 # makefile (from 'Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
 # 'override' directive
@@ -53,7 +53,7 @@ VSCODE_CWD = /mnt/d/intall/Microsoft VS Code
 # default
 MAKE_HOST := x86_64-pc-linux-gnu
 # environment
-PATH = /root/.vscode-server/bin/ccbaa2d27e38e5afa3e5c21c1c7bef4657064247/bin:/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files (x86)/Windows Resource Kits/Tools/:/mnt/d/intall/python/Scripts/:/mnt/d/intall/python/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/d/mingw64/mingw64/bin:/mnt/d/mingw64/mingw64/include:/mnt/d/mingw64/mingw64/lib:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA NvDLISR:/mnt/d/intall/cmake/bin:/mnt/c/Program Files/MySQL/MySQL Server 8.0/bin:/mnt/c/Program Files/Pandoc/:/mnt/d/mingw64/opencv/opencv/mingw-build/install/x64/mingw/bin:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/d/intall/texlive/2021/bin/win32:/mnt/d/intall/JDK/bin:/mnt/d/intall/JDK/jre/bin:/mnt/d/intall/nasm:/mnt/c/Program Files/dotnet/:/mnt/d/intall/Git/cmd:/mnt/c/Users/God/.cargo/bin:/mnt/c/Users/God/AppData/Local/Microsoft/WindowsApps:/mnt/d/intall/Microsoft VS Code/bin:/home/githubcode/qemu-5.0.0:/home/githubcode/qemu-5.0.0/riscv64-softmmu:/home/githubcode/qemu-5.0.0/riscv64-linux-user:/home/githubcode/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14/bin
+PATH = /root/.vscode-server/bin/899d46d82c4c95423fb7e10e68eba52050e30ba3/bin:/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Program Files (x86)/Windows Resource Kits/Tools/:/mnt/d/intall/python/Scripts/:/mnt/d/intall/python/:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/d/mingw64/mingw64/bin:/mnt/d/mingw64/mingw64/include:/mnt/d/mingw64/mingw64/lib:/mnt/c/Program Files/NVIDIA Corporation/NVIDIA NvDLISR:/mnt/d/intall/cmake/bin:/mnt/c/Program Files/MySQL/MySQL Server 8.0/bin:/mnt/c/Program Files/Pandoc/:/mnt/d/mingw64/opencv/opencv/mingw-build/install/x64/mingw/bin:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/d/intall/texlive/2021/bin/win32:/mnt/d/intall/JDK/bin:/mnt/d/intall/JDK/jre/bin:/mnt/d/intall/nasm:/mnt/c/Program Files/dotnet/:/mnt/d/intall/Git/cmd:/mnt/c/ProgramData/chocolatey/bin:/mnt/c/Users/God/.cargo/bin:/mnt/c/Users/God/AppData/Local/Microsoft/WindowsApps:/mnt/d/intall/Microsoft VS Code/bin:/mnt/c/Users/God/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/God/AppData/Roaming/cabal/bin:/mnt/c/tools/ghc-9.2.1/bin:/mnt/c/tools/msys64:/home/githubcode/qemu-5.0.0:/home/githubcode/qemu-5.0.0/riscv64-softmmu:/home/githubcode/qemu-5.0.0/riscv64-linux-user:/home/githubcode/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14/bin
 # environment
 LSCOLORS = Gxfxcxdxbxegedabagacad
 # environment
@@ -63,7 +63,9 @@ DISASM = -x
 # environment
 VSCODE_LOG_STACK = false
 # environment
-VSCODE_IPC_HOOK_CLI = /mnt/wslg/runtime-dir/vscode-ipc-fbec16a3-a630-43f8-a422-ea4ec99c3385.sock
+VSCODE_IPC_HOOK_CLI = /mnt/wslg/runtime-dir/vscode-ipc-e9742c76-22e5-4f3d-ac98-09e44d78064b.sock
+# environment
+VSCODE_SERVER_TAR = /mnt/c/Users/God/AppData/Local/Temp/vscode-remote-wsl/899d46d82c4c95423fb7e10e68eba52050e30ba3/vscode-server-stable-linux-x64.tar.gz
 # default
 .FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
 # environment
@@ -83,7 +85,7 @@ MODE := release
 # default
 .LOADED := 
 # environment
-WSL_INTEROP = /run/WSL/9711_interop
+WSL_INTEROP = /run/WSL/116_interop
 # environment
 PULSE_SERVER = /mnt/wslg/PulseServer
 # environment
@@ -125,7 +127,7 @@ LESS = -R
 # automatic
 %D = $(patsubst %/,%,$(dir $%))
 # environment
-VSCODE_WSL_EXT_LOCATION = /mnt/c/Users/God/.vscode/extensions/ms-vscode-remote.remote-wsl-0.58.5
+VSCODE_WSL_EXT_LOCATION = /mnt/c/Users/God/.vscode/extensions/ms-vscode-remote.remote-wsl-0.63.13
 # default
 MAKE_COMMAND := make
 # environment
@@ -179,7 +181,7 @@ WAYLAND_DISPLAY = wayland-0
 # default
 .INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
 # environment
-VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH = /root/.vscode-server/bin/ccbaa2d27e38e5afa3e5c21c1c7bef4657064247/remote/node_modules
+VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH = /root/.vscode-server/bin/899d46d82c4c95423fb7e10e68eba52050e30ba3/remote/node_modules
 # default
 .RECIPEPREFIX := 
 # makefile (from 'Makefile', line 6)
@@ -193,7 +195,7 @@ VSCODE_EXTHOST_WILL_SEND_SOCKET = true
 # environment
 WSL_DISTRO_NAME = Ubuntu-20.04
 # variable set hash-table stats:
-# Load=90/1024=9%, Rehash=0, Collisions=11/129=9%
+# Load=91/1024=9%, Rehash=0, Collisions=11/130=8%
 
 # Pattern-specific Variable Values
 
@@ -250,13 +252,14 @@ kernel:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2021-11-27 11:44:19.8698088
+#  Last modified 2021-12-03 22:44:50.478428
 #  File has been updated.
 #  Successfully updated.
 
 target/riscv64gc-unknown-none-elf/release/bare_os.bin: kernel
 #  Implicit rule search has not been done.
 #  Modification time never checked.
+ 
 #  File has not been updated.
 #  recipe to execute (from 'Makefile', line 41):
 	@$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
@@ -271,6 +274,7 @@ debug: build
 		tmux split-window -h "riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'" && \
 		tmux -2 attach-session -d
 
+ 
 build: env target/riscv64gc-unknown-none-elf/release/bare_os.bin
 #  Phony target (prerequisite of .PHONY).
 #  Implicit rule search has not been done.
@@ -286,7 +290,6 @@ build: env target/riscv64gc-unknown-none-elf/release/bare_os.bin
 run: run-inner
 #  Implicit rule search has not been done.
 #  Modification time never checked.
- 
 #  File has not been updated.
 
 clean:
@@ -340,6 +343,6 @@ env:
 # strcache performance: lookups = 58 / hit rate = 51%
 # hash-table stats:
 # Load=28/8192=0%, Rehash=0, Collisions=1/58=2%
-# Finished Make data base on Tue Nov 30 17:01:35 2021
+# Finished Make data base on Fri Dec 17 13:29:43 2021
 
  

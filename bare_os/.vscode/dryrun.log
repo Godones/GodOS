@@ -1,14 +1,6 @@
-make --dry-run --always-make --keep-going --print-directory
+make all --dry-run --always-make --keep-going --print-directory
 make: Entering directory '/home/MyOS/GodOS/bare_os'
-(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add riscv64gc-unknown-none-elf
-cargo install cargo-binutils
-rustup component add rust-src
-rustup component add llvm-tools-preview
-cd ../user && make build
-echo Platform: qemu
-cp src/linker-qemu.ld src/linker.ld
-cargo build --release  --features "board_qemu" --features "TRACE"
-rm src/linker.ld
-rust-objcopy --binary-architecture=riscv64 target/riscv64gc-unknown-none-elf/release/bare_os --strip-all -O binary target/riscv64gc-unknown-none-elf/release/bare_os.bin
 make: Leaving directory '/home/MyOS/GodOS/bare_os'
+ 
+make: *** No rule to make target 'all'.
  

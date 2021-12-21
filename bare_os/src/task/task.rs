@@ -122,7 +122,6 @@ impl TaskControlBlock {
         }else{
             return -1;
         }
-        
 
     }
     pub fn exec(&self, elf_data: &[u8]) {
