@@ -17,7 +17,7 @@ impl DirEntry {
     }
     pub fn new(name:&str,node_number:u32)->Self{
         let mut name_byte = [0u8;NAME_LENGTH_MAX+1];
-        &mut name_byte[..name.len()].copy_from_slice(name.as_bytes());
+        name_byte[..name.len()].copy_from_slice(name.as_bytes());
         Self{
             name:name_byte,
             node_number,
@@ -41,7 +41,7 @@ impl DirEntry {
         }
     }
     pub fn name(&self)->&str{
-        let end = self.name().find('.').unwrap();
+        let end = (0usize..).find(|i|self.name[*i]==0).unwrap();
         core::str::from_utf8(&self.name[..end]).unwrap()
     }
     pub fn node_number(&self)->u32{

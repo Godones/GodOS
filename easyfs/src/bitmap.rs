@@ -66,4 +66,7 @@ impl Bitmap {
             });
 
     }
+    pub fn bit_num(&self) -> usize {
+        self.blocks * BLOCK_SIZE
+    }
 }

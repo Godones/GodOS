@@ -228,7 +228,9 @@ impl DiskNode {
         useless_block
     }
 }
-type DataBlcok = [u8;BLOCK_SIZE];
+
+type DataBlock = [u8;BLOCK_SIZE];
+
 impl DiskNode{
     pub fn read_at(
         &self,offset: usize,
@@ -251,7 +253,7 @@ impl DiskNode{
             get_block_cache(self.get_block_id(start_block as u32, device) as usize,
                             device.clone())
                 .lock()
-                .read(0,|array:& DataBlcok|{
+                .read(0,|array:& DataBlock|{
                     let src = &array[start%BLOCK_SIZE..start%BLOCK_SIZE + current_read_size];
                     dst.copy_from_slice(src);
                 });
@@ -282,7 +284,7 @@ impl DiskNode{
             get_block_cache(self.get_block_id(start_block as u32, device) as usize,
                             device.clone())
                 .lock()
-                .modify(0,|array: &mut DataBlcok|{
+                .modify(0,|array: &mut DataBlock|{
                     //目标缓冲区
                     let src = & buf[write_size..write_size+current_write_size];
                     let dst = &mut array[start%BLOCK_SIZE..start%BLOCK_SIZE + current_write_size];
