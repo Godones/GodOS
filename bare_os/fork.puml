@@ -1,0 +1,28 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:sys_fork;
+:trap_handler();
+:copy_current_task();
+partition fork{
+     :MemorySet::from_existed_memset()
+     //复制父进程的地址空间;
+     :pid_alloc()
+      //为进程分配pid;
+     :KernelStack::new(&pid)
+     //分配内核栈;
+      :task_control_block
+      //构造任务控制块;
+      :parent_inner.children.push(task_control_block.clone());
+      :trap_cx.kernel_sp = kernel_stack_top;
+}
+: trap_cx_ptr.reg[10] = 0
+//更改子进程的返回值;
+:add_task(new_task);
+:tf = current_trap_cx_ptr()
+tf.reg[10] = answer;
+
+stop
+
+@enduml

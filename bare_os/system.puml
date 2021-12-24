@@ -1,0 +1,35 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:main;
+:clear_bss()
+//初始化0数据区;
+:mm::init()
+//初始化堆分配器;
+:mm::remap_test()
+//测试内核映射的正确性;
+:loader::show_apps()
+//显示APP;
+:task::add_initproc()
+//将0号进程加入队列;
+:trap::init()
+//初始化异常处理;
+:timer::enable_timer_interrupt()
+//时钟使能位;
+:timer::set_next_timetrigger()
+//第一个时钟周期开启;
+:task::run()
+//开始运行第一个进程;
+:Shell;
+fork
+repeat
+    :input task name;
+    :run task;
+repeat while (input)
+fork again
+    :recycle task;
+end fork
+stop
+
+@enduml

@@ -1,0 +1,396 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+package Task{
+    class TaskControlBlockInner
+    class TaskControlBlock
+    enum TaskStatus
+
+    class TaskContext
+}
+
+class TaskControlBlock<<(S,orchid)>>{
+    //不可变数据
+    pub pid: PidHandle,
+    pub kernel_stack: KernelStack,
+    //可变数据
+    inner: MyRefCell<TaskControlBlockInner>,
+    pub fn new(data:&[u8]) -> Self
+    pub fn get_inner_access(&self) -> RefMut<'_, TaskControlBlockInner>
+    pub fn get_pid(&self) -> usize
+    pub fn spawn(self:&Arc<TaskControlBlock>,path:&str)->isize
+    pub fn exec(&self, elf_data: &[u8])
+    pub fn fork(self:&Arc<TaskControlBlock>) -> Arc<TaskControlBlock>
+}
+class TaskControlBlockInner<<(S,orchid)>>{
+    pub task_cx_ptr: TaskContext,
+    //任务上下文栈顶地址的位置,位于内核空间中
+    pub task_status: TaskStatus,
+    pub memory_set: MemorySet,
+    //任务地址空间
+    pub trap_cx_ppn: PhysPageNum,
+    //trap上下文所在的物理块
+    pub base_size: usize,
+    //应用程序的大小
+    pub exit_code: isize,
+    //保存退出码
+    pub parent: Option<Weak<TaskControlBlock>>,
+    //父进程
+    pub children: Vec<Arc<TaskControlBlock>>,
+    //子进程需要引用计数
+    pub stride: usize,
+    //已走步长
+    pub pass: usize,
+    //每一步的步长，只与特权级相关
+    pub fn get_trap_cx(&self) -> &'static mut TrapFrame
+    pub fn get_user_token(&self) -> usize
+    pub fn get_status(&self) -> TaskStatus
+    pub fn is_zombie(&self) -> bool
+}
+enum TaskStatus {
+Ready,   //准备执行
+    Running, //正在执行
+    Exited,  //已经退出
+    Zombie,  //僵尸进程
+}
+TaskControlBlock *-- TaskControlBlockInner
+
+TaskControlBlockInner*--TaskStatus
+
+package TwoTaskManager{
+    class Processor
+    class TaskManager
+    interface TaskOut
+    interface ManagerOut
+    interface ProcessorOut
+}
+class TaskManager<<(S,orchid)>>{
+    task_ready_queue: VecDeque<Arc<TaskControlBlock>>
+    pub fn new() -> Self
+    pub fn add(&mut self, task: Arc<TaskControlBlock>)
+    pub fn pop(&mut self) -> Option<Arc<TaskControlBlock>>
+}
+interface ProcessorOut{
+    pub fn take_current_task() -> Option<Arc<TaskControlBlock>>
+    pub fn copy_current_task() -> Option<Arc<TaskControlBlock>>
+    pub fn current_user_token() -> usize
+    pub fn current_trap_cx_ptr() -> &'static mut TrapFrame
+    pub fn current_add_area(start_addr:VirtAddr,end_addr:VirtAddr,permission:MapPermission)->isize
+    pub fn current_delete_page(start_addr:VirtAddr)->isize
+    pub fn run()
+    pub fn schedule(last_task_cx_ptr: *mut TaskContext)
+
+}
+interface ManagerOut{
+    pub fn add_task(task: Arc<TaskControlBlock>)
+    pub fn fetch_task() -> Option<Arc<TaskControlBlock>>
+}
+interface TaskOut{
+    pub fn add_initproc()
+    pub fn suspend_current_run_next()
+    pub fn exit_current_run_next(exit_code:isize)
+}
+class Processor<<(S,orchid)>> {
+    //当前cpu执行的进程
+    current: Option<Arc<TaskControlBlock>>,
+    //进程切换上下文
+    //这是一个特殊的进程切换上下文，
+    //用于从当前的任务管理器中选择一个任务进行执行
+    idle_task_cx_ptr: TaskContext,
+    fn new() -> Self
+    fn take_current(&mut self) -> Option<Arc<TaskControlBlock>>
+    fn copy_current(&self) -> Option<Arc<TaskControlBlock>>
+    fn get_idle_task_cx_ptr(&mut self) -> * mut TaskContext
+}
+
+TwoTaskManager<|--Task
+
+
+package Pid{
+    class PidAllocator
+    class PidHandle
+    interface PidAlloc
+}
+interface PidAlloc{
+    fn new() -> Self;
+    fn alloc(&mut self) -> PidHandle;
+    fn dealloc(&mut self, ppn: usize);
+}
+
+
+class PidAllocator<<(S,orchid)>> {
+    current: usize,
+    recycled: Vec<usize>,
+}
+
+PidAlloc<|--PidAllocator
+class PidHandle<<(S,orchid)>> {
+    pub usize
+}
+KernelStack*--PidHandle
+PidHandle--|>PidAllocator
+
+
+class KernelStack <<(S,orchid)>> {
+    //应用的内核栈
+    pid: usize
+    pub fn new(pidhandle: &PidHandle) -> Self
+    pub fn get_stack_top(&self) -> usize
+    pub fn get_stack_button(&self) -> usize
+}
+
+TaskControlBlock*--PidHandle
+TaskControlBlock*--KernelStack
+
+class TaskContext<<(S,orchid)>> {
+    //ra: 此寄存器存储的是函数返回时跳转的地址
+    //在调用函数返回指令 sret时,Pc指针会取出ra里面的地址
+    ra: usize
+    sp: usize
+    s: [usize; 12]
+    pub fn zero_init() -> Self
+     pub fn goto_trap_return(kstack_ptr: usize) -> Self
+}
+TaskControlBlockInner*--TaskContext
+package OutInterface{
+ class BumpAllocator
+ interface GlobalAlloc
+ interface LoadApplication
+}
+
+class BumpAllocator <<(S,orchid)>> {
+    start_heap: usize
+    end_heap: usize
+    next: usize
+    allocations: usize //计数器
+    pub const fn new() -> Self
+    pub fn init(&mut self, start_heap: usize, heap_size: usize)
+}
+interface GlobalAlloc{
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8
+    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout)
+}
+GlobalAlloc<|--BumpAllocator
+
+package AddressSpace{
+    class VirtAddr
+    class PhysAddr
+    class VirtPageNum
+    class PhysPageNum
+    enum MapType
+    class MapArea
+    class MemorySet
+    class PageTableEntry
+    class PageTable
+    class PTEFlags
+    interface FindSomething
+    interface FrameAllocator
+    class StackFrameAllocator
+    class FrameTracker
+}
+
+class VirtPageNum<<(S,orchid)>>{
+    pub usize
+    fn from(value: usize) -> Self
+    pub fn index(&self) -> [usize; 3]
+    fn from(v: VirtAddr) -> Self
+}
+class PhysPageNum<<(S,orchid)>>{
+pub usize
+    fn from(value: usize) -> Self
+    pub fn get_bytes_array(&self) -> &'static mut [u8]
+    pub fn get_pte_array(&self) -> &'static mut [PageTableEntry]
+    pub fn get_mut<T>(&self) -> &'static mut T
+    fn from(v: PhysAddr) -> Self
+}
+
+class VirtAddr<<(S,orchid)>> {
+    pub usize
+    fn from(value: usize) -> Self
+    pub fn page_offset(&self) -> usize
+    pub fn floor(&self) -> PhysPageNum
+    pub fn ceil(&self) -> PhysPageNum
+    pub fn get_mut<T>(&self)->&'static mut T
+    pub fn aligned(&self)->bool
+    fn from(v: VirtPageNum) -> Self
+}
+class PhysAddr<<(S,orchid)>> {
+    pub usize
+    fn from(value: usize) -> Self
+    pub fn page_offset(&self) -> usize
+    pub fn floor(&self) -> PhysPageNum
+    pub fn ceil(&self) -> PhysPageNum
+    pub fn get_mut<T>(&self)->&'static mut T
+    pub fn aligned(&self)->bool
+    fn from(v: PhysPageNum) -> Self
+}
+
+VirtAddr<|--|>VirtPageNum
+PhysAddr<|--|>PhysPageNum
+class PTEFlags<<(S,orchid)>> {}
+
+class PageTableEntry<<(S,orchid)>> {
+   pub bits: usize //页表项
+   fn new(ppn: PhysPageNum, flags: PTEFlags) -> Self
+   fn empty() -> Self
+   pub fn ppn(&self) -> PhysPageNum
+   pub fn flags(&self) -> PTEFlags
+   pub fn is_valid(&self) -> bool
+   pub fn writable(&self) -> bool
+   pub fn readable(&self) -> bool
+   pub fn executable(&self) -> bool
+}
+
+class PageTable<<(S,orchid)>> {
+    root_ppn: PhysPageNum
+    //根页表所在的物理页帧号
+    frames: Vec<FrameTracker>
+    //所有页目录表所在的物理页帧
+    pub fn new() -> Self
+    pub fn token(&self) -> usize
+    pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags)
+    pub fn unmap(&mut self, vpn: VirtPageNum)
+    fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry>
+    pub fn from_token(stap: usize) -> Self
+    pub fn translated_va(&self,va:VirtAddr)->Option<PhysAddr>
+    //将一个虚拟地址转换为一个物理地址
+    pub fn find_pte(&self, vpn: VirtPageNum) -> Option<&PageTableEntry>
+    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry>
+
+}
+PageTable*--PTEFlags
+PageTable*--PageTableEntry
+PageTableEntry*--PhysPageNum
+PageTableEntry*--VirtPageNum
+interface FindSomething{
+    pub fn translated_byte_buffer(token: usize,ptr: *const u8,len: usize) -> Vec<&'static mut [u8]>
+    pub fn translated_str(token:usize,ptr: *const u8)->String
+    pub fn translated_refmut<T>(token:usize,ptr:*mut T) ->&'static mut T
+}
+interface FrameAllocator{
+    fn new() -> Self;
+     fn alloc(&mut self) -> Option<PhysPageNum>;
+        fn dealloc(&mut self, ppn: PhysPageNum);
+}
+FrameAllocator<|--StackFrameAllocator
+
+
+class FrameTracker<<(S,orchid)>>{
+pub ppn: PhysPageNum
+pub fn new(ppn: PhysPageNum) -> Self
+fn drop(&mut self)
+
+}
+class StackFrameAllocator<<(S,orchid)>> {
+    current: usize,
+    //起始页帧
+    end: usize,
+    //终止页帧
+    recycled: Vec<usize>,
+     //回收的页帧
+    fn init(&mut self, begin: PhysPageNum, end: PhysPageNum)
+}
+StackFrameAllocator*--FrameTracker
+PageTable*--FrameTracker
+
+enum MapType{
+     Identical, //恒等映射
+        Framed,    //其它映射
+}
+class MapArea<<(S,orchid)>>{
+    //一段逻辑地址空间的描述
+        vpn_range: VPNRange, //虚拟页号的迭代器
+        //虚拟页号和物理页号的对应关系
+        data_frames: BTreeMap<VirtPageNum, FrameTracker>,
+        //逻辑段的映射方式
+        map_type: MapType
+        //逻辑段的读取权限
+        map_perm: MapPermission
+   pub fn new(start_addr: VirtAddr,end_addr: VirtAddr,map_type: MapType,map_perm: MapPermission,) -> Self
+    pub fn copy_from_other(old_maparea: &MapArea) -> Self
+    fn map(&mut self, page_table: &mut PageTable)
+    fn unmap(&mut self, page_table: &mut PageTable)
+    fn copy_data(&mut self, page_table: &mut PageTable, data: &[u8])
+    fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum)
+    fn unmap_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum)
+}
+MapArea*--MapType
+MapArea*--VirtPageNum
+class MemorySet<<(S,orchid)>> {
+    //应用程序的地址空间
+    //三级页表
+    page_table: PageTable,
+    //所有的逻辑段
+    areas: Vec<MapArea>,
+    fn new_bare() -> Self
+    pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry>
+    pub fn token(&self) -> usize
+    pub fn activate(&self)
+    fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>)
+    pub fn insert_framed_area(&mut self,start_addr: VirtAddr,end_addr: VirtAddr,permission: MapPermission,)
+    pub fn remove_from_startaddr(&mut self, startaddr: VirtAddr)
+    fn new_kernel() -> Self
+    pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize)
+    pub fn from_existed_memset(src_memset: &MemorySet) -> Self
+    fn map_trampoline(&mut self)
+    pub fn clear_area_data(&mut self)
+}
+MemorySet*--MapArea
+MemorySet*--PageTable
+
+TaskControlBlockInner*--MemorySet
+
+
+package Exception{
+    interface Syscall
+     class TrapFrame
+        interface TrapOut
+}
+interface Syscall{
+
+pub fn sys_exit(exit_code: i32) -> !
+pub fn sys_read(fd:usize,buf:*const u8,len:usize)->isize
+pub fn sys_write(function: usize, buf: *const u8, len: usize) -> isize
+pub fn sys_yield() -> isize
+pub fn sys_get_time(time: *mut Time) -> isize
+pub fn sys_set_priority(priority: usize) -> isize
+pub fn sys_fork()->isize
+pub fn sys_exec(path:*const u8)->isize
+pub fn sys_waitpid(pid:isize,exit_code_ptr:*mut i32)->isize
+pub fn sys_spawn(path:*const u8)->isize
+pub fn sys_getpid()->isize
+pub fn sys_mmap(start:usize,len:usize,port:usize)->isize
+pub fn sys_munmap(start:usize,len:usize)->isize
+}
+
+
+class TrapFrame<<(S,orchid)>>{
+    pub reg: [usize; 32], //32个通用寄存器
+        pub sstatus: Sstatus,
+        pub sepc: usize,
+        pub kernel_satp: usize,  //内核的地址空间根页表位置
+        pub kernel_sp: usize,    //内核的用户栈栈顶 位置
+        pub trap_handler: usize, //内核处理trap的位置
+    pub fn set_sp(&mut self, sp: usize)
+   pub fn app_into_context(entry: usize,sp: usize,kernel_satp: usize,user_stack_ap: usize,trap_handler: usize,) -> Self
+}
+interface TrapOut{
+pub fn init()
+pub fn set_kernel_trap_entry()
+fn trap_from_kernel() -> !
+pub fn set_user_trap_entry()
+pub fn trap_return() -> !
+pub fn trap_handler() -> !
+fn breakpoint_handler(sepc: usize)
+fn supertimer_handler()
+}
+interface LoadApplication{
+    pub fn get_num_app()
+    pub fn get_app_data(app_id: usize) -> &'static [u8]
+    pub fn get_data_by_name(app_name: &str) -> Option<&'static [u8]
+}
+TwoTaskManager<|--OutInterface
+
+
+
+@enduml
