@@ -21,7 +21,7 @@ impl Bitmap {
         }
     }
     //分配一个位
-    pub fn malloc(&mut self, block_device: Arc<dyn BlockDevice>) -> Option<usize> {
+    pub fn alloc(&mut self, block_device: Arc<dyn BlockDevice>) -> Option<usize> {
         for block_id in 0..self.blocks {
             //查找已有的块中是否还有剩余位置
             let position = get_block_cache(block_id + self.start_block, block_device.clone())

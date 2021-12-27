@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use alloc::sync::Arc;
 use crate::bitmap::Bitmap;
 use crate::block_dev::BlockDevice;
 use spin::Mutex;
@@ -6,6 +6,7 @@ use crate::block_cache::get_block_cache;
 use crate::BLOCK_SIZE;
 use crate::inode::{DiskNode, DiskNodeType};
 use crate::layout::SuperBlock;
+use crate::vfs::Inode;
 
 ///! 负责组织下层抽象的各个文件结构，将其合理安排在磁盘上
 
@@ -39,8 +40,8 @@ impl FileSystem {
         let data_bitmap = Bitmap::new(1+inode_total_blocks,data_bitmap_blocks);
         let mut fs = Self{
             block_device:device.clone(),
-            inode_bitmap:inode_bitmap,
-            data_bitmap:data_bitmap,
+            inode_bitmap,
+            data_bitmap,
             inode_area_blocks: (1 + inode_bitmap_blocks) as u32,
             data_area_blocks: (1 + inode_total_blocks) as u32
         };
@@ -76,19 +77,63 @@ impl FileSystem {
             });
         Arc::new(Mutex::new(fs))
     }
+
+    pub fn open(device:Arc<dyn BlockDevice>)->Arc<Mutex<FileSystem>>{
+        //从一个已经写入文件系统的设备上恢复文件系统
+        //只要读取第一个存储块将超级快信息读出即可
+        get_block_cache(0,device.clone())
+            .lock()
+            .read(0,|superblock:&SuperBlock|{
+                assert!(superblock.is_valid(),"Load error efs");
+                let inode_total_blocks = superblock.inode_bitmap_blocks+superblock.inode_area_blocks;
+                let efs = Self{
+                    block_device:device,
+                    inode_bitmap:Bitmap::new(1, superblock.inode_bitmap_blocks as usize),
+                    data_bitmap:Bitmap::new((1 + inode_total_blocks) as usize, superblock.data_bitmap_blocks as usize),
+                    inode_area_blocks: (1 + superblock.inode_bitmap_blocks ) as u32,
+                    data_area_blocks: 1+inode_total_blocks+superblock.data_bitmap_blocks,
+                };
+                Arc::new(Mutex::new(efs))
+            })
+    }
+    pub fn get_data_block_id(&self,data_block_id:u32)->u32{
+       //获取逻辑块号对于物理块号
+       self.data_area_blocks + data_block_id
+   }
     fn alloc_inode(&mut self) ->u32{
         //从索引位图中分配一个inode;
-        self.inode_bitmap.malloc(self.block_device.clone()).unwrap() as u32
+        self.inode_bitmap.alloc(self.block_device.clone()).unwrap() as u32
     }
-    fn get_disk_inode_pos(&self,inode:u32) -> (u32,usize){
+    pub fn get_disk_inode_pos(&self,inode:u32) -> (u32,usize){
         //根据索引节点号找到位于索引节点区的位置和索引块编号
         let inode_size = inode as usize*core::mem::size_of::<DiskNode>();
         let block_id = inode_size/BLOCK_SIZE + self.inode_area_blocks as usize;
         let offset = inode_size%BLOCK_SIZE;
         (block_id as u32,offset)
     }
-    pub fn open(device:&Arc<dyn BlockDevice>)->Arc<Mutex<FileSystem>>{
-        //从一个已经写入文件系统的设备上恢复文件系统
-        todo!()
+    pub fn dealloc_data(&mut self,block_id: u32){
+        //回收一个数据块
+        get_block_cache(block_id as usize,self.block_device.clone())
+            .lock()
+            .modify(0,|data_block:& mut DataBlock|{
+                data_block.iter_mut().for_each(|p| *p =0);
+            });//将数据块初始化为0
+        self.data_bitmap.dealloc((block_id - self.data_area_blocks) as usize, self.block_device.clone());
+    }
+    pub fn alloc_data(&mut self)->u32{
+        self.data_bitmap.alloc(self.block_device.clone()).unwrap() as u32 + self.data_area_blocks
+    }
+    pub fn root_inode(fs:&Arc<Mutex<FileSystem>>)->Inode{
+        //提供根目录的索引节点号
+        //其它所有文件或目录均要从根目录开始寻找
+        let device = Arc::clone(&fs.lock().block_device);//获取文件系统的块设备引用
+        //获取索引节点号为1的索引块位置和偏移量
+        let (root_inode_block_id,root_inode_offset) = fs.lock().get_disk_inode_pos(0);
+        Inode::new(
+            root_inode_block_id,
+            root_inode_offset,
+            fs.clone(),
+            device
+        )
     }
 }

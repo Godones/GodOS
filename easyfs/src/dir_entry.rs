@@ -7,7 +7,8 @@ pub struct DirEntry {
     name:[u8;NAME_LENGTH_MAX+1],//文件名/目录名
     node_number:u32,//所在的索引节点编号
 }
-const  DIRENTRY_SIZE: usize = 32;
+pub const DIRENTRY_SIZE: usize = 32;
+
 impl DirEntry {
     pub fn empty() -> DirEntry {
         Self{

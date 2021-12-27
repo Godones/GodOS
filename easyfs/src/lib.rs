@@ -8,5 +8,6 @@ mod layout;
 mod inode;
 mod dir_entry;
 mod efs;
+mod vfs;
 
 pub use config::*;
