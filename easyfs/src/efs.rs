@@ -100,7 +100,7 @@ impl FileSystem {
        //获取逻辑块号对于物理块号
        self.data_area_blocks + data_block_id
    }
-    fn alloc_inode(&mut self) ->u32{
+    pub fn alloc_inode(&mut self) ->u32{
         //从索引位图中分配一个inode;
         self.inode_bitmap.alloc(self.block_device.clone()).unwrap() as u32
     }
@@ -118,6 +118,7 @@ impl FileSystem {
             .modify(0,|data_block:& mut DataBlock|{
                 data_block.iter_mut().for_each(|p| *p =0);
             });//将数据块初始化为0
+        // println!("block_id-data_area_blocks = {}",block_id-self.data_area_blocks);
         self.data_bitmap.dealloc((block_id - self.data_area_blocks) as usize, self.block_device.clone());
     }
     pub fn alloc_data(&mut self)->u32{

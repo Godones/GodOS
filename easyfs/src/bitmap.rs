@@ -32,7 +32,7 @@ impl Bitmap {
                         .enumerate()
                         .find(|(_, bits64)| **bits64 != u64::MAX)//确认并没有达到最大值
                         .map(|(bits_pos, bits64)| {
-                            (bits_pos, bits64.trailing_zeros() as usize)
+                            (bits_pos, bits64.trailing_ones() as usize)
                         })
                     {
                         bitmap_block[bits_pos] |= 1u64 << inner_pos;
@@ -48,8 +48,8 @@ impl Bitmap {
         None
     }
     fn depositions(&self, position:usize)->(usize,usize,usize) {
-        let block_id = position/BLOCK_SIZE;
-        let bits = position%BLOCK_SIZE;
+        let block_id = position/BLOCK_BITS;
+        let bits = position%BLOCK_BITS;
         let bits_pos = bits/64;
         let inner_pos=  bits%64;
         (block_id,bits_pos,inner_pos)
@@ -57,6 +57,7 @@ impl Bitmap {
     //回收分配出去的一个位
     pub fn dealloc(&mut self,position:usize,device:Arc<dyn BlockDevice>){
         let (block_id,bits_pos,inner_pos) = self.depositions(position);
+        // println!("{},{:?}",position,self.depositions(position));
         get_block_cache(block_id+self.start_block,device.clone())
             .lock()
             .modify(0,|bitsmap_block:&mut BitmapBlock|{

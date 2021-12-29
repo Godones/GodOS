@@ -35,16 +35,17 @@ impl BlockCache {
         T: Sized,
     {
         let t_size = core::mem::size_of::<T>();
-        assert!(t_size + offset < BLOCK_SIZE);
+        assert!(t_size + offset <= BLOCK_SIZE);
         let begin = self.addr_offset(offset);
         unsafe { &*(begin as *const T) }
     }
-    pub fn get_mut<T>(&self, offset: usize) -> &mut T
+    pub fn get_mut<T>(&mut self, offset: usize) -> &mut T
     where
         T: Sized,
     {
         let t_size = core::mem::size_of::<T>();
-        assert!(t_size + offset < BLOCK_SIZE);
+        assert!(t_size + offset <= BLOCK_SIZE);
+        self.modified = true;
         let begin = self.addr_offset(offset);
         unsafe { &mut *(begin as *mut T) }
     }
@@ -53,7 +54,7 @@ impl BlockCache {
         //实现对get_ref的包装
         f(self.get_ref(offset))
     }
-    pub fn modify<T, V>(&self, offset: usize, f: impl FnOnce(&mut T) -> V) -> V {
+    pub fn modify<T, V>(&mut self, offset: usize, f: impl FnOnce(&mut T) -> V) -> V {
         //实现对get_mut的包装
         //这里f是一个闭包函数
         f(self.get_mut(offset))
@@ -125,4 +126,10 @@ pub fn get_block_cache(
     BLOCK_CACHE_MANAGER
         .lock()
         .get_block_cache(block_id, block_device)
+}
+pub fn block_cache_sync(){
+    BLOCK_CACHE_MANAGER.lock()
+        .queue.iter().for_each(|(idx,cache)|{
+        cache.lock().sync()
+    })
 }

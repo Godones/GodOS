@@ -78,7 +78,7 @@ impl DiskNode {
     pub fn data_blocks(&self)->u32{
         Self::_data_blocks(self.size)
     }
-    fn total_blocks(&self,size:u32)->u32{
+    pub fn total_blocks(size:u32)->u32{
         let data_blocks = Self::_data_blocks(size);
         let mut total_blocks = data_blocks;
         if data_blocks as usize > DIRECT_MAX { total_blocks +=1 };
@@ -88,9 +88,9 @@ impl DiskNode {
         }
         total_blocks
     }
-    fn addition_blocks(&self,new_size:u32)->u32{
+    pub fn addition_blocks(&self,new_size:u32)->u32{
         //求出扩容后需要增加的数据块与索引块
-        self.total_blocks(new_size) - self.total_blocks(self.size)
+        Self::total_blocks(new_size) - Self::total_blocks(self.size)
     }
     pub fn increase_size(
         &mut self,
@@ -101,6 +101,8 @@ impl DiskNode {
         let mut current_data_blocks = self.data_blocks() as usize;//当前时刻的数据块数目
         self.size  = new_size;//更改文件/目录大小
         let mut after_data_blocks = self.data_blocks() as usize;//加入新的数据后的数目
+
+        // println!("[filesystem]inode::increase_size::after-current = {}",after_data_blocks-current_data_blocks);
         let mut new_blocks_iter = new_blocks.into_iter();
 
         while current_data_blocks < after_data_blocks.min(DIRECT_MAX) {
@@ -124,8 +126,9 @@ impl DiskNode {
         get_block_cache(self.indirect1 as usize, device.clone())
             .lock()
             .modify(0,|array: &mut Indirect|{
-                while current_data_blocks < after_data_blocks.min(INDIRECT1_MAX - DIRECT_MAX) {
+                while current_data_blocks < after_data_blocks.min(BLOCK_U32) {
                     array[current_data_blocks] = new_blocks_iter.next().unwrap();
+                    current_data_blocks +=1;
                 }
             });
         if after_data_blocks > (INDIRECT1_MAX-DIRECT_MAX){
@@ -167,17 +170,17 @@ impl DiskNode {
         //清空文件数据后应该回收所有的数据和索引块
         let mut useless_block :Vec<u32>= Vec::new();
         let mut data_blocks = self.data_blocks() as usize;
-        self.size = 0;
+        self.size = 0;//文件大小为0
         let mut current_blcoks = 0;
         while current_blcoks < data_blocks.min(DIRECT_MAX){
             useless_block.push(self.direct[current_blcoks]);
             self.direct[current_blcoks] =0;
             current_blcoks +=1;
         }
-        if data_blocks > INDIRECT1_MAX {
+        if data_blocks > DIRECT_MAX {
             useless_block.push(self.indirect1);
             current_blcoks = 0;
-            data_blocks -=INDIRECT1_MAX;
+            data_blocks -=DIRECT_MAX;
         }else { return useless_block; }
         get_block_cache(self.indirect1 as usize,device.clone())
             .lock()
@@ -190,7 +193,6 @@ impl DiskNode {
         self.indirect1 = 0;
         if data_blocks > BLOCK_U32 {
             useless_block.push(self.indirect2);
-
             data_blocks -= BLOCK_U32;
         }else {
             return useless_block;
@@ -214,7 +216,7 @@ impl DiskNode {
                 }
                 if b1 > 0 {
                     useless_block.push(array1[a1]);
-                    get_block_cache(a1,device.clone())
+                    get_block_cache(array1[a1] as usize,device.clone())
                         .lock()
                         .modify(0,|array2:&mut Indirect|{
                             for j in 0..b1{
@@ -260,25 +262,27 @@ impl DiskNode{
             read_size +=current_read_size;
             if current_end_blcok == end {break}//读完
             start_block +=1;
-            start = current_read_size;
+            start = current_end_blcok;
         }
         read_size
     }
     pub fn write_at(
         &self,offset: usize,
-        buf:&mut [u8],
+        buf:& [u8],
         device:&Arc<dyn BlockDevice>)->usize
     {
         let mut start = offset;
         //判断本文件大小
         let end = (offset+buf.len()).min(self.size as usize);
         assert!(start <= end);
+        // println!("[filesystem]inode::write_at::begin:{},end:{}", start, end);
         let mut start_block = start/BLOCK_SIZE;//起始块
         let mut write_size= 0usize;
         loop {
             //计算本数据块的的末位位置
             let mut current_end_blcok = (start/BLOCK_SIZE + 1 )*BLOCK_SIZE;
             current_end_blcok = current_end_blcok.min(end);
+            //计算要写入的大小
             let current_write_size = current_end_blcok - start;
 
             get_block_cache(self.get_block_id(start_block as u32, device) as usize,
@@ -293,7 +297,7 @@ impl DiskNode{
             write_size +=current_write_size;
             if current_end_blcok == end {break}//读完
             start_block +=1;
-            start = current_write_size;
+            start = current_end_blcok;
         }
         write_size
     }
