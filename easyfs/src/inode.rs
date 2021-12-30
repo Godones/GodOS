@@ -2,7 +2,7 @@ use alloc::sync::Arc;
 use crate::block_dev::BlockDevice;
 use crate::{DIRECT_MAX, INDIRECT1_MAX, BLOCK_SIZE, BLOCK_U32, INDIRECT2_MAX};
 use crate::block_cache::get_block_cache;
-
+use alloc::vec::Vec;
 #[derive(PartialEq)]
 pub enum  DiskNodeType {
     FILE,//普通文件
@@ -260,10 +260,11 @@ impl DiskNode{
                     dst.copy_from_slice(src);
                 });
             read_size +=current_read_size;
-            if current_end_blcok == end {break}//读完
+            if current_end_blcok == end {break;}//读完
             start_block +=1;
             start = current_end_blcok;
         }
+        // println!("read_size: {}", read_size);
         read_size
     }
     pub fn write_at(

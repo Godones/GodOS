@@ -3,9 +3,11 @@ use crate::mm::page_table::PageTableEntry;
 
 /// 虚拟地址、物理地址、虚拟页号、物理页帧的定义
 #[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq, Debug)]
+#[repr(C)]
 pub struct VirtAddr(pub usize);
 
 #[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq, Debug)]
+#[repr(C)]
 pub struct PhysAddr(pub usize);
 
 #[derive(Copy, Clone, PartialEq, Ord, PartialOrd, Eq, Debug)]
@@ -117,6 +119,13 @@ impl StepByOne for VirtPageNum {
         self.0 += 1;
     }
 }
+
+impl StepByOne for PhysPageNum {
+    fn step(&mut self) {
+        self.0 +=1;
+    }
+}
+
 
 #[derive(Copy, Clone, Debug)]
 pub struct VirPageIter {

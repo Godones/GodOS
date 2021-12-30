@@ -1,6 +1,5 @@
 use crate::config::{BIG_STRIDE, TRAMP_CONTEXT};
-use crate::file::{File, Mail, Stdin, Stdout};
-use crate::loader::get_data_by_name;
+use crate::file::{File, Mail, open_file, OpenFlags, Stdin, Stdout};
 use crate::mm::address::{PhysPageNum, VirtAddr};
 use crate::mm::MemorySet;
 use crate::mm::KERNEL_SPACE;
@@ -132,9 +131,10 @@ impl TaskControlBlock {
     }
     pub fn spawn(self: &Arc<TaskControlBlock>, path: &str) -> isize {
         //直接创建一个新的子进程，并且执行程序
-        let data = get_data_by_name(path);
-        if let Some(data) = data {
-            let task_control_block =Arc::new( TaskControlBlock::new(data));
+        let node = open_file(path,OpenFlags::R).unwrap();
+        let data = node.read_all();
+        if data.len()!=0 {
+            let task_control_block =Arc::new( TaskControlBlock::new(data.as_slice()));
             //修改其父进程的引用
             let mut inner = task_control_block.get_inner_access();
             inner.parent = Some(Arc::downgrade(self));

@@ -6,7 +6,6 @@ use crate::{println, INFO};
 use alloc::collections::btree_map::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-use core::iter::Map;
 use bitflags::bitflags;
 use lazy_static::lazy_static;
 use riscv::register;

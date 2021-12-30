@@ -7,16 +7,21 @@ pub mod process;
 mod switch;
 mod task;
 
-use crate::loader::get_data_by_name;
 use crate::task::context::TaskContext;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 pub use manager::add_task;
 pub use process::{current_trap_cx_ptr, current_user_token, run, schedule, take_current_task};
+use crate::file::open_file;
+use crate::file::OpenFlags;
 
 lazy_static! {
-    pub static ref INITPROC:Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(get_data_by_name("initproc").unwrap()));
+    pub static ref INITPROC:Arc<TaskControlBlock> = Arc::new({
+        let node = open_file("initproc",OpenFlags::R).unwrap();
+        let data = node.read_all();
+        TaskControlBlock::new(data.as_slice())
+    });
     //初始化初始进程
 }
 

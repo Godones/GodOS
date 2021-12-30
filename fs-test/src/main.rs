@@ -33,12 +33,12 @@ fn crate_filesystem()->Inode{
             .read(true)
             .write(true)
             .create(true)
-            .open("../fs-test/target/fs.img").unwrap();
-        f.set_len((8192+1024)*512).unwrap();//设置文件大小
+            .open("../user/target/riscv64gc-unknown-none-elf/release/fs.img").unwrap();
+        f.set_len(8192*512).unwrap();//设置文件大小
         f
     })));
     //创建文件系统
-    FileSystem::create(block_file.clone(),(1024+8192),1);
+    FileSystem::create(block_file.clone(),8192,1);
     let fs = FileSystem::open(block_file.clone());
     //得到根目录节点
     let root_inode = FileSystem::root_inode(&fs);
@@ -46,7 +46,7 @@ fn crate_filesystem()->Inode{
 }
 
 
-#[test]
+// #[test]
 fn fs_test()->std::io::Result<()> {
     //测试文件系统
     let root_inode = crate_filesystem();
@@ -64,6 +64,16 @@ fn fs_test()->std::io::Result<()> {
     let len = file1.read_at(0, &mut buffer);
     assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
     println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+
+    let file2 = root_inode.find_inode("file2").unwrap();
+    let hello_str = "Hello world file2";
+    file2.write_at(0,hello_str.as_bytes());
+    let mut buffer = [0u8;255];
+    let len = file2.read_at(0, &mut buffer);
+    assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+
+
     //测试写入不同长度的内容
 
     let mut random_str_test = |len:usize|{
@@ -124,24 +134,29 @@ fn package()->std::io::Result<()>{
     println!("The source path: {}",source);
     println!("The target path: {}",target);
     //获取源文件下各个应用程序的名称
-    let filenames :Vec<_>= std::fs::read_dir(source)
+    let mut filenames:Vec<_>= std::fs::read_dir(source)
         .unwrap()
         .into_iter()
         .map(|direntry|{
             let mut name = direntry.unwrap().file_name().into_string().unwrap();
+            // println!("{}",name);
             name.drain(name.find(".").unwrap()..name.len());
             name
         })
         .collect();
 
+    filenames.sort();
     let root_inode=  crate_filesystem();  // for name in filenames{
     filenames.into_iter().for_each(|name|{
         let mut data:Vec<u8> = Vec::new();
         let mut file = std::fs::File::open(format!("{}{}", target, name)).unwrap();
         file.read_to_end(& mut data).unwrap();//读取完整的应用
-        let new_inode = root_inode.create(name.as_str()).unwrap();
+
+        let new_inode = root_inode.create(name.as_str()).unwrap();//新建一个文件
+        // println!("name: {},block_id: {},block_offset: {}",name,new_inode.block_id,new_inode.block_offset);
         new_inode.write_at(0,data.as_slice());
     });
+    println!("application number: {}",root_inode.ls().len());
     root_inode.ls().iter().for_each(|name|{println!("{}",name)});
     Ok(())
 }
@@ -149,4 +164,5 @@ fn package()->std::io::Result<()>{
 fn main() {
     println!("Test filesystem...");
     package();
+    // fs_test();
 }

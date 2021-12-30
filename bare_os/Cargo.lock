@@ -23,6 +23,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "buddy_system_allocator",
+ "easyfs",
  "lazy_static",
  "riscv",
  "spin 0.9.2",
@@ -57,6 +58,14 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "easyfs"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "spin 0.9.2",
+]
 
 [[package]]
 name = "lazy_static"

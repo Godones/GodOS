@@ -106,7 +106,7 @@ impl FileSystem {
     }
     pub fn get_disk_inode_pos(&self,inode:u32) -> (u32,usize){
         //根据索引节点号找到位于索引节点区的位置和索引块编号
-        let inode_size = inode as usize*core::mem::size_of::<DiskNode>();
+        let inode_size = inode as usize * core::mem::size_of::<DiskNode>();
         let block_id = inode_size/BLOCK_SIZE + self.inode_area_blocks as usize;
         let offset = inode_size%BLOCK_SIZE;
         (block_id as u32,offset)

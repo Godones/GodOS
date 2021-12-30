@@ -6,14 +6,15 @@ use crate::block_dev::BlockDevice;
 use crate::dir_entry::{DirEntry, DIRENTRY_SIZE};
 use crate::efs::FileSystem;
 use crate::inode::{DiskNode, DiskNodeType};
-
+use alloc::vec::Vec;
+use alloc::string::String;
 ///! 索引节点层，负责提供系统调用
 
 pub struct Inode{
     //Inode与Disknode的区别在于Inode存在于内存中
     //记录文件索引节点的相关信息
-    block_id:usize,//物理块号
-    block_offset:usize,//块内偏移
+    pub block_id:usize,//物理块号
+    pub block_offset:usize,//块内偏移
     fs:Arc<Mutex<FileSystem>>,//文件系统指针，各个索引节点均需要通过这个实际操作磁盘
     block_device:Arc<dyn BlockDevice>
 }
@@ -49,6 +50,7 @@ impl Inode{
         self.read_disk_inode(|disk_inode|{
             self.find_inode_id(name,disk_inode).map(|inode_id|{
                let(block_id,block_offset) = fs.get_disk_inode_pos(inode_id);
+                // println!("the inode id: {}, The block_id :{}, block_offset :{}",inode_id,block_id,block_offset);
                 Arc::new(
                     Inode::new(
                         block_id,
@@ -63,8 +65,10 @@ impl Inode{
     fn find_inode_id(&self,name:&str,disk_inode:&DiskNode)->Option<u32>{
         //判断是否是目录
         assert!(disk_inode.is_dir(),"This is not a directory");
+        // println!("Find the {}",name);
         let mut direntry = DirEntry::empty();//创建一个空的目录项
         let direntry_num = disk_inode.size as usize/DIRENTRY_SIZE;//目录文件中包含的目录项数目
+        // println!("The direntry_num: {}",direntry_num);
         for index in 0..direntry_num{
             assert_eq!(
                 disk_inode.read_at(
@@ -73,6 +77,7 @@ impl Inode{
                     &self.block_device
                 ),DIRENTRY_SIZE);
                 if direntry.name()==name{
+                    // println!("name: {}",direntry.name());
                     return Some(direntry.node_number())
                 }
         }
@@ -101,7 +106,6 @@ impl Inode{
 
     }
     pub fn create(& self, name:&str) ->Option<Arc<Inode>>{
-
         //创建一个文件/目录，这里只实现创建一个文件
         let mut fs = self.fs.lock();
         if self.modify_disk_inode(|root_node:&mut DiskNode|{
@@ -115,6 +119,9 @@ impl Inode{
         let inode_id = fs.alloc_inode();
 
         let (inode_block_id,inode_block_offset) = fs.get_disk_inode_pos(inode_id);
+
+        // println!("The inode_block_id: {},inode_block_offset: {}",inode_block_id,inode_block_offset);
+
         get_block_cache(inode_block_id as usize,self.block_device.clone())
             .lock()
             .modify(inode_block_offset,|new_disk_inode:&mut DiskNode|{
@@ -124,23 +131,21 @@ impl Inode{
             //在根目录下添加
             let file_num = root_inode.size as usize/DIRENTRY_SIZE;
             let new_size = (file_num+1)*DIRENTRY_SIZE;//新的目录大小
-
             self.increase_size(new_size as u32,root_inode,&mut fs);
-
-            let new_entry = DirEntry::new(name, inode_block_id);
+            let new_entry = DirEntry::new(name, inode_id);
 
             let _number = root_inode.write_at(
                 file_num*DIRENTRY_SIZE as usize,
                 new_entry.as_bytes(),
                 &self.block_device,
             );//写入目录项
-            // println!("[filesystem]vfs::create::number: {}",number);
+            // println!("The filenames: {},the inode_id: {},offset: {}",name,inode_id,file_num*DIRENTRY_SIZE);
         });
-        let (block_id, block_offset) = fs.get_disk_inode_pos(inode_id);
+        // let (block_id, block_offset) = fs.get_disk_inode_pos(inode_id);
         block_cache_sync();//同步数据到磁盘
         Some(Arc::new(Inode::new(
-            block_id,
-            block_offset,
+            inode_block_id,
+            inode_block_offset,
             self.fs.clone(),
             self.block_device.clone()
         )))

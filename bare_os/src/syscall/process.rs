@@ -1,7 +1,6 @@
-use crate::DEBUG;
+
 use crate::config::BIG_STRIDE;
-use crate::file::Pipe;
-use crate::loader::get_data_by_name;
+use crate::file::{open_file, Pipe,OpenFlags};
 use crate::mm::address::VirtAddr;
 use crate::mm::page_table::{translated_refmut, translated_str, PageTable};
 use crate::task::{add_task, current_user_token, exit_current_run_next, suspend_current_run_next};
@@ -30,7 +29,6 @@ pub fn sys_yield() -> isize {
 pub fn sys_get_time(time: *mut Time) -> isize {
     let current_time = crate::timer::get_costtime(); //获取微秒
                                                      // println!("current: {}",current_time);
-
     *(translated_refmut(current_user_token(), time)) = Time {
         s: current_time / 1000_000,
         us: current_time % 1000_000,
@@ -57,9 +55,11 @@ pub fn sys_fork() -> isize {
 pub fn sys_exec(path: *const u8) -> isize {
     let token = current_user_token();
     let name = translated_str(token, path);
-    if let Some(data) = get_data_by_name(name.as_str()) {
+
+    if let Some(node) = open_file(name.as_str(),OpenFlags::R) {
+        let data = node.read_all();
         let task = copy_current_task().unwrap();
-        task.exec(data);
+        task.exec(data.as_slice());
         0
     } else {
         -1
@@ -193,6 +193,25 @@ pub fn sys_close(fd: usize) -> isize {
 pub fn sys_mail_read(buf:*mut u8,len:usize)->isize{
     sys_read(3, buf, len)
 }
+
 pub fn sys_mail_write(pid:usize,buf:*mut u8,len:usize)->isize{
+    //todo!(需要修改pid的查找)
     sys_write(3, buf, len)
+}
+pub fn sys_open(path:*const u8,flags:u32)->isize{
+    //打开文件返回一个描述符
+    let token = current_user_token();
+    let name = translated_str(token,path);
+    if let Some(node) = open_file(name.as_str(),OpenFlags::from_bits(flags).unwrap()){
+        let task = copy_current_task().unwrap();
+        let mut inner = task.get_inner_access();
+        let fd = inner.get_one_fd();//分配文件描述符
+        //
+        inner.fd_table[fd] = Some(node);
+        fd as isize
+    }
+    else {
+        -1
+    }
+
 }
