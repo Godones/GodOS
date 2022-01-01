@@ -10,6 +10,8 @@ mod lang_items;
 pub mod syscall;
 mod system_allocator;
 mod time;
+extern crate alloc;
+use alloc::vec::Vec;
 pub use time::Time;
 use bitflags::bitflags;
 use crate::syscall::*;
@@ -18,11 +20,11 @@ use system_allocator::init;
 
 bitflags!{
     pub struct OpenFlags:u32 {
-        const RDONLY = 0;//只读
-        const WDONLY = 1<<0;//只写
-        const RDWR = 1<<1;//读写
-        const CREAT = 1<<9;//新建
-        const TRUNC = 1<<10;//打开清空
+        const R = 0;//只读
+        const W = 1<<0;//只写
+        const RW = 1<<1;//读写
+        const C = 1<<9;//新建
+        const T = 1<<10;//打开清空
     }
 }
 
@@ -50,8 +52,8 @@ pub fn fork() -> isize {
     sys_fork()
 }
 
-pub fn exec(path: &str) -> isize {
-    sys_exec(path)
+pub fn exec(path: &str,args:&[*const u8]) -> isize {
+    sys_exec(path,args)
 }
 
 pub fn spawn(path: &str) -> isize {
@@ -123,14 +125,12 @@ pub fn mail_write(pid: usize, buf: &mut [u8]) -> isize {
     sys_mail_write(pid, buf)
 }
 
-pub fn open(path: &str, flags: OpenFlags) -> isize {
-    sys_opennat(0,path,flags.bits(),OpenFlags::RDWR.bits)
-}
+pub fn open(path: &str, flags: OpenFlags) -> isize { sys_open(path,flags.bits()) }
 
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]
 #[no_mangle]
-fn main() -> i32 {
+fn main(_args:usize,_arg_vec:&[&str]) -> i32 {
     panic!("Cannot find main!");
 }
 
@@ -138,8 +138,25 @@ fn main() -> i32 {
 #[link_section = ".text.entry"]
 //代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中
 //便于将其放在链接文件中
-pub extern "C" fn _start() -> ! {
+pub extern "C" fn _start(args:usize,arg_vec_base:usize) -> ! {
+    //args: 参数数量
+    //args_vec: 参数起始地址
     init();
-    exit(main());
+    //在真正开始执行应用程序前需要解析命令行的参数用来使用
+    let mut args_str:Vec<&'static str> = Vec::new();
+    for i in 0..args{
+        let args_str_start= unsafe{
+            ((arg_vec_base + i*core::mem::size_of::<usize>()) as *const usize).read_volatile()
+        };
+        let len = (0usize..).find(|index|{
+            unsafe {
+                ((args_str_start+*index) as *const u8).read_volatile()==0
+            }
+        }).unwrap();
+        args_str.push(core::str::from_utf8(
+            unsafe {core::slice::from_raw_parts(args_str_start as *const u8,len) }
+        ).unwrap());
+    }
+    exit(main(args,args_str.as_slice()));
     panic!("unreachable after sys_exit!");
 }

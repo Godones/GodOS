@@ -1,15 +1,17 @@
-
+use alloc::string::String;
 use crate::config::BIG_STRIDE;
 use crate::file::{open_file, Pipe,OpenFlags};
 use crate::mm::address::VirtAddr;
-use crate::mm::page_table::{translated_refmut, translated_str, PageTable};
+use crate::mm::page_table::{translated_refmut, translated_str, PageTable, translated_ref};
 use crate::task::{add_task, current_user_token, exit_current_run_next, suspend_current_run_next};
 use alloc::sync::Arc;
+use alloc::vec::Vec;
 
 const FD_STDOUT: usize = 1;
 const FD_STDIN: usize = 2;
 
 use crate::mm::MapPermission;
+use crate::{DEBUG, println};
 use crate::task::process::{copy_current_task, current_add_area, current_delete_page};
 use crate::timer::Time;
 
@@ -52,15 +54,26 @@ pub fn sys_fork() -> isize {
     add_task(new_task);
     new_pid as isize //对于父进程来说，其返回值为子进程的pid
 }
-pub fn sys_exec(path: *const u8) -> isize {
+pub fn sys_exec(path: *const u8, mut args: *const  usize) -> isize {
+    //args 里面包含了多个指针，指向多个参数，第一个参数是应用名称的地址
     let token = current_user_token();
-    let name = translated_str(token, path);
-
-    if let Some(node) = open_file(name.as_str(),OpenFlags::R) {
+    let name = translated_str(token, path);//应用路径
+    let mut args_v :Vec<String> = Vec::new();
+    loop {
+        let arg_ptr = *translated_ref(token,args);//找到第一个参数的指针
+        if arg_ptr == 0 { break ; }
+        args_v.push(translated_str(token,arg_ptr as *const u8));
+        //args_v中字符串已经不包含结束标记\0,且不包含参数的结束标记
+        unsafe {
+            args = args.add(1);
+        }
+    }
+    if let Some(node) = open_file(name.as_str(), OpenFlags::R) {
         let data = node.read_all();
         let task = copy_current_task().unwrap();
-        task.exec(data.as_slice());
-        0
+        let len = args_v.len();
+        task.exec(data.as_slice(), args_v);
+        len as isize
     } else {
         -1
     }
@@ -202,9 +215,13 @@ pub fn sys_open(path:*const u8,flags:u32)->isize{
     //打开文件返回一个描述符
     let token = current_user_token();
     let name = translated_str(token,path);
+    // println!("the file name: {}",name);
     if let Some(node) = open_file(name.as_str(),OpenFlags::from_bits(flags).unwrap()){
         let task = copy_current_task().unwrap();
         let mut inner = task.get_inner_access();
+        // let data = node.read_all();
+        DEBUG!("size:{}",node.get_file_size());
+        // DEBUG!("[kernel-sys-open] data:{} {}",data.len(),core::str::from_utf8(data.as_slice()).unwrap());
         let fd = inner.get_one_fd();//分配文件描述符
         //
         inner.fd_table[fd] = Some(node);
@@ -213,5 +230,4 @@ pub fn sys_open(path:*const u8,flags:u32)->isize{
     else {
         -1
     }
-
 }

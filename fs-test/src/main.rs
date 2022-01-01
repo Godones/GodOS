@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use rand;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -46,7 +47,7 @@ fn crate_filesystem()->Inode{
 }
 
 
-// #[test]
+#[test]
 fn fs_test()->std::io::Result<()> {
     //测试文件系统
     let root_inode = crate_filesystem();
@@ -73,9 +74,7 @@ fn fs_test()->std::io::Result<()> {
     assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
     println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
 
-
     //测试写入不同长度的内容
-
     let mut random_str_test = |len:usize|{
         //
         file1.clear();//清空文件，回收各个数据块
@@ -147,22 +146,34 @@ fn package()->std::io::Result<()>{
 
     filenames.sort();
     let root_inode=  crate_filesystem();  // for name in filenames{
+
+    let mut size_count =0;
     filenames.into_iter().for_each(|name|{
         let mut data:Vec<u8> = Vec::new();
         let mut file = std::fs::File::open(format!("{}{}", target, name)).unwrap();
         file.read_to_end(& mut data).unwrap();//读取完整的应用
-
         let new_inode = root_inode.create(name.as_str()).unwrap();//新建一个文件
         // println!("name: {},block_id: {},block_offset: {}",name,new_inode.block_id,new_inode.block_offset);
         new_inode.write_at(0,data.as_slice());
+        size_count +=new_inode.get_file_size();
     });
+    println!("The file_size_count: {:?}",size_count);
+    root_inode.create("filecat").unwrap();
+    let filecat = root_inode.find_inode("filecat").unwrap();
+    let hello_str = "Hello cat";
+    filecat.write_at(0,hello_str.as_bytes());
+    let mut buffer = [0u8;255];
+    let len = filecat.read_at(0, &mut buffer);
+    assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    println!("filecat size: {}",filecat.get_file_size());
     println!("application number: {}",root_inode.ls().len());
     root_inode.ls().iter().for_each(|name|{println!("{}",name)});
     Ok(())
 }
 
 fn main() {
-    println!("Test filesystem...");
+    // println!("Test filesystem...");
     package();
     // fs_test();
 }

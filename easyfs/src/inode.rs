@@ -239,6 +239,7 @@ impl DiskNode{
         buf:&mut [u8],
         device:&Arc<dyn BlockDevice>)->usize
     {
+        // println!("{}",self.size);
         let mut start = offset;
         //判断本文件大小
         let end = (offset+buf.len()).min(self.size as usize);
@@ -264,7 +265,7 @@ impl DiskNode{
             start_block +=1;
             start = current_end_blcok;
         }
-        // println!("read_size: {}", read_size);
+
         read_size
     }
     pub fn write_at(
@@ -276,7 +277,6 @@ impl DiskNode{
         //判断本文件大小
         let end = (offset+buf.len()).min(self.size as usize);
         assert!(start <= end);
-        // println!("[filesystem]inode::write_at::begin:{},end:{}", start, end);
         let mut start_block = start/BLOCK_SIZE;//起始块
         let mut write_size= 0usize;
         loop {

@@ -43,6 +43,7 @@ $(KERNEL_BIN): kernel
 
 kernel:
 	@cd ../user && make build
+	@cd ../fs-test && make run
 	@echo Platform: $(BOARD)
 	@cp src/linker-$(BOARD).ld src/linker.ld
 	@cargo build --release  --features "board_$(BOARD)" --features "$(INFO)"

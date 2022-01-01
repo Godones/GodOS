@@ -13,8 +13,8 @@ use alloc::string::String;
 pub struct Inode{
     //Inode与Disknode的区别在于Inode存在于内存中
     //记录文件索引节点的相关信息
-    pub block_id:usize,//物理块号
-    pub block_offset:usize,//块内偏移
+    block_id:usize,//物理块号
+    block_offset:usize,//块内偏移
     fs:Arc<Mutex<FileSystem>>,//文件系统指针，各个索引节点均需要通过这个实际操作磁盘
     block_device:Arc<dyn BlockDevice>
 }
@@ -31,6 +31,11 @@ impl Inode{
             fs,
             block_device
         }
+    }
+    pub fn get_file_size(&self)->usize{
+        self.read_disk_inode(|disk_node|{
+            disk_node.size as usize
+        })
     }
     pub fn read_disk_inode<V>(&self,f:impl FnOnce(&DiskNode)->V)->V{
         //读取索引节点的内容

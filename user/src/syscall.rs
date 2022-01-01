@@ -15,7 +15,7 @@ const SYSCALL_PIPE: usize = 59;
 const SYSCALL_CLOSE: usize = 57;
 const SYSCALL_MAILREAD: usize = 401;
 const SYSCALL_MAILWRITE: usize = 402;
-const SYSCALL_OPENNAT: usize = 56;
+const SYSCALL_OPEN: usize = 56;
 
 use crate::Time;
 fn syscall(id: usize, args: [usize; 3]) -> isize {
@@ -31,22 +31,22 @@ fn syscall(id: usize, args: [usize; 3]) -> isize {
     }
     ret
 }
-fn syscall6(id: usize, args: [usize; 6]) -> isize {
-    let mut ret: isize;
-    unsafe {
-        asm!("ecall",
-        inlateout("x10") args[0] => ret,
-        in("x11") args[1],
-        in("x12") args[2],
-        in("x13") args[3],
-        in("x14") args[4],
-        in("x15") args[5],
-        in("x17") id,
-        options(nostack)
-        )
-    }
-    ret
-}
+// fn syscall6(id: usize, args: [usize; 6]) -> isize {
+//     let mut ret: isize;
+//     unsafe {
+//         asm!("ecall",
+//         inlateout("x10") args[0] => ret,
+//         in("x11") args[1],
+//         in("x12") args[2],
+//         in("x13") args[3],
+//         in("x14") args[4],
+//         in("x15") args[5],
+//         in("x17") id,
+//         options(nostack)
+//         )
+//     }
+//     ret
+// }
 /// 功能：将内存中缓冲区中的数据写入文件。
 /// 参数：`fd` 表示待写入文件的文件描述符；
 ///      `buf` 表示内存中缓冲区的起始地址；
@@ -99,8 +99,8 @@ pub fn sys_waitpid(pid: isize, exit_code: *mut i32) -> isize {
 /// 功能：清空当前进程的内容并将新的应用程序加载到地址空间中
 /// 返回用户态开始执行此进程
 /// syscall id 221
-pub fn sys_exec(path: &str) -> isize {
-    syscall(SYSCALL_EXEC, [path.as_ptr() as usize, 0, 0])
+pub fn sys_exec(path: &str,args:&[*const u8]) -> isize {
+    syscall(SYSCALL_EXEC, [path.as_ptr() as usize, args.as_ptr() as usize, 0])
 }
 
 /// 功能：从文件中或屏幕读取内容到缓冲区内
@@ -156,16 +156,6 @@ pub fn sys_mail_write(pid: usize, buf: &mut [u8]) -> isize {
 //参数：`path`:文件名称
 //flags:打开方式
 //返回值：错误-1，成功返回文件描述符
-pub fn sys_opennat(dirfd: usize, path: &str, flags: u32, mode: u32) -> isize {
-    syscall6(
-        SYSCALL_OPENNAT,
-        [
-            dirfd,
-            path.as_ptr() as usize,
-            flags as usize,
-            mode as usize,
-            0,
-            0,
-        ],
-    )
+pub fn sys_open(path: &str, flags: u32) -> isize {
+    syscall(SYSCALL_OPEN,[path.as_ptr() as usize,flags as usize,0])
 }

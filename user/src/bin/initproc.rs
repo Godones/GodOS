@@ -11,7 +11,8 @@ fn main() -> isize {
     println!("[user] goto the initproc");
     if fork() == 0 {
         println!("[user] This child process,pid :{}", getpid());
-        exec("user_shell\0");
+        let args = "cat";
+        exec("user_shell\0",&[args.as_ptr()]);
     } else {
         println!("[user] This is father process,pid: {}", getpid());
         loop {

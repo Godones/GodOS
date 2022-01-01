@@ -1,3 +1,4 @@
+use alloc::string::String;
 use crate::config::{BIG_STRIDE, TRAMP_CONTEXT};
 use crate::file::{File, Mail, open_file, OpenFlags, Stdin, Stdout};
 use crate::mm::address::{PhysPageNum, VirtAddr};
@@ -9,9 +10,10 @@ use crate::task::pid::{pid_alloc, KernelStack, PidHandle};
 use crate::trap::context::TrapFrame;
 use crate::trap::trap_handler;
 use alloc::sync::{Arc, Weak};
+use alloc::{vec::Vec};
 use alloc::vec;
-use alloc::vec::Vec;
 use core::cell::RefMut;
+use crate::mm::page_table::translated_refmut;
 
 use super::add_task;
 
@@ -147,13 +149,37 @@ impl TaskControlBlock {
             return -1;
         }
     }
-    pub fn exec(&self, elf_data: &[u8]) {
+    pub fn exec(&self, elf_data: &[u8],args:Vec<String>) {
         //更换当前进程的数据
-        let (memoryset, user_sp, entry_point) = MemorySet::from_elf(elf_data);
+        let (memoryset,mut  user_sp, entry_point) = MemorySet::from_elf(elf_data);
         let trap_cx_ppn = memoryset
             .translate(VirtAddr::from(TRAMP_CONTEXT).into())
             .unwrap()
             .ppn();
+        //在应用栈中开辟空间用来存放传入的参数
+        //开辟几个存放地址的空间，这几个地址会指向更低地址存放的参数
+        user_sp = user_sp - (args.len()+1)*core::mem::size_of::<usize>();
+        let arg_base = user_sp;
+        let token=  memoryset.token();
+        let mut arg_vec:Vec<_> = (0..=args.len()).map(|index|{
+            translated_refmut(token,(arg_base+index*core::mem::size_of::<usize>())as *mut usize)
+        }).collect();
+        *arg_vec[args.len()] = 0;//最高地址处设为0
+        for i in 0..args.len(){
+            //存放相关参数
+            //将sp指针下移存放实际的参数，arg_base上移存放指针指向sp
+            user_sp -=args[i].len()+1;
+            *arg_vec[i] = user_sp;
+            let mut p = user_sp;
+            for ch in args[i].as_bytes(){
+                //存入一个个字符
+                *translated_refmut(token,p as *mut u8) = *ch;
+                p +=1;
+            }
+            *translated_refmut(token,p as *mut u8) = 0;//字符串结束标记
+        }
+        user_sp -=user_sp%core::mem::size_of::<usize>();//对齐8字节
+
         let mut inner = self.get_inner_access();
         //更换地址空间和trap上下文所在的物理页帧
         inner.memory_set = memoryset;
@@ -167,7 +193,9 @@ impl TaskControlBlock {
             KERNEL_SPACE.lock().token(),
             self.kernel_stack.get_stack_top(), //原有的内核栈
             trap_handler as usize,
-        )
+        );
+        trap_cx.reg[10] = args.len();//参数长度
+        trap_cx.reg[11] = arg_base;//参数起始位置
     }
     pub fn fork(self: &Arc<TaskControlBlock>) -> Arc<TaskControlBlock> {
         //fork一个新的进程
