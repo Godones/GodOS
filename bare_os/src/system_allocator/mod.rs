@@ -1,9 +1,11 @@
+#![allow(unused)]
 use crate::config::KERNEL_HEAP_SIZE;
 use crate::system_allocator::bump_allocator::BumpAllocator;
 use crate::system_allocator::common::Locked;
 // use crate::system_allocator::linked_list::LinkedListAllocator;
 use crate::INFO;
-// use buddy_system_allocator::LockedHeap;
+ use buddy_system_allocator::LockedHeap;
+use crate::system_allocator::linked_list::LinkedListAllocator;
 
 extern crate buddy_system_allocator;
 mod buddy;
@@ -15,10 +17,10 @@ mod linked_list;
 static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];
 
 #[global_allocator]
-pub static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+// pub static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 // static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 //#[global_allocator]
-// static ALLOCATOR: LockedHeap<32> = LockedHeap::empty();
+static ALLOCATOR: LockedHeap<32> = LockedHeap::empty();
 
 pub fn init_heap() {
     unsafe {

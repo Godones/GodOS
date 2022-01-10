@@ -2,6 +2,7 @@
 use spin::Mutex;
 use alloc::sync::{Arc};
 use crate::{mm::page_table::UserBuffer, task::suspend_current_run_next};
+use crate::file::{Stat, StatMode};
 use super::File;
 
 const MAX_REPORT_NUMBER :usize = 256;
@@ -142,5 +143,13 @@ impl File for Mail {
                 }
             }
         }
+    }
+    fn fstat(&self) -> Stat {
+        Stat::new(
+            0,
+            0,
+            StatMode::NULL,
+            1,
+        )
     }
 }

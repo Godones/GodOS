@@ -1,6 +1,6 @@
 use alloc::string::String;
 use crate::config::BIG_STRIDE;
-use crate::file::{open_file, Pipe,OpenFlags};
+use crate::file::{ open_file, OpenFlags, Pipe};
 use crate::mm::address::VirtAddr;
 use crate::mm::page_table::{translated_refmut, translated_str, PageTable, translated_ref};
 use crate::task::{add_task, current_user_token, exit_current_run_next, suspend_current_run_next};
@@ -11,7 +11,7 @@ const FD_STDOUT: usize = 1;
 const FD_STDIN: usize = 2;
 
 use crate::mm::MapPermission;
-use crate::{DEBUG, println};
+use crate::{list_apps};
 use crate::task::process::{copy_current_task, current_add_area, current_delete_page};
 use crate::timer::Time;
 
@@ -207,27 +207,26 @@ pub fn sys_mail_read(buf:*mut u8,len:usize)->isize{
     sys_read(3, buf, len)
 }
 
-pub fn sys_mail_write(pid:usize,buf:*mut u8,len:usize)->isize{
+pub fn sys_mail_write(fd:usize,buf:*mut u8,len:usize)->isize{
     //todo!(需要修改pid的查找)
     sys_write(3, buf, len)
 }
-pub fn sys_open(path:*const u8,flags:u32)->isize{
-    //打开文件返回一个描述符
-    let token = current_user_token();
-    let name = translated_str(token,path);
-    // println!("the file name: {}",name);
-    if let Some(node) = open_file(name.as_str(),OpenFlags::from_bits(flags).unwrap()){
-        let task = copy_current_task().unwrap();
-        let mut inner = task.get_inner_access();
-        // let data = node.read_all();
-        DEBUG!("size:{}",node.get_file_size());
-        // DEBUG!("[kernel-sys-open] data:{} {}",data.len(),core::str::from_utf8(data.as_slice()).unwrap());
-        let fd = inner.get_one_fd();//分配文件描述符
-        //
-        inner.fd_table[fd] = Some(node);
-        fd as isize
+
+pub fn sys_dup(fd:usize)->isize{
+    let task = copy_current_task().unwrap();
+    let mut inner = task.get_inner_access();
+    if fd >= inner.fd_table.len() {
+        return -1;
+    }else if inner.fd_table[fd].is_none(){
+        return -1;
     }
-    else {
-        -1
-    }
+    let new_fd = inner.get_one_fd();
+    inner.fd_table[new_fd] =Some(Arc::clone(inner.fd_table[fd].as_ref().unwrap()));//复制fd
+    new_fd as isize
 }
+
+pub fn sys_ls()->isize{
+    list_apps();
+    0
+}
+

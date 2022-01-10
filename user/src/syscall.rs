@@ -1,3 +1,4 @@
+#![allow(unused)]
 const SYSCALL_EXIT: usize = 93;
 const SYSCALL_WRITE: usize = 64;
 const SYSCALL_YIELD: usize = 124;
@@ -16,8 +17,12 @@ const SYSCALL_CLOSE: usize = 57;
 const SYSCALL_MAILREAD: usize = 401;
 const SYSCALL_MAILWRITE: usize = 402;
 const SYSCALL_OPEN: usize = 56;
-
-use crate::Time;
+const SYSCALL_DUP: usize = 24;
+const SYSCALL_LS: usize = 44; //自定义系统调用
+const SYSCALL_LINKAT:usize = 37;
+const SYSCALL_UNLINKAT:usize = 35;
+const SYSCALL_FSTAT:usize = 80;
+use crate::{Stat, Time};
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
     unsafe {
@@ -31,22 +36,22 @@ fn syscall(id: usize, args: [usize; 3]) -> isize {
     }
     ret
 }
-// fn syscall6(id: usize, args: [usize; 6]) -> isize {
-//     let mut ret: isize;
-//     unsafe {
-//         asm!("ecall",
-//         inlateout("x10") args[0] => ret,
-//         in("x11") args[1],
-//         in("x12") args[2],
-//         in("x13") args[3],
-//         in("x14") args[4],
-//         in("x15") args[5],
-//         in("x17") id,
-//         options(nostack)
-//         )
-//     }
-//     ret
-// }
+/// fn syscall6(id: usize, args: [usize; 6]) -> isize {
+///     let mut ret: isize;
+///     unsafe {
+///         asm!("ecall",
+///         inlateout("x10") args[0] => ret,
+///         in("x11") args[1],
+///         in("x12") args[2],
+///         in("x13") args[3],
+///         in("x14") args[4],
+///         in("x15") args[5],
+///         in("x17") id,
+///         options(nostack)
+///         )
+///     }
+///     ret
+/// }
 /// 功能：将内存中缓冲区中的数据写入文件。
 /// 参数：`fd` 表示待写入文件的文件描述符；
 ///      `buf` 表示内存中缓冲区的起始地址；
@@ -99,8 +104,11 @@ pub fn sys_waitpid(pid: isize, exit_code: *mut i32) -> isize {
 /// 功能：清空当前进程的内容并将新的应用程序加载到地址空间中
 /// 返回用户态开始执行此进程
 /// syscall id 221
-pub fn sys_exec(path: &str,args:&[*const u8]) -> isize {
-    syscall(SYSCALL_EXEC, [path.as_ptr() as usize, args.as_ptr() as usize, 0])
+pub fn sys_exec(path: &str, args: &[*const u8]) -> isize {
+    syscall(
+        SYSCALL_EXEC,
+        [path.as_ptr() as usize, args.as_ptr() as usize, 0],
+    )
 }
 
 /// 功能：从文件中或屏幕读取内容到缓冲区内
@@ -123,9 +131,9 @@ pub fn sys_getpid() -> isize {
     syscall(SYSCALL_PID, [0, 0, 0])
 }
 
-//申请一个len长度的物理内存，将其映射到start开始的许村，内存页属性为port
-//其中port等待0位表示是否可读，1位是否可写，2表示是否可执行
-// 成功返回0，错误返回-1
+///申请一个len长度的物理内存，将其映射到start开始的许村，内存页属性为port
+///其中port等待0位表示是否可读，1位是否可写，2表示是否可执行
+/// 成功返回0，错误返回-1
 pub fn sys_mmap(start: usize, len: usize, port: usize) -> isize {
     syscall(SYSCALL_MMAP, [start, len, port])
 }
@@ -140,11 +148,11 @@ pub fn sys_close(fd: usize) -> isize {
     syscall(SYSCALL_CLOSE, [fd, 0, 0])
 }
 
-//读取邮箱的内容
+///读取邮箱的内容
 pub fn sys_mail_read(buf: &mut [u8]) -> isize {
     syscall(SYSCALL_MAILREAD, [buf.as_mut_ptr() as usize, buf.len(), 0])
 }
-//向指定进程发送内容
+///向指定进程发送内容
 pub fn sys_mail_write(pid: usize, buf: &mut [u8]) -> isize {
     syscall(
         SYSCALL_MAILWRITE,
@@ -152,10 +160,48 @@ pub fn sys_mail_write(pid: usize, buf: &mut [u8]) -> isize {
     )
 }
 
-//功能：打开普通文件
-//参数：`path`:文件名称
-//flags:打开方式
-//返回值：错误-1，成功返回文件描述符
+///功能：打开普通文件
+///参数：`path`:文件名称
+///flags:打开方式
+///返回值：错误-1，成功返回文件描述符
 pub fn sys_open(path: &str, flags: u32) -> isize {
-    syscall(SYSCALL_OPEN,[path.as_ptr() as usize,flags as usize,0])
+    syscall(SYSCALL_OPEN, [path.as_ptr() as usize, flags as usize, 0])
+}
+///重定向
+/// 功能：将进程中一个已经打开的文件复制一份并分配到一个新的文件描述符中。
+/// 参数：fd 表示进程中一个已经打开的文件的文件描述符。
+/// 返回值：如果出现了错误则返回 -1，否则能够访问已打开文件的新文件描述符。
+/// 可能的错误原因是：传入的 fd 并不对应一个合法的已打开文件。
+/// syscall ID：24
+pub fn sys_dup(fd: usize) -> isize {
+    syscall(SYSCALL_DUP, [fd, 0, 0])
+}
+
+/// ls
+/// 功能：查看指定目录下的文件
+/// 当前只能查看根目录下的文件
+pub fn sys_ls() -> isize {
+    syscall(SYSCALL_LS, [0, 0, 0])
+}
+
+/// 实现文件的硬连接
+/// 这里只需要关注oldpath与newpath即可
+///
+pub fn sys_linkat(
+    olddirfd: i32,
+    oldpath: *const u8,
+    newdirfd: i32,
+    newpath: *const u8,
+    flags: u32) -> isize{
+
+    syscall(SYSCALL_LINKAT,[oldpath as usize,newpath as usize,0])
+}
+/// 解除一个文件的链接
+pub fn sys_unlinkat(dirfd: i32, path: *const u8, flags: u32) -> isize{
+    syscall(SYSCALL_UNLINKAT,[path as usize,0,0])
+}
+/// 查看文件信息
+///
+pub fn sys_fstat(fd:usize,stat:&Stat)->isize{
+    syscall(SYSCALL_FSTAT,[fd,stat as *const Stat as usize,0])
 }

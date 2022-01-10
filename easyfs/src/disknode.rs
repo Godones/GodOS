@@ -8,9 +8,9 @@ pub enum  DiskNodeType {
     FILE,//普通文件
     DIRECTORY,//目录
 }
-
 #[repr(C)]
 pub struct DiskNode {
+    pub nlink:u32,//硬链接数量
     pub size:u32,//记录文件/目录大小
     pub direct:[u32;DIRECT_MAX],//存放数据的块号
     pub indirect1:u32,//一级索引
@@ -22,6 +22,7 @@ type Indirect = [u32;BLOCK_SIZE/4];//128个u32数据,用来间接索引
 
 impl DiskNode {
     pub fn initialize(&mut self,node_type:DiskNodeType){
+        self.nlink = 1;
         self.size = 0;
         self.node_type = node_type;
         self.direct = [0;DIRECT_MAX];
@@ -35,6 +36,7 @@ impl DiskNode {
         self.node_type == DiskNodeType::FILE
     }
 
+    ///找到数据块位置
     pub fn get_block_id(&self,inner_pos:u32,block_device:&Arc<dyn BlockDevice>) ->u32{
         //根据inner_pos找到对应的块，inner_pos表示存放数据的某个块号l
         let inner_pos=  inner_pos as usize;

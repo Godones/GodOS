@@ -1,8 +1,9 @@
 mod file;
 mod process;
 
-use crate::syscall::file::{sys_read, sys_write};
+use crate::syscall::file::{sys_fstat, sys_read, sys_write, sys_open, sys_linkat, sys_unlinkat};
 use process::*;
+use crate::file::Stat;
 
 use crate::timer::Time;
 
@@ -24,7 +25,11 @@ const SYSCALL_CLOSE: usize = 57;
 const SYSCALL_MAILREAD:usize = 401;
 const SYSCALL_MAILWRITE:usize = 402;
 const SYSCALL_OPEN: usize = 56;
-
+const SYSCALL_DUP:usize = 24;
+const SYSCALL_LS:usize = 44;//自定义ls
+const SYSCALL_LINKAT:usize = 37;
+const SYSCALL_UNLINKAT:usize = 35;
+const SYSCALL_FSTAT:usize = 80;
 
 pub fn syscall(call: usize, args: [usize; 3]) -> isize {
     // crate::println!("function: {}, args: {:?}",function,args);
@@ -47,6 +52,11 @@ pub fn syscall(call: usize, args: [usize; 3]) -> isize {
         SYSCALL_MAILREAD => sys_mail_read(args[0] as *mut u8,args[1]),
         SYSCALL_MAILWRITE => sys_mail_write(args[0],args[1] as *mut u8,args[2]),
         SYSCALL_OPEN => sys_open(args[0] as *const u8, args[1] as u32),
+        SYSCALL_DUP => sys_dup(args[0]),
+        SYSCALL_LS => sys_ls(),
+        SYSCALL_FSTAT => sys_fstat(args[0],args[1] as *mut Stat),
+        SYSCALL_LINKAT => sys_linkat(args[0] as *const u8,args[1] as *const u8),
+        SYSCALL_UNLINKAT => sys_unlinkat(args[0] as *const u8),
         _ => {
             panic!("Undefined call for syscall: {}", call);
         }

@@ -35,11 +35,11 @@ fn crate_filesystem()->Inode{
             .write(true)
             .create(true)
             .open("../user/target/riscv64gc-unknown-none-elf/release/fs.img").unwrap();
-        f.set_len(8192*512).unwrap();//设置文件大小
+        f.set_len(8192*512*2).unwrap();//设置文件大小
         f
     })));
     //创建文件系统
-    FileSystem::create(block_file.clone(),8192,1);
+    FileSystem::create(block_file.clone(),8192*2,1);
     let fs = FileSystem::open(block_file.clone());
     //得到根目录节点
     let root_inode = FileSystem::root_inode(&fs);
@@ -157,23 +157,32 @@ fn package()->std::io::Result<()>{
         new_inode.write_at(0,data.as_slice());
         size_count +=new_inode.get_file_size();
     });
-    println!("The file_size_count: {:?}",size_count);
-    root_inode.create("filecat").unwrap();
-    let filecat = root_inode.find_inode("filecat").unwrap();
-    let hello_str = "Hello cat";
-    filecat.write_at(0,hello_str.as_bytes());
-    let mut buffer = [0u8;255];
-    let len = filecat.read_at(0, &mut buffer);
-    assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
-    println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
-    println!("filecat size: {}",filecat.get_file_size());
-    println!("application number: {}",root_inode.ls().len());
+    // println!("The file_size_count: {:?}",size_count);
+    // root_inode.create("filecat").unwrap();
+    // let filecat = root_inode.find_inode("filecat").unwrap();
+    // let hello_str = "Hello cat";
+    // filecat.write_at(0,hello_str.as_bytes());
+    // let mut buffer = [0u8;255];
+    // let len = filecat.read_at(0, &mut buffer);
+    // assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    // println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    // println!("filecat size: {}",filecat.get_file_size());
+    // println!("application number: {}",root_inode.ls().len());
     root_inode.ls().iter().for_each(|name|{println!("{}",name)});
     Ok(())
 }
+// #[test]
+pub fn test_link(){
+    let root_inode = crate_filesystem();
+    root_inode.create("file1");
+    root_inode.create("file2");
+    println!("create nlink");
+    root_inode.create_nlink("file3","file1");
 
+}
 fn main() {
     // println!("Test filesystem...");
     package();
     // fs_test();
+    // test_link();
 }

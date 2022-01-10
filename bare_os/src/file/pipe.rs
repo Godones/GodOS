@@ -1,5 +1,5 @@
 use crate::config::RING_BUFFER_SIZE;
-use crate::file::File;
+use crate::file::{File, Stat, StatMode};
 use crate::mm::page_table::UserBuffer;
 use alloc::sync::{Arc, Weak};
 use spin::Mutex;
@@ -65,12 +65,12 @@ impl RingBuffer {
         self.status = RingBufferStatus::NORMAL;
         self.msg[self.tail] = val;
         self.tail  = (self.tail+1)%RING_BUFFER_SIZE;
-        if self.tail ==self.head{
+        if self.tail == self.head{
             self.status = RingBufferStatus::FULL;
         }
     }
     pub fn available_write(&self)->usize{
-        if self.status== RingBufferStatus::FULL { RING_BUFFER_SIZE }
+        if self.status== RingBufferStatus::FULL { 0 }
         else {
             RING_BUFFER_SIZE - self.available_read()
         }
@@ -106,6 +106,7 @@ impl Pipe {
     }
 }
 
+// todo!(检查读写是否正确)
 impl File for Pipe {
     fn read(&self, buf: UserBuffer) -> usize {
         assert_eq!(self.readable, true);
@@ -141,7 +142,7 @@ impl File for Pipe {
         let mut user_buf_iter = buf.into_iter();
         loop {
             let mut buffer = self.buffer.lock();
-            let available_size = buffer.available_write();//查看可读数量
+            let available_size = buffer.available_write();//查看可写数量
             if available_size==0 {
                 drop(buffer);
                 suspend_current_run_next();//等待之后的读端往这里面读内容
@@ -159,5 +160,13 @@ impl File for Pipe {
                 }
             }
         }
+    }
+    fn fstat(&self) -> Stat {
+        Stat::new(
+            0,
+            0,
+            StatMode::NULL,
+            1,
+        )
     }
 }

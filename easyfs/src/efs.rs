@@ -4,7 +4,7 @@ use crate::block_dev::BlockDevice;
 use spin::Mutex;
 use crate::block_cache::get_block_cache;
 use crate::BLOCK_SIZE;
-use crate::inode::{DiskNode, DiskNodeType};
+use crate::disknode::{DiskNode, DiskNodeType};
 use crate::layout::SuperBlock;
 use crate::vfs::Inode;
 
@@ -25,7 +25,7 @@ impl FileSystem {
         total_blocks:usize,
         inode_bitmap_blocks:usize,//索引节点块个数
     ) ->Arc<Mutex<Self>>{
-        //从第1块开始位索引节点位图所占的块
+        //从第1块开始为索引节点位图所占的块
         let inode_bitmap = Bitmap::new(1,inode_bitmap_blocks);
         let inode_num = inode_bitmap.bit_num();//索引节点位图所能容纳的节点数目
         //索引节点所占的索引节点区块数
@@ -110,6 +110,12 @@ impl FileSystem {
         let block_id = inode_size/BLOCK_SIZE + self.inode_area_blocks as usize;
         let offset = inode_size%BLOCK_SIZE;
         (block_id as u32,offset)
+    }
+    ///将索引块号与块内偏移转化为inode编号
+    pub fn get_disk_inode(&self,block_id:u32,offset:usize)->u32{
+        let per_block_disknode = BLOCK_SIZE/core::mem::size_of::<DiskNode>();
+        let inode = (block_id - self.inode_area_blocks)*per_block_disknode as u32 + offset as u32;
+        inode
     }
     pub fn dealloc_data(&mut self,block_id: u32){
         //回收一个数据块

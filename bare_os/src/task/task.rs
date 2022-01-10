@@ -1,6 +1,6 @@
 use alloc::string::String;
 use crate::config::{BIG_STRIDE, TRAMP_CONTEXT};
-use crate::file::{File, Mail, open_file, OpenFlags, Stdin, Stdout};
+use crate::file::{ File, Mail, open_file, OpenFlags, Stdin, Stdout};
 use crate::mm::address::{PhysPageNum, VirtAddr};
 use crate::mm::MemorySet;
 use crate::mm::KERNEL_SPACE;
@@ -76,7 +76,6 @@ impl TaskControlBlockInner {
 
 impl TaskControlBlock {
     pub fn new(data: &[u8]) -> Self {
-        // let data = get_data_by_name(task_name).unwrap();
         //构造用户地址空间
         let (memory_set, use_sp, entry_point) = MemorySet::from_elf(data);
         //trap上下文所在物理页帧

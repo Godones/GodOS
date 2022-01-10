@@ -1,8 +1,7 @@
 #![no_std]
 #![no_main]
 
-
-use lib::{open, close, read, write, OpenFlags, println};
+use lib::{close, open, println, read, write, OpenFlags};
 
 #[no_mangle]
 pub fn main() -> i32 {
@@ -11,22 +10,19 @@ pub fn main() -> i32 {
     let fd = open(filea, OpenFlags::C | OpenFlags::W);
     assert!(fd > 0);
     let fd = fd as usize;
-    write(fd, test_str.as_bytes());//写入内容
+    write(fd, test_str.as_bytes()); //写入内容
 
-    println!("first fd:{}",fd);
+    println!("first fd:{}", fd);
     close(fd);
-    let fd = open(filea, OpenFlags::R);//打开，读取内容
+    let fd = open(filea, OpenFlags::R); //打开，读取内容
     assert!(fd > 0);
     let fd = fd as usize;
     let mut buffer = [0u8; 100];
-    println!("second fd:{}",fd);
+    println!("second fd:{}", fd);
     let read_len = read(fd, &mut buffer) as usize;
     close(fd);
 
-    assert_eq!(
-        test_str,
-        core::str::from_utf8(&buffer[..read_len]).unwrap(),
-    );
+    assert_eq!(test_str, core::str::from_utf8(&buffer[..read_len]).unwrap(),);
     println!("file_test passed!");
     0
 }

@@ -1,4 +1,4 @@
-use crate::file::File;
+use crate::file::{File, Stat, StatMode};
 use crate::mm::page_table::UserBuffer;
 use crate::print;
 use crate::sbi::console_getchar;
@@ -30,6 +30,14 @@ impl File for Stdin {
     fn write(&self, _buf: UserBuffer) -> usize {
         panic!("Stdin unsupported write");
     }
+    fn fstat(&self) -> Stat {
+        Stat::new(
+            0,
+            0,
+            StatMode::NULL,
+            1,
+        )
+    }
 }
 
 impl File for Stdout {
@@ -41,5 +49,13 @@ impl File for Stdout {
             print!("{}", core::str::from_utf8(*val).unwrap());
         }
         buf.len()
+    }
+    fn fstat(&self) -> Stat {
+        Stat::new(
+            0,
+            0,
+            StatMode::NULL,
+            1,
+        )
     }
 }

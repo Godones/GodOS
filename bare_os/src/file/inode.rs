@@ -6,10 +6,11 @@ use easyfs::{
 };
 use lazy_static::lazy_static;
 use spin::mutex::Mutex;
-use crate::file::File;
+use crate::file::{File, Stat, StatMode};
 use crate::mm::page_table::UserBuffer;
 use crate::driver::BLOCK_DEVICE;
-use crate::{DEBUG, println};
+use crate::{println};
+
 
 pub struct FNode{
     writeable: bool,
@@ -20,6 +21,7 @@ pub struct FNodeInner{
     inode:Arc<Inode>,
     offset:usize,//每个文件的偏移量
 }
+
 
 impl FNode{
     pub fn new(writeable:bool,readable:bool,inode:Arc<Inode>) -> FNode{
@@ -53,6 +55,20 @@ impl FNode{
         let inner = self.inner.lock();
         inner.inode.get_file_size()
     }
+    pub fn make_fstat(&self)->Stat{
+        let inner = self.inner.lock();
+        let ftype = match inner.inode.get_disk_type() {
+            0o040000 => StatMode::DIR,
+            0o100000 => StatMode::FILE,
+            _ => StatMode::NULL,
+        };
+        Stat::new(
+            0,
+            inner.inode.get_disk_inode() as u64,
+            ftype,
+            inner.inode.get_disk_nlink()
+        )
+    }
 }
 
 impl File for FNode {
@@ -60,7 +76,7 @@ impl File for FNode {
         let mut inner = self.inner.lock();
         let mut read_size = 0;
         for buffer in buf.buffer.iter_mut(){
-            DEBUG!("[kernel] offset:{}", inner.offset);
+            // DEBUG!("[kernel] offset:{}", inner.offset);
             let size = inner.inode.read_at(inner.offset,*buffer);
             if size==0 {break ;}
             read_size +=size;
@@ -78,6 +94,23 @@ impl File for FNode {
             inner.offset +=size;
         }
         write_size
+    }
+    fn fstat(&self) -> Stat {
+        let inner = self.inner.lock();
+        let ino = inner.inode.get_disk_inode();
+        let mode = match inner.inode.get_disk_type() {
+            0o040000 => StatMode::DIR,
+            0o100000 => StatMode::FILE,
+            _ => StatMode::NULL
+        };
+        let links = inner.inode.get_disk_nlink();
+        let fstat = Stat::new(
+            0,
+            ino as u64,
+            mode,
+            links
+        );
+        fstat
     }
 }
 lazy_static! {
@@ -103,9 +136,6 @@ pub fn list_apps() {
     println!("******APP LIST******");
     for name in ROOT_INODE.ls().iter() {
         println!("{}", name);
-        // if let Some(node) = open_file(name.as_str(), OpenFlags::R) {
-        //     println!("file size: {}", node.get_file_size());
-        // }
     }
     println!("********************");
 }
@@ -149,7 +179,6 @@ pub fn open_file(name:&str,flag:OpenFlags)->Option<Arc<FNode>>{
         }
     }
     else {
-
         ROOT_INODE.find_inode(name).
             map(|inode|{
                 if flag.contains(OpenFlags::T) {
@@ -164,4 +193,13 @@ pub fn open_file(name:&str,flag:OpenFlags)->Option<Arc<FNode>>{
                 ))
             })
     }
+}
+pub fn create_nlink_file(newfile:&str,oldfile:&str)->isize{
+    if let Some(_) = ROOT_INODE.create_nlink(newfile,oldfile){
+        return 0
+    }
+    -1
+}
+pub fn delete_nlink_file(path:&str)->isize{
+    ROOT_INODE.delete_nlink(path)
 }
