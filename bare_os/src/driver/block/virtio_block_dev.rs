@@ -25,12 +25,12 @@ impl VirtIOBlock{
 }
 
 impl BlockDevice for VirtIOBlock {
+    fn read_block(&self, block_id: usize, buf: &mut [u8]) {
+        self.0.lock().read_block(block_id,buf).expect("Read from block error!");
+    }
     //为块设备实现定义的接口
     fn write_block(&self, block_id: usize, buf: &[u8]) {
         self.0.lock().write_block(block_id,buf).expect("Write to block error!");
-    }
-    fn read_block(&self, block_id: usize, buf: &mut [u8]) {
-        self.0.lock().read_block(block_id,buf).expect("Read from block error!");
     }
 }
 lazy_static!{
@@ -38,7 +38,7 @@ lazy_static!{
 }
 
 //为驱动设备实现其定义的接口
-//这些接口负责为设备在内存中开辟部分空间用于cpu与设备进行通行
+//这些接口负责为设备在内存中开辟部分空间用于cpu与设备进行通信
 #[no_mangle]
 pub extern "C" fn virtio_dma_alloc(pages: usize) -> PhysAddr{
     //为其分配连续的物理页帧，由于是在内核初始化阶段进行，因此页帧的分配是连续的

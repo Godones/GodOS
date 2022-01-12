@@ -72,7 +72,6 @@ impl PageTable {
     pub fn new() -> Self {
         //为根页表申请一个物理页帧
         let root_frame = frame_alloc().unwrap();
-
         PageTable {
             root_ppn: root_frame.ppn,
             frames: vec![root_frame],

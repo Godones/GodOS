@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use core::arch::asm;
 ///使用RustSBI接口进行相关操作
 ///
 const SBI_SET_TIMER: usize = 0;

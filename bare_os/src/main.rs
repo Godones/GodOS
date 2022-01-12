@@ -7,6 +7,7 @@
 #![allow(dead_code)]
 #![feature(const_mut_refs)]
 
+
 #[macro_use]
 pub mod panic;
 mod config;
@@ -25,6 +26,7 @@ mod driver;
 extern crate alloc;
 extern crate easyfs;
 
+use crate::driver::gpu;
 use crate::file::list_apps;
 
 global_asm!(include_str!("entry.asm"));
@@ -48,6 +50,7 @@ fn clear_bss() {
 extern "C" fn rust_main() -> ! {
     clear_bss();
     INFO!("[kernel] Godone OS");
+
     // test
     {
         // color_output_test();
