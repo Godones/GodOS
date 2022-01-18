@@ -26,6 +26,7 @@ extern crate alloc;
 extern crate easyfs;
 
 use crate::file::list_apps;
+use crate::task::add_initproc;
 
 global_asm!(include_str!("entry.asm"));
 // global_asm!(include_str!("link_app.S"));
@@ -58,10 +59,10 @@ extern "C" fn rust_main() -> ! {
     mm::init();
     mm::remap_test(); //测试内核映射的正确性
                       //运行程序
-    list_apps();
-    task::add_initproc();
     trap::init();
     println!("set trap over");
+    list_apps();
+    add_initproc();
     timer::enable_timer_interrupt(); //使能位
     timer::set_next_timetrigger();
     task::run();

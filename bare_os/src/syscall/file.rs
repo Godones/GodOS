@@ -1,19 +1,20 @@
-
-use crate::file::{ create_nlink_file, delete_nlink_file, open_file, OpenFlags, Stat};
+use alloc::sync::Arc;
+use crate::file::{create_nlink_file, delete_nlink_file, open_file, OpenFlags, Pipe, Stat};
+use crate::list_apps;
 use crate::mm::page_table::{translated_byte_buffer, translated_refmut, translated_str, UserBuffer};
 
 use crate::task::current_user_token;
-use crate::task::process::copy_current_task;
+use crate::task::processor::current_process;
 
 pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
     let token = current_user_token();
-    let current_task = copy_current_task().unwrap();
-    let current_task_inner = current_task.get_inner_access();
-    if fd < current_task_inner.fd_table.len() {
-        match &current_task_inner.fd_table[fd] {
+    let process = current_process();
+    let current_process_inner = process.get_inner_access();
+    if fd < current_process_inner.fd_table.len() {
+        match &current_process_inner.fd_table[fd] {
             Some(file) => {
                 let file = file.clone();
-                drop(current_task_inner);
+                drop(current_process_inner);
                 let buffer = translated_byte_buffer(token, buf, len);
                 file.read(UserBuffer::new(buffer)) as isize
             }
@@ -25,13 +26,13 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
 }
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
     let token = current_user_token();
-    let current_task = copy_current_task().unwrap();
-    let current_task_inner = current_task.get_inner_access();
-    if fd < current_task_inner.fd_table.len() {
-        match &current_task_inner.fd_table[fd] {
+    let process = current_process();
+    let current_process_inner = process.get_inner_access();
+    if fd < current_process_inner.fd_table.len() {
+        match &current_process_inner.fd_table[fd] {
             Some(file) => {
                 let file = file.clone();
-                drop(current_task_inner);
+                drop(current_process_inner);
                 let buffer = translated_byte_buffer(token, buf, len);
                 file.write(UserBuffer::new(buffer)) as isize
             }
@@ -47,8 +48,8 @@ pub fn sys_open(path:*const u8,flags:u32)->isize{
     let name = translated_str(token,path);
     // println!("the file name: {}",name);
     if let Some(node) = open_file(name.as_str(),OpenFlags::from_bits(flags).unwrap()){
-        let task = copy_current_task().unwrap();
-        let mut inner = task.get_inner_access();
+        let process = current_process();
+        let mut inner = process.get_inner_access();
         // let data = node.read_all();
         // DEBUG!("size:{}",node.get_file_size());
         // DEBUG!("[kernel-sys-open] data:{} {}",data.len(),core::str::from_utf8(data.as_slice()).unwrap());
@@ -61,16 +62,71 @@ pub fn sys_open(path:*const u8,flags:u32)->isize{
         -1
     }
 }
+
+
+pub fn sys_pipe(pipe: *mut usize) -> isize {
+    let token = current_user_token();
+    let current_process = current_process();
+    let mut inner = current_process.get_inner_access();
+    // DEBUG!("[kernel] sys_pipe");
+    let (read_end, write_end) = Pipe::new(); //声请两个文件
+    let fd_read_end = inner.get_one_fd();
+    inner.fd_table[fd_read_end] = Some(read_end);
+    let fd_write_end = inner.get_one_fd();
+    inner.fd_table[fd_write_end] = Some(write_end);
+    *translated_refmut(token, pipe) = fd_read_end;
+    *translated_refmut(token, unsafe { pipe.add(1) }) = fd_write_end;
+    0
+}
+pub fn sys_close(fd: usize) -> isize {
+    // "关闭进程打开的文件描述符
+    let process = current_process();
+    let mut process_inner = process.get_inner_access();
+    if fd >= process_inner.fd_table.len() {
+        return -1;
+    }
+    if process_inner.fd_table[fd].is_none() {
+        return -1; //检查是否已经关闭过
+    }
+    process_inner.fd_table[fd].take();
+    0
+}
+pub fn sys_mail_read(buf:*mut u8,len:usize)->isize{
+    sys_read(3, buf, len)
+}
+pub fn sys_mail_write(_fd:usize,buf:*mut u8,len:usize)->isize{
+    //todo!(需要修改pid的查找)
+    sys_write(3, buf, len)
+}
+
+
+pub fn sys_dup(fd:usize)->isize{
+    let process = current_process();
+    let mut inner = process.get_inner_access();
+    if fd >= inner.fd_table.len() {
+        return -1;
+    }else if inner.fd_table[fd].is_none(){
+        return -1;
+    }
+    let new_fd = inner.get_one_fd();
+    inner.fd_table[new_fd] =Some(Arc::clone(inner.fd_table[fd].as_ref().unwrap()));//复制fd
+    new_fd as isize
+}
+pub fn sys_ls()->isize{
+    list_apps();
+    0
+}
+
 ///根据fd找到文件的相关信息
 pub fn sys_fstat(fd:usize,stat:*mut Stat)->isize{
     let token = current_user_token();
-    let current_task = copy_current_task().unwrap();
-    let current_task_inner = current_task.get_inner_access();
-    if fd < current_task_inner.fd_table.len() {
-        match &current_task_inner.fd_table[fd] {
+    let current_process = current_process();
+    let current_process_inner = current_process.get_inner_access();
+    if fd < current_process_inner.fd_table.len() {
+        match &current_process_inner.fd_table[fd] {
             Some(file) => {
                 let file = file.clone();
-                drop(current_task_inner);
+                drop(current_process_inner);
                 let fstat = file.fstat();
                  *translated_refmut(token,stat) = fstat;
                 0

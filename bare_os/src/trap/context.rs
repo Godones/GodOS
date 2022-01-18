@@ -19,7 +19,7 @@ impl TrapFrame {
         entry: usize,
         sp: usize,
         kernel_satp: usize,
-        user_stack_ap: usize,
+        kernel_stack_sp: usize,
         trap_handler: usize,
     ) -> Self {
         //为启动应用程序而特殊构造的 Trap 上下文，
@@ -33,7 +33,7 @@ impl TrapFrame {
             sstatus: status,
             sepc: entry,              //动态链接的应用程序入口
             kernel_satp,              //内核的satp
-            kernel_sp: user_stack_ap, //应用程序在内核的栈顶地址
+            kernel_sp: kernel_stack_sp, //应用程序在内核的栈顶地址
             trap_handler,
         };
         trap_cx.set_sp(sp);

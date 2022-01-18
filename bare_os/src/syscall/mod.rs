@@ -1,10 +1,11 @@
 mod file;
 mod process;
+mod multhread;
 
-use crate::syscall::file::{sys_fstat, sys_read, sys_write, sys_open, sys_linkat, sys_unlinkat};
+use crate::syscall::file::*;
 use process::*;
 use crate::file::Stat;
-
+use multhread::*;
 use crate::timer::Time;
 
 const SYSCALL_WRITE: usize = 64;
@@ -30,6 +31,16 @@ const SYSCALL_LS:usize = 44;//自定义ls
 const SYSCALL_LINKAT:usize = 37;
 const SYSCALL_UNLINKAT:usize = 35;
 const SYSCALL_FSTAT:usize = 80;
+
+const SYSCALL_THREAD_CREATE: usize = 1000;
+const SYSCALL_GETTID: usize = 1001;
+const SYSCALL_WAITTID: usize = 1002;
+const SYSCALL_MUTEX_CREATE: usize = 1010;
+const SYSCALL_MUTEX_LOCK: usize = 1011;
+const SYSCALL_MUTEX_UNLOCK: usize = 1012;
+const SYSCALL_SEMAPHORE_CREATE: usize = 1020;
+const SYSCALL_SEMAPHORE_UP: usize = 1021;
+const SYSCALL_SEMAPHORE_DOWN: usize = 1022;
 
 pub fn syscall(call: usize, args: [usize; 3]) -> isize {
     // crate::println!("function: {}, args: {:?}",function,args);
@@ -57,6 +68,8 @@ pub fn syscall(call: usize, args: [usize; 3]) -> isize {
         SYSCALL_FSTAT => sys_fstat(args[0],args[1] as *mut Stat),
         SYSCALL_LINKAT => sys_linkat(args[0] as *const u8,args[1] as *const u8),
         SYSCALL_UNLINKAT => sys_unlinkat(args[0] as *const u8),
+        SYSCALL_THREAD_CREATE => sys_thread_create(args[0],args[1]),
+        SYSCALL_WAITTID => sys_waittid(args[0]) as isize,
         _ => {
             panic!("Undefined call for syscall: {}", call);
         }

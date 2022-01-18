@@ -1,4 +1,4 @@
-use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAMP_CONTEXT, USER_STACK_SIZE, MMIO};
+use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE, MMIO};
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};
@@ -270,7 +270,7 @@ impl MemorySet {
         //直接硬编码到地址空间的次高位
         memoryset.push(
             MapArea::new(
-                TRAMP_CONTEXT.into(),
+                TRAP_CONTEXT.into(),
                 TRAMPOLINE.into(),
                 MapType::Framed,
                 MapPermission::R | MapPermission::W,
