@@ -6,6 +6,7 @@ use crate::mm::KERNEL_SPACE;
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
 use spin::Mutex;
+use crate::DEBUG;
 use crate::task::process::ProcessControlBlock;
 
 pub struct RecycleAllocator {
@@ -147,7 +148,7 @@ impl TaskUserRes {
             .insert_framed_area(
                 ustack_buttom.into(),
                 ustack_top.into(),
-                MapPermission::R|MapPermission::W
+                MapPermission::R|MapPermission::W|MapPermission::U,
             );//插入地址空间中
         //获取trap上下文
         let trap_cx_bottom = trap_cx_button_from_tid(self.tid);
@@ -156,7 +157,7 @@ impl TaskUserRes {
             .insert_framed_area(
                 trap_cx_bottom.into(),
                 trap_cx_top.into(),
-                MapPermission::W|MapPermission::W
+                MapPermission::R|MapPermission::W
             );//插入trap上下文
     }
     pub fn dealloc_user_res(&self){

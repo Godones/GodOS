@@ -12,7 +12,7 @@ fn main() -> isize {
     if fork() == 0 {
         println!("[user] This child process,pid :{}", getpid());
         let args = "cat";
-        exec("user_shell\0", &[args.as_ptr()]);
+        exec("user_shell\0", &[0 as *const u8]);
     } else {
         println!("[user] This is father process,pid: {}", getpid());
         loop {

@@ -16,7 +16,4 @@ fn panic(_info: &PanicInfo) -> ! {
     }
 
     exit(-1);
-    loop {
-
-    }
 }

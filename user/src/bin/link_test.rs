@@ -1,8 +1,7 @@
 #![no_std]
 #![no_main]
 
-
-use lib::{close, fstat, link, open, read, unlink, write, OpenFlags, Stat};
+use lib::{close, fstat, link, open, read, unlink, write, OpenFlags, Stat, INFO};
 use lib::println;
 
 /// 测试 link/unlink，输出　Test link OK! 就算正确。
@@ -13,22 +12,20 @@ pub fn main() -> i32 {
     let fname = "fname2\0";
     let (lname0, lname1, lname2) = ("linkname0\0", "linkname1\0", "linkname2\0");
     let fd = open(fname, OpenFlags::C | OpenFlags::W) as usize;
-    // println!("fd:{}",fd);
     link(fname, lname0);
-    // INFO!("link success..\n");
     let stat = Stat::new();
     fstat(fd, &stat);
     assert_eq!(stat.nlink, 2);
-    // INFO!("stat test 1\n");
+    INFO!("link1\n");
     link(fname, lname1);
-    // INFO!("link2\n");
+    INFO!("link2\n");
     link(fname, lname2);
-    // INFO!("link3\n");
+    INFO!("link3\n");
     fstat(fd, &stat);
     assert_eq!(stat.nlink, 4);
     write(fd, test_str.as_bytes());
     close(fd);
-    // INFO!("unlink...\n");
+    INFO!("unlink...\n");
     unlink(fname);
     // INFO!("unlink success\n");
     let fd = open(lname0, OpenFlags::R) as usize;

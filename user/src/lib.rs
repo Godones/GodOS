@@ -36,7 +36,7 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
 pub fn read(fd: usize, buf: &mut [u8]) -> isize {
     sys_read(fd, buf)
 }
-pub fn exit(exit_code: i32) -> isize {
+pub fn exit(exit_code: i32) -> ! {
     sys_exit(exit_code)
 }
 pub fn get_time(time: &mut Time) -> isize {
@@ -156,7 +156,12 @@ pub fn unlink(path:&str)->isize{
 pub fn fstat(fd:usize,state:&Stat)->isize{
     sys_fstat(fd,state)
 }
-
+pub fn thread_create(entry:usize,arg:usize)->isize{
+    sys_thread_create(entry,arg)
+}
+pub fn waittid(tid:usize)->isize{
+    sys_waittid(tid)
+}
 
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]

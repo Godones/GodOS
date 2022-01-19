@@ -6,6 +6,7 @@ use crate::mm::page_table::{translated_refmut, translated_str, PageTable, transl
 use crate::task::{current_user_token, exit_current_run_next, suspend_current_run_next};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
+use crate::DEBUG;
 
 const FD_STDOUT: usize = 1;
 const FD_STDIN: usize = 2;

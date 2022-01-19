@@ -65,6 +65,7 @@ extern "C" fn rust_main() -> ! {
     add_initproc();
     timer::enable_timer_interrupt(); //使能位
     timer::set_next_timetrigger();
+    INFO!("Run process......");
     task::run();
     panic!("The main_end!");
 }

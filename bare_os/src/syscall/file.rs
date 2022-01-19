@@ -1,6 +1,6 @@
 use alloc::sync::Arc;
 use crate::file::{create_nlink_file, delete_nlink_file, open_file, OpenFlags, Pipe, Stat};
-use crate::list_apps;
+use crate::{DEBUG, list_apps};
 use crate::mm::page_table::{translated_byte_buffer, translated_refmut, translated_str, UserBuffer};
 
 use crate::task::current_user_token;

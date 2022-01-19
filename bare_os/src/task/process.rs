@@ -75,7 +75,6 @@ impl ProcessControlBlock {
         //构造用户地址空间
         let (memory_set, ustack_base, entry_point) = MemorySet::from_elf(data);
         //为进程分配pid
-        DEBUG!("[kernel]task::process::PCB::new: builded memeset");
         let pid = pid_alloc();
         let process = Arc::new(Self {
             pid,
@@ -153,17 +152,15 @@ impl ProcessControlBlock {
         //在应用栈中开辟空间用来存放传入的参数
         //开辟几个存放地址的空间，这几个地址会指向更低地址存放的参数
         let token = memoryset.token();
-        let mut inner = self.get_inner_access();
         //更换地址空间
-        inner.memory_set = memoryset;
+        self.get_inner_access().memory_set = memoryset;
         //为主线程申请资源
-        let main_task = inner.get_task(0);//主线程
+        let main_task =  self.get_inner_access().get_task(0);//主线程
         let mut main_task_inner = main_task.get_inner_access();
         //切换主线程的相关内容
         main_task_inner.res.as_mut().unwrap().ustack_base = user_stack_base;
         main_task_inner.res.as_mut().unwrap().alloc_user_res();//重新申请资源
-        main_task_inner.trap_cx_ppn = main_task_inner.res.as_ref().unwrap().trap_cx_ppn();
-
+        main_task_inner.trap_cx_ppn = main_task_inner.res.as_mut().unwrap().trap_cx_ppn();
         let mut user_sp = main_task_inner.res.as_ref().unwrap().ustack_top() - (args.len()+1)*core::mem::size_of::<usize>();
         let arg_base = user_sp;
         let mut arg_vec:Vec<_> = (0..=args.len()).map(|index|{

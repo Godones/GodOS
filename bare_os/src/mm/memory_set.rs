@@ -256,31 +256,12 @@ impl MemorySet {
         let mut user_stack_buttom: usize = max_end_va.into(); //
                                                               //放置一个guard page ？
         user_stack_buttom += PAGE_SIZE;
-        let user_stack_top = user_stack_buttom + USER_STACK_SIZE;
-        memoryset.push(
-            MapArea::new(
-                user_stack_buttom.into(),
-                user_stack_top.into(),
-                MapType::Framed,
-                MapPermission::R | MapPermission::W | MapPermission::U,
-            ),
-            None,
-        );
-        //映射用户trap上下文
-        //直接硬编码到地址空间的次高位
-        memoryset.push(
-            MapArea::new(
-                TRAP_CONTEXT.into(),
-                TRAMPOLINE.into(),
-                MapType::Framed,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
+        let user_stack_base = user_stack_buttom + USER_STACK_SIZE;
+
         //返回应用程序的地址空间与用户栈顶以及程序入口地址
         (
             memoryset,
-            user_stack_top,
+            user_stack_base,
             elf.header.pt2.entry_point() as usize,
         )
     }

@@ -60,7 +60,7 @@ _app_name:
     .string "fstat_test"
     .string "hugewrite"
     .string "initproc"
-    .string "link"
+    .string "link_test"
     .string "ls"
     .string "mmap"
     .string "mmap1"
@@ -207,7 +207,7 @@ app_14_end:
     .global app_15_end
     .align 3
 app_15_start:
-    .incbin "../user/target/riscv64gc-unknown-none-elf/release/link"
+    .incbin "../user/target/riscv64gc-unknown-none-elf/release/link_test"
 app_15_end:
 
     .section .data
