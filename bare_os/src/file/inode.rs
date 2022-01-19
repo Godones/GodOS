@@ -159,6 +159,7 @@ pub fn open_file(name:&str,flag:OpenFlags)->Option<Arc<FNode>>{
         if let Some(inode) = ROOT_INODE.find_inode(name){
             //如果找到了存在就需要清空内容
             inode.clear();
+            // DEBUG!("[kernel] create_inode:{}",inode.get_disk_inode());
             Some(Arc::new(
                 FNode::new(
                     writeable,
@@ -170,6 +171,7 @@ pub fn open_file(name:&str,flag:OpenFlags)->Option<Arc<FNode>>{
             //没有找到就新建
             ROOT_INODE.create(name)
                 .map(|inode|{
+                    // DEBUG!("[kernel] create_inode:{}",inode.get_disk_inode());
                     Arc::new(FNode::new(
                         writeable,
                         readable,
@@ -185,7 +187,7 @@ pub fn open_file(name:&str,flag:OpenFlags)->Option<Arc<FNode>>{
                     //如果需要截断
                     inode.clear();
                 }
-                // DEBUG!("[kernel] first_open_size:{}",inode.get_file_size());
+                // DEBUG!("[kernel] find_inode:{}",inode.get_disk_inode());
                 Arc::new(FNode::new(
                     writeable,
                     readable,

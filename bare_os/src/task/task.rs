@@ -1,3 +1,4 @@
+///! 线程定义
 use alloc::sync::{Arc, Weak};
 use core::cell::RefMut;
 use crate::mm::address::PhysPageNum;
@@ -6,7 +7,7 @@ use crate::task::context::TaskContext;
 use crate::task::id::{kernel_stack_alloc, KernelStack, TaskUserRes};
 use crate::task::process::ProcessControlBlock;
 use crate::trap::context::TrapFrame;
-///! 线程控制块定义
+
 
 
 #[derive(Copy, Clone, Eq, PartialEq)]

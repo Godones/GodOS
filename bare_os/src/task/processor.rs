@@ -8,7 +8,6 @@ use crate::trap::context::TrapFrame;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::DEBUG;
 use crate::task::process::ProcessControlBlock;
 
 lazy_static! {

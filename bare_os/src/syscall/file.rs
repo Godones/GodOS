@@ -1,6 +1,6 @@
 use alloc::sync::Arc;
 use crate::file::{create_nlink_file, delete_nlink_file, open_file, OpenFlags, Pipe, Stat};
-use crate::{DEBUG, list_apps};
+use crate::{ list_apps};
 use crate::mm::page_table::{translated_byte_buffer, translated_refmut, translated_str, UserBuffer};
 
 use crate::task::current_user_token;
@@ -46,12 +46,10 @@ pub fn sys_open(path:*const u8,flags:u32)->isize{
     //打开文件返回一个描述符
     let token = current_user_token();
     let name = translated_str(token,path);
-    // println!("the file name: {}",name);
     if let Some(node) = open_file(name.as_str(),OpenFlags::from_bits(flags).unwrap()){
         let process = current_process();
         let mut inner = process.get_inner_access();
         // let data = node.read_all();
-        // DEBUG!("size:{}",node.get_file_size());
         // DEBUG!("[kernel-sys-open] data:{} {}",data.len(),core::str::from_utf8(data.as_slice()).unwrap());
         let fd = inner.get_one_fd();//分配文件描述符
         //
@@ -140,7 +138,7 @@ pub fn sys_fstat(fd:usize,stat:*mut Stat)->isize{
 ///建立硬链接
 pub fn sys_linkat(old_path:*const u8,new_path:*const u8)->isize{
     let token = current_user_token();
-    let old_path = translated_str(token,old_path);
+    let old_path = translated_str(token,old_path);//已经没有'\0'结束标记
     let new_path = translated_str(token,new_path);
     create_nlink_file(new_path.as_str(),old_path.as_str())
 }

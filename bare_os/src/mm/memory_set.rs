@@ -1,4 +1,4 @@
-use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE, MMIO};
+use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, USER_STACK_SIZE, MMIO};
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};

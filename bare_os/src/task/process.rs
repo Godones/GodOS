@@ -3,7 +3,6 @@ use alloc::sync::{Arc, Weak};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefMut;
-use crate::DEBUG;
 use crate::file::{File, Mail, open_file, OpenFlags, Stdin, Stdout};
 use crate::mm::{KERNEL_SPACE, MemorySet};
 use crate::mm::page_table::translated_refmut;

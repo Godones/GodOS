@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use alloc::sync::{Arc, Weak};
 use crate::config::{KERNEL_STACK_SIZE, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
 use crate::mm::address::{PhysPageNum, VirtAddr};

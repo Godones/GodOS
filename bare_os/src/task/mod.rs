@@ -1,5 +1,4 @@
-/// 为了更好地完成任务上下文切换，需要对任务处于什么状态做明确划分
-///任务的运行状态：未初始化->准备执行->正在执行->已退出
+
 pub mod context;
 mod manager;
 mod id;
@@ -86,9 +85,12 @@ pub fn exit_current_run_next(exit_code: i32) {
             }
         }
         //回收所有子线程的资源
-        for task in process_inner.task.iter().filter(|x|x.is_some()){
+        for task in process_inner.task.iter().filter(
+            |x|x.is_some())
+        {
             let task  = task.as_ref().unwrap();
             let mut task_inner= task.get_inner_access();
+
             task_inner.res = None;
         }
         process_inner.children.clear();//清空所有的子进程

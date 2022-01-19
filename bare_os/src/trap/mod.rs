@@ -1,6 +1,6 @@
 pub mod context;
 
-use crate::config::{TRAMPOLINE, TRAP_CONTEXT};
+use crate::config::{TRAMPOLINE};
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 
