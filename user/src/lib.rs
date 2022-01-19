@@ -160,7 +160,12 @@ pub fn thread_create(entry:usize,arg:usize)->isize{
     sys_thread_create(entry,arg)
 }
 pub fn waittid(tid:usize)->isize{
-    sys_waittid(tid)
+    loop {
+        match sys_waittid(tid) {
+            -2 => yield_(),
+            exit_code => return exit_code
+        };
+    }
 }
 
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
@@ -195,5 +200,4 @@ pub extern "C" fn _start(args: usize, arg_vec_base: usize) -> ! {
         );
     }
     exit(main(args, args_str.as_slice()));
-    panic!("unreachable after sys_exit!");
 }

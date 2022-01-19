@@ -7,17 +7,17 @@ use lib::{thread_create, waittid, exit, print, println};
 use alloc::vec::Vec;
 
 pub fn thread_a() -> ! {
-    for _ in 0..1000 { print!("a"); }
+    for _ in 0..100 { print!("a"); }
     exit(1)
 }
 
 pub fn thread_b() -> ! {
-    for _ in 0..1000 { print!("b"); }
+    for _ in 0..100 { print!("b"); }
     exit(2)
 }
 
 pub fn thread_c() -> ! {
-    for _ in 0..1000 { print!("c"); }
+    for _ in 0..100 { print!("c"); }
     exit(3)
 }
 

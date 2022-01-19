@@ -1,107 +1,119 @@
 #![allow(dead_code)]
+use easyfs::{BlockDevice, FileSystem, Inode};
 use rand;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
-use easyfs::{BlockDevice, FileSystem, Inode};
 use std::sync::{Arc, Mutex};
 extern crate clap;
-use clap::{App,Arg};
+use clap::{App, Arg};
 
-const BLOCK_SIZE:usize = 512;
+const BLOCK_SIZE: usize = 512;
 
 ///使用本地的文件模拟一个块设备
-struct BlockFile (Mutex<File>);
+struct BlockFile(Mutex<File>);
 
 impl BlockDevice for BlockFile {
     fn write_block(&self, block_id: usize, buf: &[u8]) {
         let mut file = self.0.lock().unwrap();
-        file.seek(SeekFrom::Start((block_id * BLOCK_SIZE)as u64))
+        file.seek(SeekFrom::Start((block_id * BLOCK_SIZE) as u64))
             .expect("Error seeking");
-        assert_eq!(file.write(buf).unwrap(),BLOCK_SIZE,"Not a completed block");
-    }//通过Seek访问特定的块
+        assert_eq!(
+            file.write(buf).unwrap(),
+            BLOCK_SIZE,
+            "Not a completed block"
+        );
+    } //通过Seek访问特定的块
 
     fn read_block(&self, block_id: usize, buf: &mut [u8]) {
         let mut file = self.0.lock().unwrap();
-        file.seek(SeekFrom::Start((block_id * BLOCK_SIZE)as u64))
+        file.seek(SeekFrom::Start((block_id * BLOCK_SIZE) as u64))
             .expect("Error seeking");
-        assert_eq!(file.read(buf).unwrap(),BLOCK_SIZE,"Not a completed block");
-    }//通过Seek访问特定的块
+        assert_eq!(file.read(buf).unwrap(), BLOCK_SIZE, "Not a completed block");
+    } //通过Seek访问特定的块
 }
 
-fn crate_filesystem()->Inode{
+fn crate_filesystem() -> Inode {
     let block_file = Arc::new(BlockFile(Mutex::new({
         let f = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
-            .open("../user/target/riscv64gc-unknown-none-elf/release/fs.img").unwrap();
-        f.set_len(8192*512*2).unwrap();//设置文件大小
+            .open("../user/target/riscv64gc-unknown-none-elf/release/fs.img")
+            .unwrap();
+        f.set_len(8192 * 512 * 2).unwrap(); //设置文件大小
         f
     })));
     //创建文件系统
-    FileSystem::create(block_file.clone(),8192*2,1);
+    FileSystem::create(block_file.clone(), 8192 * 2, 1);
     let fs = FileSystem::open(block_file.clone());
     //得到根目录节点
     let root_inode = FileSystem::root_inode(&fs);
     root_inode
 }
 
-
 #[test]
-fn fs_test()->std::io::Result<()> {
+fn fs_test() -> std::io::Result<()> {
     //测试文件系统
     let root_inode = crate_filesystem();
     root_inode.create("file1");
     root_inode.create("file2");
     println!("test list file names...");
     for l in root_inode.ls() {
-        println!("name: {}",l);
+        println!("name: {}", l);
     }
     //测试文件写入与读出
     let file1 = root_inode.find_inode("file1").unwrap();
     let hello_str = "Hello world";
-    file1.write_at(0,hello_str.as_bytes());
-    let mut buffer = [0u8;255];
+    file1.write_at(0, hello_str.as_bytes());
+    let mut buffer = [0u8; 255];
     let len = file1.read_at(0, &mut buffer);
-    assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
-    println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    assert_eq!(hello_str, core::str::from_utf8(&buffer[..len]).unwrap());
+    println!(
+        "{}=={}",
+        hello_str,
+        core::str::from_utf8(&buffer[..len]).unwrap()
+    );
 
     let file2 = root_inode.find_inode("file2").unwrap();
     let hello_str = "Hello world file2";
-    file2.write_at(0,hello_str.as_bytes());
-    let mut buffer = [0u8;255];
+    file2.write_at(0, hello_str.as_bytes());
+    let mut buffer = [0u8; 255];
     let len = file2.read_at(0, &mut buffer);
-    assert_eq!(hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
-    println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    assert_eq!(hello_str, core::str::from_utf8(&buffer[..len]).unwrap());
+    println!(
+        "{}=={}",
+        hello_str,
+        core::str::from_utf8(&buffer[..len]).unwrap()
+    );
 
     //测试写入不同长度的内容
-    let mut random_str_test = |len:usize|{
+    let mut random_str_test = |len: usize| {
         //
-        file1.clear();//清空文件，回收各个数据块
-        assert_eq!(file1.read_at(0,&mut buffer),0);//内容长度为0
+        file1.clear(); //清空文件，回收各个数据块
+        assert_eq!(file1.read_at(0, &mut buffer), 0); //内容长度为0
         let mut str = String::new();
-        for _ in 0..len{
+        for _ in 0..len {
             //随机产生数字
             str.push(char::from('0' as u8 + rand::random::<u8>() % 10));
         }
         println!("str.len():{}", str.len());
-        file1.write_at(0,str.as_bytes());
+        file1.write_at(0, str.as_bytes());
 
-        let mut read_buffer = [0u8;127];
+        let mut read_buffer = [0u8; 127];
         let mut offset = 0usize;
         let mut read_str = String::new();
         loop {
-            let len = file1.read_at(offset,&mut read_buffer);
-            if len==0 {
-                break
+            let len = file1.read_at(offset, &mut read_buffer);
+            if len == 0 {
+                break;
             }
-            offset +=len;
+            offset += len;
             read_str.push_str(core::str::from_utf8(&read_buffer[0..len]).unwrap());
         }
-        assert_eq!(str,read_str);
+        assert_eq!(str, read_str);
     };
 
-    random_str_test(4*BLOCK_SIZE);
+    random_str_test(4 * BLOCK_SIZE);
     random_str_test(8 * BLOCK_SIZE + BLOCK_SIZE / 2);
     random_str_test(100 * BLOCK_SIZE);
     random_str_test(70 * BLOCK_SIZE + BLOCK_SIZE / 7);
@@ -112,31 +124,35 @@ fn fs_test()->std::io::Result<()> {
     Ok(())
 }
 // 打包应用程序
-fn package()->std::io::Result<()>{
+fn package() -> std::io::Result<()> {
     let matches = App::new("Get Application Package")
         .version("1.0")
         .author("God")
         .about("Input the source path and the elf_data path")
-        .arg(Arg::new("source")
-            .short('S')
-            .long("source")
-            .help("Set the source code")
-            .takes_value(true))
-        .arg(Arg::new("target")
-            .short('T')
-            .long("target")
-            .help("Set the target path")
-            .takes_value(true))
+        .arg(
+            Arg::new("source")
+                .short('S')
+                .long("source")
+                .help("Set the source code")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::new("target")
+                .short('T')
+                .long("target")
+                .help("Set the target path")
+                .takes_value(true),
+        )
         .get_matches();
-    let source = matches.value_of("source").unwrap();//获取源文件目录
+    let source = matches.value_of("source").unwrap(); //获取源文件目录
     let target = matches.value_of("target").unwrap();
-    println!("The source path: {}",source);
-    println!("The target path: {}",target);
+    println!("The source path: {}", source);
+    println!("The target path: {}", target);
     //获取源文件下各个应用程序的名称
-    let mut filenames:Vec<_>= std::fs::read_dir(source)
+    let mut filenames: Vec<_> = std::fs::read_dir(source)
         .unwrap()
         .into_iter()
-        .map(|direntry|{
+        .map(|direntry| {
             let mut name = direntry.unwrap().file_name().into_string().unwrap();
             // println!("{}",name);
             name.drain(name.find(".").unwrap()..name.len());
@@ -145,17 +161,17 @@ fn package()->std::io::Result<()>{
         .collect();
 
     filenames.sort();
-    let root_inode=  crate_filesystem();  // for name in filenames{
+    let root_inode = crate_filesystem(); // for name in filenames{
 
-    let mut size_count =0;
-    filenames.into_iter().for_each(|name|{
-        let mut data:Vec<u8> = Vec::new();
+    let mut size_count = 0;
+    filenames.into_iter().for_each(|name| {
+        let mut data: Vec<u8> = Vec::new();
         let mut file = std::fs::File::open(format!("{}{}", target, name)).unwrap();
-        file.read_to_end(& mut data).unwrap();//读取完整的应用
-        let new_inode = root_inode.create(name.as_str()).unwrap();//新建一个文件
-        // println!("name: {},block_id: {},block_offset: {}",name,new_inode.block_id,new_inode.block_offset);
-        new_inode.write_at(0,data.as_slice());
-        size_count +=new_inode.get_file_size();
+        file.read_to_end(&mut data).unwrap(); //读取完整的应用
+        let new_inode = root_inode.create(name.as_str()).unwrap(); //新建一个文件
+                                                                   // println!("name: {},block_id: {},block_offset: {}",name,new_inode.block_id,new_inode.block_offset);
+        new_inode.write_at(0, data.as_slice());
+        size_count += new_inode.get_file_size();
     });
     // println!("The file_size_count: {:?}",size_count);
     // root_inode.create("filecat").unwrap();
@@ -168,21 +184,80 @@ fn package()->std::io::Result<()>{
     // println!("{}=={}",hello_str,core::str::from_utf8(&buffer[..len]).unwrap());
     // println!("filecat size: {}",filecat.get_file_size());
     // println!("application number: {}",root_inode.ls().len());
-    root_inode.ls().iter().for_each(|name|{println!("{}",name)});
+    // root_inode.ls().iter().for_each(|name|{println!("{}",name)});
     Ok(())
 }
 // #[test]
-pub fn test_link(){
+pub fn test_link() {
     let root_inode = crate_filesystem();
     root_inode.create("file1");
     root_inode.create("file2");
     println!("create nlink");
-    root_inode.create_nlink("file3","file1");
+    root_inode.create_nlink("file3", "file1");
+}
 
+pub fn link_test2() {
+    let root_inode = crate_filesystem();
+    let test_str = "Hello, world!";
+    let fname = "fname2";
+    let (lname0, lname1, lname2) = ("linkname0", "linkname1", "linkname2");
+    let base_inode = root_inode.create(fname).unwrap();
+
+    println!(
+        "base_inode:{}-{}",
+        base_inode.block_id, base_inode.block_offset
+    );
+    let first_inode = root_inode.create_nlink(lname0, fname).unwrap();
+    let second_inode = root_inode.create_nlink(lname1, fname).unwrap();
+    let three_inode = root_inode.create_nlink(lname2, fname).unwrap();
+    println!(
+        "first_inode:{}-{}",
+        first_inode.block_id, first_inode.block_offset
+    );
+
+    let links = base_inode.get_disk_nlink();
+    println!("links:{}", links);
+    base_inode.write_at(0, test_str.as_bytes());
+    // let mut buffer = [0u8;255];
+    // let len = base_inode.read_at(0, &mut buffer);
+    // assert_eq!(test_str,core::str::from_utf8(&buffer[..len]).unwrap());
+    // println!("write_read_ok");
+
+    root_inode.delete_nlink(fname);
+    let new_inode = root_inode.find_inode(lname0).unwrap();
+    println!(
+        "new_inode:{}-{}",
+        new_inode.block_id, new_inode.block_offset
+    );
+    let new_links = new_inode.get_disk_nlink();
+    println!("new_links:{}", new_links);
+
+    //
+    // INFO!("unlink...\n");
+    // unlink(lname0);
+    // // INFO!("unlink success\n");
+    // let fd = open(fname, OpenFlags::R) as usize;
+    // let stat2 = Stat::new();
+    // let mut buf = [0u8; 100];
+    // let read_len = read(fd, &mut buf) as usize;
+    // assert_eq!(test_str, core::str::from_utf8(&buf[..read_len]).unwrap(),);
+    // fstat(fd, &stat2);
+    // assert_eq!(stat2.dev, stat.dev);
+    // assert_eq!(stat2.ino, stat.ino);
+    // assert_eq!(stat2.nlink, 3);
+    // unlink(lname1);
+    // unlink(lname2);
+    // fstat(fd, &stat2);
+    // assert_eq!(stat2.nlink, 1);
+    // close(fd);
+    // unlink(lname0);
+    // // It's Ok if you don't delete the inode and data blocks.
+    // println!("Test link OK!");
 }
 fn main() {
     // println!("Test filesystem...");
     package();
     // fs_test();
     // test_link();
+    // link_test2();
 }

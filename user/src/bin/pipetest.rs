@@ -18,8 +18,6 @@ pub fn main() -> i32 {
     assert_eq!(pipe_fd[0], 4);
     // write end
     assert_eq!(pipe_fd[1], 5);
-
-
     if fork() == 0 {
         // child process, read from parent
         // close write_end
@@ -28,8 +26,8 @@ pub fn main() -> i32 {
         let len_read = read(pipe_fd[0], &mut buffer) as usize;
         // close read_end
         close(pipe_fd[0]);
-        // assert_eq!(core::str::from_utf8(&buffer[..len_read]).unwrap(), STR);
-        assert_eq!(len_read,1000);
+        assert_eq!(core::str::from_utf8(&buffer[..len_read]).unwrap(), STR);
+        assert_eq!(len_read,13);
         println!("Read OK, child process exited!");
         0
     } else {

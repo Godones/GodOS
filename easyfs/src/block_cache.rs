@@ -127,9 +127,10 @@ pub fn get_block_cache(
         .lock()
         .get_block_cache(block_id, block_device)
 }
-pub fn block_cache_sync(){
-    BLOCK_CACHE_MANAGER.lock()
-        .queue.iter().for_each(|(idx,cache)|{
-        cache.lock().sync()
-    })
+pub fn block_cache_sync() {
+    BLOCK_CACHE_MANAGER
+        .lock()
+        .queue
+        .iter()
+        .for_each(|(idx, cache)| cache.lock().sync())
 }

@@ -13,7 +13,7 @@ const DEL: u8 = 127; //删除键
 const BS: u8 = 8; //退格键
 
 
-const shell:&str ="
+const SHELL:&str ="
 ███████╗██╗  ██╗███████╗██╗     ██╗
 ██╔════╝██║  ██║██╔════╝██║     ██║
 ███████╗███████║█████╗  ██║     ██║
@@ -63,7 +63,7 @@ fn command_parser(str: &str) -> (String, String, Vec<String>, Vec<*const u8>) {
 
 #[no_mangle]
 fn main() -> isize {
-    INFO!("{}",shell);
+    INFO!("{}",SHELL);
     let mut process_name = String::new();
     INFO!("GodOS:/\n$");
     loop {

@@ -10,7 +10,7 @@ pub fn main() -> i32 {
     for i in 0..buffer.len() {
         buffer[i] = i as u8;
     }
-    let f = open("testf", OpenFlags::C | OpenFlags::W);
+    let f = open("testf\0", OpenFlags::C | OpenFlags::W);
     if f < 0 {
         panic!("Open test file failed!");
     }
