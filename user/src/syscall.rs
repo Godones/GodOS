@@ -250,3 +250,17 @@ pub fn sys_mutex_unlock(lock_id:usize)->isize{
 pub fn sys_mutex_create()->isize{
     syscall(SYSCALL_MUTEX_CREATE,[0,0,0])
 }
+
+/// 创建信号量
+pub fn sys_semaphore_create(count:usize)->isize{
+    syscall(SYSCALL_SEMAPHORE_CREATE,[count,0,0])
+}
+/// 信号量p操作
+pub fn sys_semaphore_p(sem_id:usize)->isize{
+    syscall(SYSCALL_SEMAPHORE_DOWN,[sem_id,0,0])
+}
+
+/// 信号量v操作
+pub fn sys_semaphore_v(sem_id:usize)->isize{
+    syscall(SYSCALL_SEMAPHORE_UP,[sem_id,0,0])
+}

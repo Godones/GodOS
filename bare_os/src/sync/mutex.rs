@@ -1,6 +1,5 @@
 use alloc::collections::VecDeque;
 use alloc::sync::Arc;
-use crate::DEBUG;
 
 use crate::my_struct::my_ref_cell::MyRefCell;
 use crate::task::processor::copy_current_task;

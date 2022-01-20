@@ -12,7 +12,7 @@ use crate::task::id::{pid_alloc, PidHandle, RecycleAllocator};
 use crate::task::task::TaskControlBlock;
 use crate::trap::context::TrapFrame;
 use crate::trap::trap_handler;
-use crate::sync::{ Mutex};
+use crate::sync::{Mutex, Semaphore};
 ///! 进程控制块定义
 pub struct ProcessControlBlock {
     //不可变数据
@@ -31,6 +31,7 @@ pub struct ProcessControlBlockInner {
     pub task:Vec<Option<Arc<TaskControlBlock>>>,//线程管理器
     pub task_res_allocator:RecycleAllocator,//升级版分配器
     pub mutex_list:Vec<Option<Arc<dyn Mutex>>>,//记录进程拥有的互斥资源
+    pub semaphore_list:Vec<Option<Arc<Semaphore>>>,
 }
 
 impl ProcessControlBlockInner {
@@ -93,6 +94,7 @@ impl ProcessControlBlock {
                 task:Vec::new(),
                 task_res_allocator:RecycleAllocator::new(),
                 mutex_list:Vec::new(),
+                semaphore_list:Vec::new(),
             }),
         }); //构造任务控制块
         //创建主线程
@@ -226,6 +228,7 @@ impl ProcessControlBlock {
                 task:Vec::new(),
                 task_res_allocator: RecycleAllocator::new(),
                 mutex_list:Vec::new(),
+                semaphore_list:Vec::new(),
             }),
         }); //构造任务控制块
         //加入子进程中

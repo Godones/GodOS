@@ -180,9 +180,17 @@ pub fn mutex_unlock(lock_id:usize)->isize{
 pub fn mutex_create()->isize{
     sys_mutex_create()
 }
+pub fn semaphore_up(sem_id:usize)->isize{
+    sys_semaphore_v(sem_id)
+}
+pub fn semaphore_down(sem_id:usize)->isize{
+    sys_semaphore_p(sem_id)
+}
+pub fn semaphore_create(count:usize)->isize{
+    sys_semaphore_create(count)
+}
 
-
-//weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
+/// weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]
 #[no_mangle]
 fn main(_args: usize, _arg_vec: &[&str]) -> i32 {
@@ -191,8 +199,8 @@ fn main(_args: usize, _arg_vec: &[&str]) -> i32 {
 
 #[no_mangle]
 #[link_section = ".text.entry"]
-//代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中
-//便于将其放在链接文件中
+/// 代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中
+/// 便于将其放在链接文件中
 pub extern "C" fn _start(args: usize, arg_vec_base: usize) -> ! {
     //args: 参数数量
     //args_vec: 参数起始地址
