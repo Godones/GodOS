@@ -12,7 +12,7 @@ use crate::task::id::{pid_alloc, PidHandle, RecycleAllocator};
 use crate::task::task::TaskControlBlock;
 use crate::trap::context::TrapFrame;
 use crate::trap::trap_handler;
-
+use crate::sync::{ Mutex};
 ///! 进程控制块定义
 pub struct ProcessControlBlock {
     //不可变数据
@@ -30,6 +30,7 @@ pub struct ProcessControlBlockInner {
     // 文件描述符 (File Descriptor) 代表了一个特定读写属性的I/O资源。
     pub task:Vec<Option<Arc<TaskControlBlock>>>,//线程管理器
     pub task_res_allocator:RecycleAllocator,//升级版分配器
+    pub mutex_list:Vec<Option<Arc<dyn Mutex>>>,//记录进程拥有的互斥资源
 }
 
 impl ProcessControlBlockInner {
@@ -91,6 +92,7 @@ impl ProcessControlBlock {
                 ],
                 task:Vec::new(),
                 task_res_allocator:RecycleAllocator::new(),
+                mutex_list:Vec::new(),
             }),
         }); //构造任务控制块
         //创建主线程
@@ -223,6 +225,7 @@ impl ProcessControlBlock {
                 fd_table: new_fdtable,
                 task:Vec::new(),
                 task_res_allocator: RecycleAllocator::new(),
+                mutex_list:Vec::new(),
             }),
         }); //构造任务控制块
         //加入子进程中

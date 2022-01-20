@@ -221,12 +221,6 @@ impl MemorySet {
                 //需要加载的段我们就加载到内存指定位置
                 let start_addr: VirtAddr = (ph.virtual_addr() as usize).into();
                 let end_addr: VirtAddr = ((ph.virtual_addr() + ph.mem_size()) as usize).into();
-
-                // INFO!(
-                //     "[kernel] application section began:{:?} end:{:?}",
-                //     start_addr,
-                //     end_addr
-                // );
                 //用户态程序
                 let mut map_perm = MapPermission::U;
                 //执行权限

@@ -8,9 +8,9 @@ use lib::{println, yield_};
 
 #[no_mangle]
 fn main() -> isize {
-    // println!("[user] goto the initproc");
+    println!("[user] goto the initproc");
     if fork() == 0 {
-        // println!("[user] This child process,pid :{}", getpid());
+        println!("[user] This child process,pid :{}", getpid());
         let args = "cat";
         exec("user_shell\0", &[0 as *const u8]);
     } else {

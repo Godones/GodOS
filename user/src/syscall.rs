@@ -230,3 +230,23 @@ pub fn sys_thread_create(entry:usize,arg:usize)->isize{
 pub fn sys_waittid(tid:usize)->isize{
     syscall(SYSCALL_WAITTID,[tid,0,0])
 }
+
+/// 创建互斥锁
+pub fn sys_mutex_blocking_create()->isize{
+    syscall(SYSCALL_MUTEX_CREATE,[1,0,0])
+}
+
+/// 申请加锁
+pub fn sys_mutex_lock(lock_id:usize)->isize{
+    syscall(SYSCALL_MUTEX_LOCK,[lock_id,0,0])
+}
+
+/// 申请释放锁
+pub fn sys_mutex_unlock(lock_id:usize)->isize{
+    syscall(SYSCALL_MUTEX_UNLOCK,[lock_id,0,0])
+}
+
+/// 创建自旋锁
+pub fn sys_mutex_create()->isize{
+    syscall(SYSCALL_MUTEX_CREATE,[0,0,0])
+}

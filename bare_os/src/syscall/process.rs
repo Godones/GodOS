@@ -6,6 +6,7 @@ use crate::mm::page_table::{translated_refmut, translated_str, PageTable, transl
 use crate::task::{current_user_token, exit_current_run_next, suspend_current_run_next};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
+use crate::DEBUG;
 
 const FD_STDOUT: usize = 1;
 const FD_STDIN: usize = 2;
@@ -69,6 +70,7 @@ pub fn sys_exec(path: *const u8, mut args: *const  usize) -> isize {
     }
     if let Some(node) = open_file(name.as_str(), OpenFlags::R) {
         let data = node.read_all();
+        // DEBUG!("[kernel] data_size: {:}",data.len());
         let process = current_process();
         let len = args_v.len();
         process.exec(data.as_slice(), args_v);

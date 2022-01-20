@@ -15,7 +15,7 @@ lazy_static! {
 }
 
 pub struct Processor {
-    //当前cpu执行的进程
+    //当前cpu执行的线程
     current: Option<Arc<TaskControlBlock>>,
     //进程切换上下文
     //这是一个特殊的进程切换上下文，用于从当前的任务管理器中选择一个任务进行执行

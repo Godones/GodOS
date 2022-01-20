@@ -1,11 +1,13 @@
 mod file;
 mod process;
 mod multhread;
+mod sync;
 
 use crate::syscall::file::*;
 use process::*;
 use crate::file::Stat;
 use multhread::*;
+use sync::*;
 use crate::timer::Time;
 
 const SYSCALL_WRITE: usize = 64;
@@ -35,6 +37,7 @@ const SYSCALL_FSTAT:usize = 80;
 const SYSCALL_THREAD_CREATE: usize = 1000;
 const SYSCALL_GETTID: usize = 1001;
 const SYSCALL_WAITTID: usize = 1002;
+
 const SYSCALL_MUTEX_CREATE: usize = 1010;
 const SYSCALL_MUTEX_LOCK: usize = 1011;
 const SYSCALL_MUTEX_UNLOCK: usize = 1012;
@@ -43,7 +46,6 @@ const SYSCALL_SEMAPHORE_UP: usize = 1021;
 const SYSCALL_SEMAPHORE_DOWN: usize = 1022;
 
 pub fn syscall(call: usize, args: [usize; 3]) -> isize {
-    // crate::println!("function: {}, args: {:?}",function,args);
     match call {
         SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
         SYSCALL_EXIT => sys_exit(args[0] as i32),
@@ -70,6 +72,9 @@ pub fn syscall(call: usize, args: [usize; 3]) -> isize {
         SYSCALL_UNLINKAT => sys_unlinkat(args[0] as *const u8),
         SYSCALL_THREAD_CREATE => sys_thread_create(args[0],args[1]),
         SYSCALL_WAITTID => sys_waittid(args[0]) as isize,
+        SYSCALL_MUTEX_CREATE => sys_mutex_create(args[0]==1),
+        SYSCALL_MUTEX_LOCK => sys_mutex_lock(args[0]),
+        SYSCALL_MUTEX_UNLOCK => sys_mutex_unlock(args[0]),
         _ => {
             panic!("Undefined call for syscall: {}", call);
         }

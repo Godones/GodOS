@@ -21,7 +21,7 @@ mod tests;
 pub mod timer;
 mod trap;
 mod driver;
-
+mod sync;
 extern crate alloc;
 extern crate easyfs;
 

@@ -1,6 +1,6 @@
 use alloc::sync::Arc;
 use crate::file::{create_nlink_file, delete_nlink_file, open_file, OpenFlags, Pipe, Stat};
-use crate::{ list_apps};
+use crate::{DEBUG, list_apps};
 use crate::mm::page_table::{translated_byte_buffer, translated_refmut, translated_str, UserBuffer};
 
 use crate::task::current_user_token;
@@ -50,7 +50,7 @@ pub fn sys_open(path:*const u8,flags:u32)->isize{
         let process = current_process();
         let mut inner = process.get_inner_access();
         // let data = node.read_all();
-        // DEBUG!("[kernel-sys-open] data:{} {}",data.len(),core::str::from_utf8(data.as_slice()).unwrap());
+        // DEBUG!("[kernel-sys-open] data:{:.2}",data.len() as f64/1024 as f64);
         let fd = inner.get_one_fd();//分配文件描述符
         //
         inner.fd_table[fd] = Some(node.clone());

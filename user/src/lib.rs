@@ -168,6 +168,20 @@ pub fn waittid(tid:usize)->isize{
     }
 }
 
+pub fn mutex_blocking_create()->isize{
+    sys_mutex_blocking_create()
+}
+pub fn mutex_lock(lock_id:usize)->isize{
+    sys_mutex_lock(lock_id)
+}
+pub fn mutex_unlock(lock_id:usize)->isize{
+    sys_mutex_unlock(lock_id)
+}
+pub fn mutex_create()->isize{
+    sys_mutex_create()
+}
+
+
 //weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]
 #[no_mangle]
