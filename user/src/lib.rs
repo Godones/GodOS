@@ -190,6 +190,17 @@ pub fn semaphore_create(count:usize)->isize{
     sys_semaphore_create(count)
 }
 
+pub fn monitor_create()->isize{
+    sys_monitor_create()
+}
+
+pub fn monitor_signal(mon_id:usize)->isize{
+    sys_monitor_signal(mon_id)
+}
+
+pub fn monitor_wait(mon_id:usize,mutex_id:usize)->isize{
+    sys_monitor_wait(mon_id,mutex_id)
+}
 /// weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]
 #[no_mangle]

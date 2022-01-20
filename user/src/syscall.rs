@@ -32,7 +32,9 @@ const SYSCALL_MUTEX_UNLOCK: usize = 1012;
 const SYSCALL_SEMAPHORE_CREATE: usize = 1020;
 const SYSCALL_SEMAPHORE_UP: usize = 1021;
 const SYSCALL_SEMAPHORE_DOWN: usize = 1022;
-
+const SYSCALL_MONITOR_CREATE: usize = 1030;
+const SYSCALL_MONITOR_SIGNAL: usize = 1031;
+const SYSCALL_MONITOR_WAIT: usize = 1032;
 
 use alloc::sync::Arc;
 use crate::{Stat, Time};
@@ -263,4 +265,16 @@ pub fn sys_semaphore_p(sem_id:usize)->isize{
 /// 信号量v操作
 pub fn sys_semaphore_v(sem_id:usize)->isize{
     syscall(SYSCALL_SEMAPHORE_UP,[sem_id,0,0])
+}
+
+
+pub fn sys_monitor_create()->isize{
+    syscall(SYSCALL_MONITOR_CREATE,[0,0,0])
+}
+
+pub fn sys_monitor_wait(mon_id:usize,mutex_id:usize)->isize{
+    syscall(SYSCALL_MONITOR_WAIT,[mon_id,mutex_id,0])
+}
+pub fn sys_monitor_signal(mon_id:usize)->isize{
+    syscall(SYSCALL_MONITOR_SIGNAL,[0,0,0])
 }

@@ -44,6 +44,9 @@ const SYSCALL_MUTEX_UNLOCK: usize = 1012;
 const SYSCALL_SEMAPHORE_CREATE: usize = 1020;
 const SYSCALL_SEMAPHORE_UP: usize = 1021;
 const SYSCALL_SEMAPHORE_DOWN: usize = 1022;
+const SYSCALL_MONITOR_CREATE: usize = 1030;
+const SYSCALL_MONITOR_SIGNAL: usize = 1031;
+const SYSCALL_MONITOR_WAIT: usize = 1032;
 
 pub fn syscall(call: usize, args: [usize; 3]) -> isize {
     match call {
@@ -78,6 +81,9 @@ pub fn syscall(call: usize, args: [usize; 3]) -> isize {
         SYSCALL_SEMAPHORE_CREATE => sys_semaphore_create(args[0]),
         SYSCALL_SEMAPHORE_DOWN => sys_semaphore_p(args[0]),
         SYSCALL_SEMAPHORE_UP => sys_semaphore_v(args[0]),
+        SYSCALL_MONITOR_CREATE => sys_monitor_create(),
+        SYSCALL_MONITOR_SIGNAL => sys_monitor_signal(args[0]),
+        SYSCALL_MONITOR_WAIT=> sys_monitor_wait(args[0],args[1]),
         _ => {
             panic!("Undefined call for syscall: {}", call);
         }
