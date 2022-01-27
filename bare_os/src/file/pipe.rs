@@ -3,6 +3,7 @@ use crate::file::{File, Stat, StatMode};
 use crate::mm::page_table::UserBuffer;
 use alloc::sync::{Arc, Weak};
 use spin::Mutex;
+use crate::println;
 use crate::task::suspend_current_run_next;
 
 pub struct Pipe {
@@ -156,6 +157,7 @@ impl File for Pipe {
                     }
                 }
                 else {
+                    println!("write_size: {}",write_size);
                     return write_size;
                 }
             }

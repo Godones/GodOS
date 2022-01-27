@@ -19,7 +19,7 @@ impl TaskManager {
         }
     }
     pub fn add(&mut self, task: Arc<TaskControlBlock>) {
-        //添加一个进程控制块
+        //添加一个线程
         self.task_ready_queue.push_back(task)
     }
     pub fn pop(&mut self) -> Option<Arc<TaskControlBlock>> {

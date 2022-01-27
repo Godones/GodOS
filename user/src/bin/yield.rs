@@ -2,6 +2,7 @@
 #![no_std]
 
 use lib::{getpid, println, yield_};
+
 #[no_mangle]
 fn main() -> isize {
     println!("Hello, I am process {}.", getpid());

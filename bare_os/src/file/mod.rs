@@ -6,6 +6,10 @@ mod mail;
 mod inode;
 mod ftable;
 
+
+pub use ftable::*;
+
+
 pub use pipe::Pipe;
 pub use stdio::{Stdin, Stdout};
 pub use mail::Mail;
@@ -17,7 +21,6 @@ pub use inode::{
     OpenFlags,
     FNode
 };
-pub use ftable::*;
 
 pub trait File: Send + Sync {
     fn read(&self,  buf: UserBuffer) -> usize;

@@ -1,26 +1,24 @@
 use alloc::string::String;
-use crate::config::BIG_STRIDE;
-use crate::file::{ open_file, OpenFlags, Pipe};
+// use crate::config::BIG_STRIDE;
+use crate::file::{ open_file, OpenFlags};
 use crate::mm::address::VirtAddr;
 use crate::mm::page_table::{translated_refmut, translated_str, PageTable, translated_ref};
-use crate::task::{add_task, current_user_token, exit_current_run_next, suspend_current_run_next};
+use crate::task::{current_user_token, exit_current_run_next, suspend_current_run_next};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
+use crate::DEBUG;
 
 const FD_STDOUT: usize = 1;
 const FD_STDIN: usize = 2;
 
-use crate::mm::MapPermission;
-use crate::{list_apps};
-use crate::task::process::{copy_current_task, current_add_area, current_delete_page};
+use crate::mm::{MapPermission};
+use crate::task::processor::{ current_add_area, current_delete_page, current_process};
 use crate::timer::Time;
-
-use super::file::{sys_read, sys_write};
 
 pub fn sys_exit(exit_code: i32) -> ! {
     // INFO!("[kernel] Application exited with code {}", exit_code);
     //函数退出后，运行下一个应用程序
-    exit_current_run_next(exit_code as isize);
+    exit_current_run_next(exit_code);
     panic!("Unreachable sys_exit!")
 }
 
@@ -38,22 +36,24 @@ pub fn sys_get_time(time: *mut Time) -> isize {
 
     0
 }
-pub fn sys_set_priority(priority: usize) -> isize {
+pub fn sys_set_priority(_priority: usize) -> isize {
     //设置应用的特权级
-    let current_task = copy_current_task().unwrap();
-    current_task.get_inner_access().pass = BIG_STRIDE / priority;
-    priority as isize
+    todo!()
 }
 pub fn sys_fork() -> isize {
     //拷贝一份
-    let current_task = copy_current_task().unwrap();
-    let new_task = current_task.fork();
-    let new_pid = new_task.pid.0;
-    let trap_cx_ptr = new_task.get_inner_access().get_trap_cx();
+    let current_process = current_process();
+    let new_process = current_process.fork();
+    let new_pid = new_process.pid.0;
+    let process_inner = new_process.get_inner_access();
+    //找到主线程
+    let task = process_inner.task[0].as_ref().unwrap();
+    let trap_cx_ptr = task.get_inner_access().get_trap_cx();
     trap_cx_ptr.reg[10] = 0; //对于子进程来说，其返回值为0
-    add_task(new_task);
     new_pid as isize //对于父进程来说，其返回值为子进程的pid
 }
+
+
 pub fn sys_exec(path: *const u8, mut args: *const  usize) -> isize {
     //args 里面包含了多个指针，指向多个参数，第一个参数是应用名称的地址
     let token = current_user_token();
@@ -70,19 +70,20 @@ pub fn sys_exec(path: *const u8, mut args: *const  usize) -> isize {
     }
     if let Some(node) = open_file(name.as_str(), OpenFlags::R) {
         let data = node.read_all();
-        let task = copy_current_task().unwrap();
+        // DEBUG!("[kernel] data_size: {:}",data.len());
+        let process = current_process();
         let len = args_v.len();
-        task.exec(data.as_slice(), args_v);
+        process.exec(data.as_slice(), args_v);
         len as isize
     } else {
         -1
     }
 }
 pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
-    let current_task = copy_current_task().unwrap();
+    let current_process = current_process();
     //获取正在执行的进程
-    let mut task_inner = current_task.get_inner_access();
-    if task_inner
+    let mut process_inner = current_process.get_inner_access();
+    if process_inner
         .children
         .iter()
         .find(|task| pid == -1 || pid as usize == task.get_pid())
@@ -90,7 +91,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
     {
         return -1;
     } //查找是否有对应的子进程或者是pid=-1
-    let pair = task_inner
+    let pair = process_inner
         .children
         .iter()
         .enumerate()
@@ -99,35 +100,34 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         });
     if let Some((idx, _)) = pair {
         //移除子进程
-        let child = task_inner.children.remove(idx);
+        let child = process_inner.children.remove(idx);
         assert_eq!(Arc::strong_count(&child), 1); //确保此时子进程的引用计数为1
         let found_pid = child.get_pid(); //子进程的pid
         let exit_code = child.get_inner_access().exit_code; //
                                                             //向当前执行的进程的保存返回值位置写入子进程的返回值
-        *translated_refmut(task_inner.memory_set.token(), exit_code_ptr) = exit_code as i32;
+        *translated_refmut(process_inner.memory_set.token(), exit_code_ptr) = exit_code as i32;
         found_pid as isize //返回找到的子进程pid
     } else {
         -2
     }
 }
 pub fn sys_spawn(path: *const u8) -> isize {
+    //todo!(重新实现spawn)
     //完成新建子进程并执行应用程序的功能，即将exec与fork合并的功能
     //这里的实现是spawn不必像fork一样复制父进程地址空间和内容
     let token = current_user_token();
     let name = translated_str(token, path); //查找是否存在此应用程序
-    let task = copy_current_task().unwrap();
-    task.spawn(name.as_str())
+    let process = current_process();
+    process.spawn(name.as_str())
     
 }
-
 pub fn sys_getpid() -> isize {
     //获取当前进程的pid号
-    let current_task = copy_current_task().unwrap();
-    current_task.get_pid() as isize
+    let current_process = current_process();
+    current_process.get_pid() as isize
 }
-
-// 申请长度为 len 字节的物理内存，
-// 将其映射到 start 开始的虚存，内存页属性为 port
+/// 申请长度为 len 字节的物理内存，
+/// 将其映射到 start 开始的虚存，内存页属性为 port
 pub fn sys_mmap(start: usize, len: usize, port: usize) -> isize {
     let start_vir: VirtAddr = start.into(); //与页大小对齐
                                             //除了低8位其它位必须为0;
@@ -155,7 +155,7 @@ pub fn sys_mmap(start: usize, len: usize, port: usize) -> isize {
     current_add_area(start_vir, (start + len).into(), map_permission);
     0
 }
-//撤销申请的空间
+/// 撤销申请的空间
 pub fn sys_munmap(start: usize, len: usize) -> isize {
     let start_vir: VirtAddr = start.into(); //与页大小对齐
     if !start_vir.aligned() {
@@ -175,58 +175,5 @@ pub fn sys_munmap(start: usize, len: usize) -> isize {
     0
 }
 
-pub fn sys_pipe(pipe: *mut usize) -> isize {
-    let token = current_user_token();
-    let current_task = copy_current_task().unwrap();
-    let mut inner = current_task.get_inner_access();
-    // DEBUG!("[kernel] sys_pipe");
-    let (read_end, write_end) = Pipe::new(); //声请两个文件
-    let fd_read_end = inner.get_one_fd();
-    inner.fd_table[fd_read_end] = Some(read_end);
-    let fd_write_end = inner.get_one_fd();
-    inner.fd_table[fd_write_end] = Some(write_end);
-    *translated_refmut(token, pipe) = fd_read_end;
-    *translated_refmut(token, unsafe { pipe.add(1) }) = fd_write_end;
-    0
-}
-pub fn sys_close(fd: usize) -> isize {
-    // "关闭进程打开的文件描述符
-    let task = copy_current_task().unwrap();
-    let mut task_inner = task.get_inner_access();
-    if fd >= task_inner.fd_table.len() {
-        return -1;
-    }
-    if task_inner.fd_table[fd].is_none() {
-        return -1; //检查是否已经关闭过
-    }
-    task_inner.fd_table[fd].take();
-    0
-}
 
-pub fn sys_mail_read(buf:*mut u8,len:usize)->isize{
-    sys_read(3, buf, len)
-}
-
-pub fn sys_mail_write(fd:usize,buf:*mut u8,len:usize)->isize{
-    //todo!(需要修改pid的查找)
-    sys_write(3, buf, len)
-}
-
-pub fn sys_dup(fd:usize)->isize{
-    let task = copy_current_task().unwrap();
-    let mut inner = task.get_inner_access();
-    if fd >= inner.fd_table.len() {
-        return -1;
-    }else if inner.fd_table[fd].is_none(){
-        return -1;
-    }
-    let new_fd = inner.get_one_fd();
-    inner.fd_table[new_fd] =Some(Arc::clone(inner.fd_table[fd].as_ref().unwrap()));//复制fd
-    new_fd as isize
-}
-
-pub fn sys_ls()->isize{
-    list_apps();
-    0
-}
 

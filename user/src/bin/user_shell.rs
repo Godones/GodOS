@@ -12,6 +12,18 @@ const CR: u8 = 13; //回车键
 const DEL: u8 = 127; //删除键
 const BS: u8 = 8; //退格键
 
+
+const SHELL:&str ="
+███████╗██╗  ██╗███████╗██╗     ██╗
+██╔════╝██║  ██║██╔════╝██║     ██║
+███████╗███████║█████╗  ██║     ██║
+╚════██║██╔══██║██╔══╝  ██║     ██║
+███████║██║  ██║███████╗███████╗███████╗
+╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝
+";
+
+
+
 fn command_parser(str: &str) -> (String, String, Vec<String>, Vec<*const u8>) {
     let command: Vec<_> = str.split_whitespace().collect();
     let mut command: Vec<String> = command
@@ -51,7 +63,7 @@ fn command_parser(str: &str) -> (String, String, Vec<String>, Vec<*const u8>) {
 
 #[no_mangle]
 fn main() -> isize {
-    println!("The User Shell");
+    INFO!("{}",SHELL);
     let mut process_name = String::new();
     INFO!("GodOS:/\n$");
     loop {

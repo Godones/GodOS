@@ -36,7 +36,7 @@ pub fn write(fd: usize, buf: &[u8]) -> isize {
 pub fn read(fd: usize, buf: &mut [u8]) -> isize {
     sys_read(fd, buf)
 }
-pub fn exit(exit_code: i32) -> isize {
+pub fn exit(exit_code: i32) -> ! {
     sys_exit(exit_code)
 }
 pub fn get_time(time: &mut Time) -> isize {
@@ -156,9 +156,52 @@ pub fn unlink(path:&str)->isize{
 pub fn fstat(fd:usize,state:&Stat)->isize{
     sys_fstat(fd,state)
 }
+pub fn thread_create(entry:usize,arg:usize)->isize{
+    sys_thread_create(entry,arg)
+}
+pub fn waittid(tid:usize)->isize{
+    loop {
+        match sys_waittid(tid) {
+            -2 => yield_(),
+            exit_code => return exit_code
+        };
+    }
+}
 
+pub fn mutex_blocking_create()->isize{
+    sys_mutex_blocking_create()
+}
+pub fn mutex_lock(lock_id:usize)->isize{
+    sys_mutex_lock(lock_id)
+}
+pub fn mutex_unlock(lock_id:usize)->isize{
+    sys_mutex_unlock(lock_id)
+}
+pub fn mutex_create()->isize{
+    sys_mutex_create()
+}
+pub fn semaphore_up(sem_id:usize)->isize{
+    sys_semaphore_v(sem_id)
+}
+pub fn semaphore_down(sem_id:usize)->isize{
+    sys_semaphore_p(sem_id)
+}
+pub fn semaphore_create(count:usize)->isize{
+    sys_semaphore_create(count)
+}
 
-//weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
+pub fn monitor_create()->isize{
+    sys_monitor_create()
+}
+
+pub fn monitor_signal(mon_id:usize)->isize{
+    sys_monitor_signal(mon_id)
+}
+
+pub fn monitor_wait(mon_id:usize,mutex_id:usize)->isize{
+    sys_monitor_wait(mon_id,mutex_id)
+}
+/// weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]
 #[no_mangle]
 fn main(_args: usize, _arg_vec: &[&str]) -> i32 {
@@ -167,8 +210,8 @@ fn main(_args: usize, _arg_vec: &[&str]) -> i32 {
 
 #[no_mangle]
 #[link_section = ".text.entry"]
-//代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中
-//便于将其放在链接文件中
+/// 代码编译后的汇编代码中放在一个名为 .text.entry 的代码段中
+/// 便于将其放在链接文件中
 pub extern "C" fn _start(args: usize, arg_vec_base: usize) -> ! {
     //args: 参数数量
     //args_vec: 参数起始地址
@@ -190,5 +233,4 @@ pub extern "C" fn _start(args: usize, arg_vec_base: usize) -> ! {
         );
     }
     exit(main(args, args_str.as_slice()));
-    panic!("unreachable after sys_exit!");
 }

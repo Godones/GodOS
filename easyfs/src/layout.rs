@@ -6,7 +6,7 @@
 // 数据块位图： 多块 记录数据库的使用情况
 // 数据块：多块 存放所有文件或目录的数据
 
-use crate::{EFS_MAGIC};
+use crate::EFS_MAGIC;
 
 #[repr(C)]
 pub struct SuperBlock {

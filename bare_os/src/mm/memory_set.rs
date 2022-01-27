@@ -1,4 +1,4 @@
-use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAMP_CONTEXT, USER_STACK_SIZE, MMIO};
+use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, USER_STACK_SIZE, MMIO};
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};
@@ -221,12 +221,6 @@ impl MemorySet {
                 //需要加载的段我们就加载到内存指定位置
                 let start_addr: VirtAddr = (ph.virtual_addr() as usize).into();
                 let end_addr: VirtAddr = ((ph.virtual_addr() + ph.mem_size()) as usize).into();
-
-                // INFO!(
-                //     "[kernel] application section began:{:?} end:{:?}",
-                //     start_addr,
-                //     end_addr
-                // );
                 //用户态程序
                 let mut map_perm = MapPermission::U;
                 //执行权限
@@ -256,31 +250,12 @@ impl MemorySet {
         let mut user_stack_buttom: usize = max_end_va.into(); //
                                                               //放置一个guard page ？
         user_stack_buttom += PAGE_SIZE;
-        let user_stack_top = user_stack_buttom + USER_STACK_SIZE;
-        memoryset.push(
-            MapArea::new(
-                user_stack_buttom.into(),
-                user_stack_top.into(),
-                MapType::Framed,
-                MapPermission::R | MapPermission::W | MapPermission::U,
-            ),
-            None,
-        );
-        //映射用户trap上下文
-        //直接硬编码到地址空间的次高位
-        memoryset.push(
-            MapArea::new(
-                TRAMP_CONTEXT.into(),
-                TRAMPOLINE.into(),
-                MapType::Framed,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
+        let user_stack_base = user_stack_buttom + USER_STACK_SIZE;
+
         //返回应用程序的地址空间与用户栈顶以及程序入口地址
         (
             memoryset,
-            user_stack_top,
+            user_stack_base,
             elf.header.pt2.entry_point() as usize,
         )
     }

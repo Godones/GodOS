@@ -26,14 +26,12 @@ impl Bitmap {
             //查找已有的块中是否还有剩余位置
             let position = get_block_cache(block_id + self.start_block, block_device.clone())
                 .lock()
-                .modify(0, |bitmap_block: &mut BitmapBlock|{
+                .modify(0, |bitmap_block: &mut BitmapBlock| {
                     if let Some((bits_pos, inner_pos)) = bitmap_block
                         .iter()
                         .enumerate()
-                        .find(|(_, bits64)| **bits64 != u64::MAX)//确认并没有达到最大值
-                        .map(|(bits_pos, bits64)| {
-                            (bits_pos, bits64.trailing_ones() as usize)
-                        })
+                        .find(|(_, bits64)| **bits64 != u64::MAX) //确认并没有达到最大值
+                        .map(|(bits_pos, bits64)| (bits_pos, bits64.trailing_ones() as usize))
                     {
                         bitmap_block[bits_pos] |= 1u64 << inner_pos;
                         Some(block_id * BLOCK_BITS + bits_pos * 64 + inner_pos)
@@ -47,25 +45,24 @@ impl Bitmap {
         }
         None
     }
-    fn depositions(&self, position:usize)->(usize,usize,usize) {
-        let block_id = position/BLOCK_BITS;
-        let bits = position%BLOCK_BITS;
-        let bits_pos = bits/64;
-        let inner_pos=  bits%64;
-        (block_id,bits_pos,inner_pos)
+    fn depositions(&self, position: usize) -> (usize, usize, usize) {
+        let block_id = position / BLOCK_BITS;
+        let bits = position % BLOCK_BITS;
+        let bits_pos = bits / 64;
+        let inner_pos = bits % 64;
+        (block_id, bits_pos, inner_pos)
     }
     //回收分配出去的一个位
-    pub fn dealloc(&mut self,position:usize,device:Arc<dyn BlockDevice>){
-        let (block_id,bits_pos,inner_pos) = self.depositions(position);
+    pub fn dealloc(&mut self, position: usize, device: Arc<dyn BlockDevice>) {
+        let (block_id, bits_pos, inner_pos) = self.depositions(position);
         // println!("{},{:?}",position,self.depositions(position));
-        get_block_cache(block_id+self.start_block,device.clone())
+        get_block_cache(block_id + self.start_block, device.clone())
             .lock()
-            .modify(0,|bitsmap_block:&mut BitmapBlock|{
+            .modify(0, |bitsmap_block: &mut BitmapBlock| {
                 //判断当前这个位置是否为1
-                assert!(bitsmap_block[bits_pos]&(1u64<<inner_pos)>0);//==1
-                bitsmap_block[bits_pos] -= 1u64<<inner_pos;
+                assert!(bitsmap_block[bits_pos] & (1u64 << inner_pos) > 0); //==1
+                bitsmap_block[bits_pos] -= 1u64 << inner_pos;
             });
-
     }
     pub fn bit_num(&self) -> usize {
         self.blocks * BLOCK_SIZE

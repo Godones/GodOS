@@ -12,9 +12,9 @@ fn main() -> isize {
     if fork() == 0 {
         println!("[user] This child process,pid :{}", getpid());
         let args = "cat";
-        exec("user_shell\0", &[args.as_ptr()]);
+        exec("user_shell\0", &[0 as *const u8]);
     } else {
-        println!("[user] This is father process,pid: {}", getpid());
+        // println!("[user] This is father process,pid: {}", getpid());
         loop {
             let mut exit_code: i32 = 0;
             //初始进程为根进程，需要等待其它进程任意一个子进程结束

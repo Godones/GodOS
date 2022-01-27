@@ -1,6 +1,6 @@
 pub mod context;
 
-use crate::config::{TRAMPOLINE, TRAMP_CONTEXT};
+use crate::config::{TRAMPOLINE};
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;
 
@@ -11,6 +11,7 @@ use riscv::register::{
     scause::{self, Exception, Interrupt, Trap},
     stval, stvec,
 };
+use crate::task::processor::current_trap_cx_user_va;
 global_asm!(include_str!("trap.asm"));
 
 /// 批处理操作系统初始化
@@ -23,14 +24,16 @@ pub fn init() {
     set_kernel_trap_entry();
     println!("++++ setup trap ++++");
 }
-pub fn set_kernel_trap_entry() {
+fn set_kernel_trap_entry() {
     unsafe {
         stvec::write(trap_from_kernel as usize, stvec::TrapMode::Direct);
     }
 }
 #[no_mangle]
 fn trap_from_kernel() -> ! {
-    panic!("[kernel] trap from kernel");
+    use riscv::register::sepc;
+    println!("stval = {:#x}, sepc = {:#x}", stval::read(), sepc::read());
+    panic!("a trap {:?} from kernel!", scause::read().cause());
 }
 pub fn set_user_trap_entry() {
     //设置用户态trap处理入口
@@ -42,7 +45,7 @@ pub fn set_user_trap_entry() {
 pub fn trap_return() -> ! {
     //返回用户态继续执行
     set_user_trap_entry(); //先设置在用户态发生trap时的入口
-    let trap_cx = TRAMP_CONTEXT; //获取应用程序trapframe
+    let trap_cx_user_va = current_trap_cx_user_va(); //获取应用程序trapframe
     let user_satp = current_user_token(); //获取应用程序的satp
     extern "C" {
         fn _alltraps();
@@ -54,12 +57,11 @@ pub fn trap_return() -> ! {
             "fence.i",
             "jr {restore_va}",
             restore_va = in(reg) restore_va,
-            in("a0") trap_cx,
+            in("a0") trap_cx_user_va,
             in("a1") user_satp,
             options(noreturn)
         );
     } //跳转到restore_va的地方执行，这是内核与应用程序均有相同映射的trampoline区域
-
     // panic!("Unreachable in back_to_user!");
 }
 ///根据不同类型的中断选择不同的处理

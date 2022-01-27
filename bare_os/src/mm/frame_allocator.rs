@@ -1,7 +1,7 @@
 ///物理页帧分配器
 use crate::config::MEMORY_END;
 use crate::mm::address::{PhysAddr, PhysPageNum};
-use crate::INFO;
+use crate::{INFO, println};
 use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::option::Option;
@@ -32,7 +32,6 @@ trait FrameAllocator {
     fn dealloc(&mut self, ppn: PhysPageNum);
 }
 
-// todo!(页帧管理策略);
 
 pub struct StackFrameAllocator {
     current: usize,       //起始页帧
