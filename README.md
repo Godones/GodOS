@@ -20,25 +20,25 @@
 
 #### 实验报告(只包含1-5章)
 
- [实验1报告.pdf](doc\实验1报告.pdf) 
+ [实验1报告.pdf](doc/实验1报告.pdf) 
 
- [实验2报告.pdf](doc\实验2报告.pdf) 
+ [实验2报告.pdf](doc/实验2报告.pdf) 
 
- [实验3报告.pdf](doc\实验3报告.pdf) 
+ [实验3报告.pdf](doc/实验3报告.pdf) 
 
- [实验4报告.pdf](doc\实验4报告.pdf) 
+ [实验4报告.pdf](doc/实验4报告.pdf) 
 
- [实验5报告.pdf](doc\实验5报告.pdf) 
+ [实验5报告.pdf](doc/实验5报告.pdf) 
 
 实验报告5包含当时系统的大致结构图。
 
 #### 一些杂七杂八的文件
 
- [RISC-V-Reader-Chinese-v2p1.pdf](doc\RISC-V-Reader-Chinese-v2p1.pdf) 
+ [RISC-V-Reader-Chinese-v2p1.pdf](doc/RISC-V-Reader-Chinese-v2p1.pdf) 
 
- [一点汇编知识.pdf](doc\一点汇编知识.pdf) 
+ [一点汇编知识.pdf](doc/一点汇编知识.pdf) 
 
- [riscv-sbi.pdf](doc\riscv-sbi.pdf) 
+ [riscv-sbi.pdf](doc/riscv-sbi.pdf) 
 
 #### 对实验的一些建议
 
