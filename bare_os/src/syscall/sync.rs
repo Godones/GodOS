@@ -1,5 +1,5 @@
 use alloc::sync::Arc;
-use crate::sync::{Monitor, Mutex, MutexBlock, MutexSpin, Semaphore};
+use crate::sync::{Monitor, MutexBlock, MutexSpin, Semaphore};
 use crate::task::processor::current_process;
 
 /// 创建一个互斥资源锁

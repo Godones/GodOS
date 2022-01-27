@@ -26,7 +26,6 @@ mod sync;
 extern crate alloc;
 extern crate easyfs;
 
-use crate::driver::gpu;
 use crate::file::list_apps;
 use crate::task::add_initproc;
 
