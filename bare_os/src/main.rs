@@ -1,7 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(asm)]
-#![feature(global_asm)]
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
 #![allow(dead_code)]
@@ -26,6 +24,7 @@ mod sync;
 extern crate alloc;
 extern crate easyfs;
 
+use core::arch::global_asm;
 use crate::file::list_apps;
 use crate::task::add_initproc;
 

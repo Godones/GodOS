@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+// use lazy_static::lazy_static;
 use virtio_drivers::{VirtIOGpu,VirtIOHeader};
 use crate::INFO;
 

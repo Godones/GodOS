@@ -11,7 +11,7 @@ use lazy_static::lazy_static;
 use riscv::register;
 use spin::Mutex;
 use xmas_elf::ElfFile;
-
+use core::arch::asm;
 /// 地址空间的抽象
 /// 对于任意一个应用程序(后面成为进程）来说，其由多个
 /// 段构成，每个段对应于一段虚拟的逻辑地址空间

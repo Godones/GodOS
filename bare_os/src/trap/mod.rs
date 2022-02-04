@@ -1,5 +1,6 @@
 pub mod context;
 
+use core::arch::{asm, global_asm};
 use crate::config::{TRAMPOLINE};
 use crate::syscall::syscall;
 use crate::timer::set_next_timetrigger;

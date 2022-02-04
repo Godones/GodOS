@@ -4,7 +4,7 @@
 extern crate alloc;
 use lib::{get_time_ms, mutex_blocking_create, mutex_lock, mutex_unlock, print, println};
 use lib::{thread_create, waittid};
-use lib::{sleep, exit, get_time};
+use lib::{sleep, exit};
 use alloc::vec::Vec;
 
 const N: usize = 5;

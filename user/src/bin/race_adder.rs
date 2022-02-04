@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use lib::{exit, thread_create, waittid, get_time, println, get_time_ms};
+use lib::{exit, thread_create, waittid, println, get_time_ms};
 use alloc::vec::Vec;
 
 static mut A: usize = 0;

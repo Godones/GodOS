@@ -3,7 +3,7 @@
 /// !消费者和生产者问题
 extern crate alloc;
 
-use lib::{semaphore_create, semaphore_up, semaphore_down, print, println, INFO};
+use lib::{semaphore_create, semaphore_up, semaphore_down, println, INFO};
 use lib::{thread_create, waittid};
 use lib::exit;
 use alloc::vec::Vec;
@@ -59,7 +59,7 @@ pub fn main() -> i32 {
     threads.push(thread_create(consumer as usize, 0));
     // wait for all threads to complete
     for thread in threads.iter() {
-        let exit_code = waittid(*thread as usize);
+        waittid(*thread as usize);
     }
     println!("mpsc_sem passed!");
     0

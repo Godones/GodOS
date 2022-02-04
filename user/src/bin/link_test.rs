@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use lib::{close, fstat, link, open, read, unlink, write, OpenFlags, Stat, INFO};
+use lib::{close, fstat, link, open, read, unlink, write, OpenFlags, Stat};
 use lib::println;
 
 /// 测试 link/unlink，输出　Test link OK! 就算正确。

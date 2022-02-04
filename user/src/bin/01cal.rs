@@ -1,11 +1,10 @@
 #![no_main]
 #![no_std]
-#![feature(asm)]
 #![allow(non_snake_case)]
 
 #[macro_use]
 extern crate lib;
-use lib::set_priority;
+// use lib::set_priority;
 const LEN: usize = 100;
 
 #[no_mangle]

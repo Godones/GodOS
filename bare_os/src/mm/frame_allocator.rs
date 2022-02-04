@@ -1,7 +1,7 @@
 ///物理页帧分配器
 use crate::config::MEMORY_END;
 use crate::mm::address::{PhysAddr, PhysPageNum};
-use crate::{INFO, println};
+use crate::{INFO};
 use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::option::Option;

@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 use easyfs::{BlockDevice, FileSystem, Inode};
-use rand;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::sync::{Arc, Mutex};
@@ -163,13 +162,13 @@ fn package() -> std::io::Result<()> {
     let root_inode = crate_filesystem(); // for name in filenames{
 
     let mut size_count = 0;
-    let mut size_V = Vec::new();
+    let mut size_v = Vec::new();
     filenames.iter().for_each(|name| {
         let mut data: Vec<u8> = Vec::new();
         let mut file = std::fs::File::open(format!("{}{}", target, name)).unwrap();
         file.read_to_end(&mut data).unwrap(); //读取完整的应用
         let new_inode = root_inode.create(name.as_str()).unwrap(); //新建一个文件
-        size_V.push(data.len());
+        size_v.push(data.len());
         // println!("name: {},size:{}",name,data.len());
         new_inode.write_at(0, data.as_slice());
         size_count += new_inode.get_file_size();
@@ -179,53 +178,17 @@ fn package() -> std::io::Result<()> {
         let inode = root_inode.find_inode(name.as_str()).unwrap();
         let size = inode.get_file_size();
         // println!("{}-{}",size_V[i],size);
-        assert_eq!(size,size_V[i]);
+        assert_eq!(size,size_v[i]);
         i +=1;
     });
 
 
     Ok(())
 }
-pub fn link_test2() {
-    let root_inode = crate_filesystem();
-    // let test_str = "Hello, world!";
-    // let fname = "fname2";
-    // let (lname0, lname1, lname2) = ("linkname0", "linkname1", "linkname2");
-    // let base_inode = root_inode.create(fname).unwrap();
-    //
-    // println!(
-    //     "base_inode:{}-{}",
-    //     base_inode.block_id, base_inode.block_offset
-    // );
-    // let first_inode = root_inode.create_nlink(lname0, fname).unwrap();
-    // let second_inode = root_inode.create_nlink(lname1, fname).unwrap();
-    // let three_inode = root_inode.create_nlink(lname2, fname).unwrap();
-    // println!(
-    //     "first_inode:{}-{}",
-    //     first_inode.block_id, first_inode.block_offset
-    // );
-    //
-    // let links = base_inode.get_disk_nlink();
-    // println!("links:{}", links);
-    // base_inode.write_at(0, test_str.as_bytes());
-    // // let mut buffer = [0u8;255];
-    // // let len = base_inode.read_at(0, &mut buffer);
-    // // assert_eq!(test_str,core::str::from_utf8(&buffer[..len]).unwrap());
-    // // println!("write_read_ok");
-    //
-    // root_inode.delete_nlink(fname);
-    // let new_inode = root_inode.find_inode(lname0).unwrap();
-    // println!(
-    //     "new_inode:{}-{}",
-    //     new_inode.block_id, new_inode.block_offset
-    // );
-    // let new_links = new_inode.get_disk_nlink();
-    // println!("new_links:{}", new_links);
 
-}
 fn main() {
     // println!("Test filesystem...");
-    package();
+    package().unwrap();
     // fs_test();
     // test_link();
     // link_test2();

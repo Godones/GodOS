@@ -1,6 +1,5 @@
 #![no_main]
 #![no_std]
-#![feature(asm)]
 #![allow(non_snake_case)]
 
 use lib::{exec, fork, getpid, wait};
@@ -11,7 +10,6 @@ fn main() -> isize {
     println!("[user] goto the initproc");
     if fork() == 0 {
         println!("[user] This child process,pid :{}", getpid());
-        let args = "cat";
         exec("user_shell\0", &[0 as *const u8]);
     } else {
         // println!("[user] This is father process,pid: {}", getpid());

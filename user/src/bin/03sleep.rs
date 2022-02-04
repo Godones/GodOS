@@ -1,6 +1,5 @@
 #![no_main]
 #![no_std]
-#![feature(asm)]
 #![allow(non_snake_case)]
 #[macro_use]
 extern crate lib;
