@@ -3,15 +3,16 @@ use crate::config::KERNEL_HEAP_SIZE;
 use crate::system_allocator::bump_allocator::BumpAllocator;
 use crate::system_allocator::common::Locked;
 // use crate::system_allocator::linked_list::LinkedListAllocator;
-use crate::INFO;
- use buddy_system_allocator::LockedHeap;
 use crate::system_allocator::linked_list::LinkedListAllocator;
+use crate::INFO;
+use buddy_system_allocator::LockedHeap;
 
 extern crate buddy_system_allocator;
-mod buddy;
+pub mod buddy;
 /// 实现自己的堆分配器
 pub mod bump_allocator;
 mod common;
+mod fixed_size;
 mod linked_list;
 
 static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];

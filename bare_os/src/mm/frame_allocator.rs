@@ -1,7 +1,7 @@
 ///物理页帧分配器
 use crate::config::MEMORY_END;
 use crate::mm::address::{PhysAddr, PhysPageNum};
-use crate::{INFO};
+use crate::INFO;
 use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::option::Option;
@@ -19,7 +19,7 @@ extern "C" {
 
 pub fn init_frame_allocator() {
     //初始化分配器
-    INFO!("[kernel] frame: {}-{}",ekernel as usize, MEMORY_END);
+    INFO!("[kernel] frame: {}-{}", ekernel as usize, MEMORY_END);
     FRAME_ALLOCATOR.lock().init(
         PhysAddr::from(ekernel as usize).ceil(),
         PhysAddr::from(MEMORY_END).floor(),
@@ -31,7 +31,6 @@ trait FrameAllocator {
     fn alloc(&mut self) -> Option<PhysPageNum>;
     fn dealloc(&mut self, ppn: PhysPageNum);
 }
-
 
 pub struct StackFrameAllocator {
     current: usize,       //起始页帧

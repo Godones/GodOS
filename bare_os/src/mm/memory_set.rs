@@ -1,4 +1,4 @@
-use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, USER_STACK_SIZE, MMIO};
+use crate::config::{MEMORY_END, MMIO, PAGE_SIZE, TRAMPOLINE, USER_STACK_SIZE};
 use crate::mm::address::{PhysAddr, PhysPageNum, StepByOne, VPNRange, VirtAddr, VirtPageNum};
 use crate::mm::frame_allocator::{frame_alloc, FrameTracker};
 use crate::mm::page_table::{PTEFlags, PageTable, PageTableEntry};
@@ -7,11 +7,11 @@ use alloc::collections::btree_map::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use bitflags::bitflags;
+use core::arch::asm;
 use lazy_static::lazy_static;
 use riscv::register;
 use spin::Mutex;
 use xmas_elf::ElfFile;
-use core::arch::asm;
 /// 地址空间的抽象
 /// 对于任意一个应用程序(后面成为进程）来说，其由多个
 /// 段构成，每个段对应于一段虚拟的逻辑地址空间
@@ -191,11 +191,11 @@ impl MemorySet {
                     (pair.0).into(),
                     (pair.0 + pair.1).into(),
                     MapType::Identical,
-                    MapPermission::R|MapPermission::W,
+                    MapPermission::R | MapPermission::W,
                 ),
-                None
+                None,
             );
-        };
+        }
 
         memoryset
     }

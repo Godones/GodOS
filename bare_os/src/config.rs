@@ -17,12 +17,13 @@ pub const RING_BUFFER_SIZE: usize = 32;
 #[cfg(feature = "board_qemu")]
 pub const CLOCK_FREQ: usize = 12500000;
 //配置外部设备的内存映射
-pub const MMIO:&[(usize,usize)] = &[
-    (0x10001000,0x1000), ];
+pub const MMIO: &[(usize, usize)] = &[
+    (0x10001000, 0x1000),
+    // (0x10007000,0x1000),
+];
 
-
+pub const VIRTIO0: usize = 0x10001000;
+pub const VIRTIO1: usize = 0x10007000;
 
 #[cfg(feature = "LOG")]
 pub const MINIEST_INFO: usize = 0;
-
-

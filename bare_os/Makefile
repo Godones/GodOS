@@ -64,7 +64,7 @@ disasm-vim: kernel
 run: run-inner
 
 doc:
-	@cargo doc --open --features "board_$(BOARD)" --features"$(INFO)"
+	@cargo doc --open --features "board_$(BOARD)" --features"$(INFO)" --no-deps
 
 run-inner: build
 ifeq ($(BOARD),qemu)

@@ -31,8 +31,8 @@ impl TrapFrame {
         let mut trap_cx = Self {
             reg: [0; 32],
             sstatus: status,
-            sepc: entry,              //动态链接的应用程序入口
-            kernel_satp,              //内核的satp
+            sepc: entry,                //动态链接的应用程序入口
+            kernel_satp,                //内核的satp
             kernel_sp: kernel_stack_sp, //应用程序在内核的栈顶地址
             trap_handler,
         };

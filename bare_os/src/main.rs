@@ -5,28 +5,34 @@
 #![allow(dead_code)]
 #![feature(const_mut_refs)]
 
-
 #[macro_use]
 pub mod panic;
 mod config;
+mod driver;
 mod file;
 mod mm;
 mod my_struct;
 mod sbi;
+mod sync;
 mod syscall;
 mod system_allocator;
 mod task;
 mod tests;
 pub mod timer;
 mod trap;
-mod driver;
-mod sync;
 extern crate alloc;
 extern crate easyfs;
 
-use core::arch::global_asm;
+use crate::config::KERNEL_HEAP_SIZE;
+use crate::driver::gpu;
 use crate::file::list_apps;
+use crate::sbi::shutdown;
+use crate::system_allocator::buddy::{find_last_min_pow2, test_buddy};
 use crate::task::add_initproc;
+use buddy_system_allocator::linked_list::ListNode;
+use core::arch::global_asm;
+use core::mem::size_of;
+use core::ptr::null_mut;
 
 global_asm!(include_str!("entry.asm"));
 // global_asm!(include_str!("link_app.S"));
@@ -60,13 +66,35 @@ extern "C" fn rust_main() -> ! {
     mm::init();
     mm::remap_test(); //测试内核映射的正确性
                       //运行程序
-    trap::init();
-    println!("set trap over");
-    list_apps();
-    add_initproc();
-    timer::enable_timer_interrupt(); //使能位
-    timer::set_next_timetrigger();
-    // INFO!("Run process......");
-    task::run();
-    panic!("The main_end!");
+
+    // trap::init();
+    // println!("set trap over");
+    // // gpu();
+    // list_apps();
+    // add_initproc();
+    // timer::enable_timer_interrupt(); //使能位
+    // timer::set_next_timetrigger();
+    // // INFO!("Run process......");
+    // task::run();
+    // panic!("The main_end!");
+
+    INFO!("{:}", 1<<find_last_min_pow2(5));
+    INFO!("{:}", 1<<find_last_min_pow2(128));
+    INFO!("{:}", 1<<find_last_min_pow2(0x30_0000));
+    INFO!("{}",(4 as usize) .next_power_of_two());
+
+    #[derive(Debug,Clone)]
+    struct node{
+        next : * mut node,
+    }
+    let data = [0usize;10];
+    let raw = data.as_ptr();
+    let first = node{
+        next:null_mut()
+    };
+
+    test_buddy();
+
+
+    shutdown();
 }

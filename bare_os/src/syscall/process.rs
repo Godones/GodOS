@@ -1,8 +1,8 @@
 use alloc::string::String;
 // use crate::config::BIG_STRIDE;
-use crate::file::{ open_file, OpenFlags};
+use crate::file::{open_file, OpenFlags};
 use crate::mm::address::VirtAddr;
-use crate::mm::page_table::{translated_refmut, translated_str, PageTable, translated_ref};
+use crate::mm::page_table::{translated_ref, translated_refmut, translated_str, PageTable};
 use crate::task::{current_user_token, exit_current_run_next, suspend_current_run_next};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -10,8 +10,8 @@ use alloc::vec::Vec;
 const FD_STDOUT: usize = 1;
 const FD_STDIN: usize = 2;
 
-use crate::mm::{MapPermission};
-use crate::task::processor::{ current_add_area, current_delete_page, current_process};
+use crate::mm::MapPermission;
+use crate::task::processor::{current_add_area, current_delete_page, current_process};
 use crate::timer::Time;
 
 pub fn sys_exit(exit_code: i32) -> ! {
@@ -52,16 +52,17 @@ pub fn sys_fork() -> isize {
     new_pid as isize //对于父进程来说，其返回值为子进程的pid
 }
 
-
-pub fn sys_exec(path: *const u8, mut args: *const  usize) -> isize {
+pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
     //args 里面包含了多个指针，指向多个参数，第一个参数是应用名称的地址
     let token = current_user_token();
-    let name = translated_str(token, path);//应用路径
-    let mut args_v :Vec<String> = Vec::new();
+    let name = translated_str(token, path); //应用路径
+    let mut args_v: Vec<String> = Vec::new();
     loop {
-        let arg_ptr = *translated_ref(token,args);//找到第一个参数的指针
-        if arg_ptr == 0 { break ; }
-        args_v.push(translated_str(token,arg_ptr as *const u8));
+        let arg_ptr = *translated_ref(token, args); //找到第一个参数的指针
+        if arg_ptr == 0 {
+            break;
+        }
+        args_v.push(translated_str(token, arg_ptr as *const u8));
         //args_v中字符串已经不包含结束标记\0,且不包含参数的结束标记
         unsafe {
             args = args.add(1);
@@ -118,7 +119,6 @@ pub fn sys_spawn(path: *const u8) -> isize {
     let name = translated_str(token, path); //查找是否存在此应用程序
     let process = current_process();
     process.spawn(name.as_str())
-    
 }
 pub fn sys_getpid() -> isize {
     //获取当前进程的pid号
@@ -173,6 +173,3 @@ pub fn sys_munmap(start: usize, len: usize) -> isize {
     current_delete_page(start_vir);
     0
 }
-
-
-

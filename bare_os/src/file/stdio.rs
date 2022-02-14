@@ -31,12 +31,7 @@ impl File for Stdin {
         panic!("Stdin unsupported write");
     }
     fn fstat(&self) -> Stat {
-        Stat::new(
-            0,
-            0,
-            StatMode::NULL,
-            1,
-        )
+        Stat::new(0, 0, StatMode::NULL, 1)
     }
 }
 
@@ -51,11 +46,6 @@ impl File for Stdout {
         buf.len()
     }
     fn fstat(&self) -> Stat {
-        Stat::new(
-            0,
-            0,
-            StatMode::NULL,
-            1,
-        )
+        Stat::new(0, 0, StatMode::NULL, 1)
     }
 }

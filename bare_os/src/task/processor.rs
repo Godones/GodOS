@@ -2,13 +2,13 @@ use crate::mm::address::VirtAddr;
 use crate::mm::MapPermission;
 use crate::task::context::TaskContext;
 use crate::task::manager::fetch_task;
+use crate::task::process::ProcessControlBlock;
 use crate::task::switch::__switch;
 use crate::task::task::{TaskControlBlock, TaskStatus};
 use crate::trap::context::TrapFrame;
 use alloc::sync::Arc;
 use lazy_static::lazy_static;
 use spin::Mutex;
-use crate::task::process::ProcessControlBlock;
 
 lazy_static! {
     static ref PROCESSOR: Mutex<Processor> = Mutex::new(Processor::new());
@@ -50,9 +50,7 @@ pub fn copy_current_task() -> Option<Arc<TaskControlBlock>> {
 }
 pub fn current_user_token() -> usize {
     //当前进程用户地址空间的satp
-    copy_current_task()
-        .unwrap()
-        .get_user_token()
+    copy_current_task().unwrap().get_user_token()
 }
 pub fn current_trap_cx_ptr() -> &'static mut TrapFrame {
     //获取当前进程的trap上下文
@@ -62,21 +60,22 @@ pub fn current_trap_cx_ptr() -> &'static mut TrapFrame {
         .get_trap_cx()
 }
 /// 返回当前的进程
-pub fn current_process()->Arc<ProcessControlBlock>{
+pub fn current_process() -> Arc<ProcessControlBlock> {
     copy_current_task().unwrap().process.upgrade().unwrap()
 }
 /// 返回当前线程在用户态的trap上下文虚拟地址
-pub fn current_trap_cx_user_va()->usize{
-    copy_current_task().unwrap()
+pub fn current_trap_cx_user_va() -> usize {
+    copy_current_task()
+        .unwrap()
         .get_inner_access()
-        .res.as_ref()
+        .res
+        .as_ref()
         .unwrap()
         .trap_cx_user_va()
 }
 /// 返回当前线程的内核栈顶
-pub fn current_kstack_top()->usize{
-    copy_current_task().unwrap()
-        .kernel_stack.get_stack_top()
+pub fn current_kstack_top() -> usize {
+    copy_current_task().unwrap().kernel_stack.get_stack_top()
 }
 
 pub fn current_add_area(
@@ -87,8 +86,11 @@ pub fn current_add_area(
     //向当前进程添加一些物理内存区域
     copy_current_task()
         .unwrap()
-        .process.upgrade().unwrap()
-        .get_inner_access().memory_set
+        .process
+        .upgrade()
+        .unwrap()
+        .get_inner_access()
+        .memory_set
         .insert_framed_area(start_addr, end_addr, permission);
     0
 }
@@ -96,7 +98,9 @@ pub fn current_add_area(
 pub fn current_delete_page(start_addr: VirtAddr) -> isize {
     copy_current_task()
         .unwrap()
-        .process.upgrade().unwrap()
+        .process
+        .upgrade()
+        .unwrap()
         .get_inner_access()
         .memory_set
         .remove_from_startaddr(start_addr);

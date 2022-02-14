@@ -210,13 +210,13 @@ pub fn translated_str(token: usize, ptr: *const u8) -> String {
     }
     name
 }
-pub fn translated_refmut<T>(token: usize, ptr:*mut T) -> &'static mut T {
+pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
     let page_table = PageTable::from_token(token);
     let start = ptr as usize;
     page_table.translated_va(start.into()).unwrap().get_mut()
 }
 
-pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T{
+pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T {
     let page_table = PageTable::from_token(token);
     let start = ptr as usize;
     page_table.translated_va(start.into()).unwrap().get_ref()

@@ -1,22 +1,21 @@
-
 pub mod context;
-mod manager;
 mod id;
+mod manager;
+mod process;
 pub mod processor;
 mod switch;
 mod task;
-mod process;
 
-use crate::task::context::TaskContext;
-use crate::task::task::{TaskStatus};
-use alloc::sync::Arc;
-use lazy_static::lazy_static;
-pub use task::TaskControlBlock;
-pub use manager::add_task;
-pub use processor::{current_trap_cx_ptr, current_user_token, run, schedule, take_current_task};
 use crate::file::open_file;
 use crate::file::OpenFlags;
+use crate::task::context::TaskContext;
 use crate::task::process::ProcessControlBlock;
+use crate::task::task::TaskStatus;
+use alloc::sync::Arc;
+use lazy_static::lazy_static;
+pub use manager::add_task;
+pub use processor::{current_trap_cx_ptr, current_user_token, run, schedule, take_current_task};
+pub use task::TaskControlBlock;
 
 lazy_static! {
     pub static ref INITPROC:Arc<ProcessControlBlock> = {
@@ -48,7 +47,7 @@ pub fn suspend_current_run_next() {
                     //进行任务切换
     schedule(task_cx_ptr);
 }
-pub fn block_current_run_next(){
+pub fn block_current_run_next() {
     let task = take_current_task().unwrap();
     let mut task_inner = task.get_inner_access();
     let task_cx_ptr = &mut task_inner.task_cx_ptr as *mut TaskContext;
@@ -62,18 +61,18 @@ pub fn exit_current_run_next(exit_code: i32) {
     let current_task = take_current_task().unwrap();
     let mut current_task_inner = current_task.get_inner_access();
     let process = current_task.process.upgrade().unwrap();
-    let tid = current_task_inner.res.as_ref().unwrap().tid;//线程标识符
+    let tid = current_task_inner.res.as_ref().unwrap().tid; //线程标识符
 
     //保存返回码
-    current_task_inner.res = None;//子线程资源回收
+    current_task_inner.res = None; //子线程资源回收
     current_task_inner.exit_code = Some(exit_code);
     drop(current_task_inner);
     drop(current_task);
 
     //如果是主线程发出此系统调用
-    if tid==0 {
+    if tid == 0 {
         let mut process_inner = process.get_inner_access();
-        process_inner.is_zombie = true;//僵尸进程
+        process_inner.is_zombie = true; //僵尸进程
         process_inner.exit_code = exit_code;
         {
             //将子进程全部挂载到初始进程上面
@@ -85,15 +84,13 @@ pub fn exit_current_run_next(exit_code: i32) {
             }
         }
         //回收所有子线程的资源
-        for task in process_inner.task.iter().filter(
-            |x|x.is_some())
-        {
-            let task  = task.as_ref().unwrap();
-            let mut task_inner= task.get_inner_access();
+        for task in process_inner.task.iter().filter(|x| x.is_some()) {
+            let task = task.as_ref().unwrap();
+            let mut task_inner = task.get_inner_access();
 
             task_inner.res = None;
         }
-        process_inner.children.clear();//清空所有的子进程
+        process_inner.children.clear(); //清空所有的子进程
         process_inner.memory_set.clear_area_data();
     }
     //自动解除引用
@@ -101,7 +98,7 @@ pub fn exit_current_run_next(exit_code: i32) {
     let mut _unused = TaskContext::zero_init();
     schedule(&mut _unused as *mut TaskContext); //重新调度
 }
-fn set_priority( _priority: usize) -> isize {
+fn set_priority(_priority: usize) -> isize {
     //设置优先级就等价于更改增长量
     todo!("设置进程优先级")
 }

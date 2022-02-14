@@ -1,9 +1,9 @@
-use alloc::sync::Arc;
 use crate::sync::{Monitor, MutexBlock, MutexSpin, Semaphore};
 use crate::task::processor::current_process;
+use alloc::sync::Arc;
 
 /// 创建一个互斥资源锁
-pub fn sys_mutex_create(blocking:bool)->isize{
+pub fn sys_mutex_create(blocking: bool) -> isize {
     let process = current_process();
     let mut process_inner = process.get_inner_access();
     //从进程的加锁向量中找到一个空闲位置
@@ -11,32 +11,30 @@ pub fn sys_mutex_create(blocking:bool)->isize{
         .mutex_list
         .iter()
         .enumerate()
-        .find(|(_,item)|{ item.is_none() })
-        .map(|(id,_)|{ id }){
+        .find(|(_, item)| item.is_none())
+        .map(|(id, _)| id)
+    {
         //找到一个空闲位置
         process_inner.mutex_list[id] = if !blocking {
             //自旋锁
             Some(Arc::new(MutexSpin::new()))
-        }
-        else {
+        } else {
             //互斥锁
             Some(Arc::new(MutexBlock::new()))
         };
         id as isize
-    }else {
-        process_inner.mutex_list.push(
-            if!blocking{
-                Some(Arc::new(MutexSpin::new()))
-            }else {
-                Some(Arc::new(MutexBlock::new()))
-            }
-        );
-        (process_inner.mutex_list.len()-1) as isize
+    } else {
+        process_inner.mutex_list.push(if !blocking {
+            Some(Arc::new(MutexSpin::new()))
+        } else {
+            Some(Arc::new(MutexBlock::new()))
+        });
+        (process_inner.mutex_list.len() - 1) as isize
     }
 }
 
 // 对进程拥有的某个资源进行加锁
-pub fn sys_mutex_lock(lock_id:usize)->isize{
+pub fn sys_mutex_lock(lock_id: usize) -> isize {
     let process = current_process();
     let process_inner = process.get_inner_access();
     let mutex = process_inner.mutex_list[lock_id].as_ref().unwrap().clone();
@@ -45,7 +43,7 @@ pub fn sys_mutex_lock(lock_id:usize)->isize{
     mutex.lock();
     0
 }
-pub fn sys_mutex_unlock(lock_id:usize)->isize{
+pub fn sys_mutex_unlock(lock_id: usize) -> isize {
     let process = current_process();
     let process_inner = process.get_inner_access();
     let mutex = process_inner.mutex_list[lock_id].as_ref().unwrap().clone();
@@ -55,7 +53,7 @@ pub fn sys_mutex_unlock(lock_id:usize)->isize{
     0
 }
 
-pub fn sys_semaphore_create(count:usize)->isize{
+pub fn sys_semaphore_create(count: usize) -> isize {
     let process = current_process();
     let mut process_inner = process.get_inner_access();
     //从进程的加锁向量中找到一个空闲位置
@@ -63,39 +61,47 @@ pub fn sys_semaphore_create(count:usize)->isize{
         .semaphore_list
         .iter()
         .enumerate()
-        .find(|(_,item)|{ item.is_none() })
-        .map(|(id,_)|{ id }){
+        .find(|(_, item)| item.is_none())
+        .map(|(id, _)| id)
+    {
         //找到一个空闲位置
         process_inner.semaphore_list[id] = Some(Arc::new(Semaphore::new(count)));
         id as isize
-    }else {
-        process_inner.semaphore_list.push(Some(Arc::new(Semaphore::new(count))));
-        (process_inner.semaphore_list.len()-1) as isize
+    } else {
+        process_inner
+            .semaphore_list
+            .push(Some(Arc::new(Semaphore::new(count))));
+        (process_inner.semaphore_list.len() - 1) as isize
     }
 }
 
-pub fn sys_semaphore_p(sem_id:usize)->isize{
+pub fn sys_semaphore_p(sem_id: usize) -> isize {
     let process = current_process();
     let process_inner = process.get_inner_access();
-    let semaphore = process_inner.semaphore_list[sem_id].as_ref().unwrap().clone();
+    let semaphore = process_inner.semaphore_list[sem_id]
+        .as_ref()
+        .unwrap()
+        .clone();
     drop(process_inner);
     drop(process);
     semaphore.P();
     0
 }
 
-
-pub fn sys_semaphore_v(sem_id:usize)->isize{
+pub fn sys_semaphore_v(sem_id: usize) -> isize {
     let process = current_process();
     let process_inner = process.get_inner_access();
-    let semaphore = process_inner.semaphore_list[sem_id].as_ref().unwrap().clone();
+    let semaphore = process_inner.semaphore_list[sem_id]
+        .as_ref()
+        .unwrap()
+        .clone();
     drop(process_inner);
     drop(process);
     semaphore.V();
     0
 }
 
-pub fn sys_monitor_create()->isize{
+pub fn sys_monitor_create() -> isize {
     let process = current_process();
     let mut process_inner = process.get_inner_access();
     //从进程的加锁向量中找到一个空闲位置
@@ -103,19 +109,22 @@ pub fn sys_monitor_create()->isize{
         .monitor_list
         .iter()
         .enumerate()
-        .find(|(_,item)|{ item.is_none() })
-        .map(|(id,_)|{ id }){
+        .find(|(_, item)| item.is_none())
+        .map(|(id, _)| id)
+    {
         //找到一个空闲位置
         process_inner.monitor_list[id] = Some(Arc::new(Monitor::new()));
         id as isize
-    }else {
-        process_inner.monitor_list.push(Some(Arc::new(Monitor::new())));
-        (process_inner.monitor_list.len()-1) as isize
+    } else {
+        process_inner
+            .monitor_list
+            .push(Some(Arc::new(Monitor::new())));
+        (process_inner.monitor_list.len() - 1) as isize
     }
 }
 
 /// 对进程拥有的某个资源进行加锁
-pub fn sys_monitor_wait(mon_id:usize,mutex_id:usize)->isize{
+pub fn sys_monitor_wait(mon_id: usize, mutex_id: usize) -> isize {
     let process = current_process();
     let process_inner = process.get_inner_access();
     let mutex = process_inner.mutex_list[mutex_id].as_ref().unwrap().clone();
@@ -125,7 +134,7 @@ pub fn sys_monitor_wait(mon_id:usize,mutex_id:usize)->isize{
     monitor.wait(mutex);
     0
 }
-pub fn sys_monitor_signal(mon_id:usize)->isize{
+pub fn sys_monitor_signal(mon_id: usize) -> isize {
     let process = current_process();
     let process_inner = process.get_inner_access();
     let monitor = process_inner.monitor_list[mon_id].as_ref().unwrap().clone();

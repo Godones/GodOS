@@ -98,7 +98,7 @@ macro_rules! println {
 macro_rules! ERROR {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => {
-        ($crate::print!("\x1b[31m{}\x1b[0m\n", format_args!($($arg)*)));
+        ($crate::print!("\x1b[31m[ERROR]{}\x1b[0m\n", format_args!($($arg)*)));
     }
 }
 
@@ -112,7 +112,7 @@ macro_rules! WARN {
     );
     ($($arg:tt)*) => {
         #[cfg(any(feature = " WARN ", feature = "INFO", feature = "DEBUG", feature = "TRACE"))]
-        ($crate::print!("\x1b[93m{}\x1b[0m\n", format_args!($($arg)*)));
+        ($crate::print!("\x1b[93m[WARN]{}\x1b[0m\n", format_args!($($arg)*)));
         $crate::print!("");
     }
 }
@@ -122,12 +122,12 @@ macro_rules! WARN {
 macro_rules! INFO {
     () => {
         #[cfg(any(feature = "INFO",feature = "DEBUG", feature = "TRACE"))]
-        $crate::print!("\n");
+        $crate::print!("[INFO]\n");
         $crate::print!("");
     };
     ($($arg:tt)*) => {
         #[cfg(any(feature = "INFO",feature = "DEBUG", feature = "TRACE"))]
-        ($crate::print!("\x1b[34m{}\x1b[0m\n", format_args!($($arg)*)));
+        ($crate::print!("\x1b[34m[INFO]{}\x1b[0m\n", format_args!($($arg)*)));
         $crate::print!("");
     }
 }
@@ -140,7 +140,7 @@ macro_rules! DEBUG {
     };
     ($($arg:tt)*) => {
         #[cfg(any(feature = "DEBUG", feature = "TRACE"))]
-        ($crate::print!("\x1b[32m{}\x1b[0m\n", format_args!($($arg)*)));
+        ($crate::print!("\x1b[32m[DEBUG]{}\x1b[0m\n", format_args!($($arg)*)));
         $crate::print!("");
     }
 }
@@ -155,7 +155,7 @@ macro_rules! TRACE {
     };
     ($($arg:tt)*) => {
         #[cfg(feature = "TRACE")]
-        ($crate::print!("\x1b[90m{}\x1b[0m\n", format_args!($($arg)*)));
+        ($crate::print!("\x1b[90m[TRACE]{}\x1b[0m\n", format_args!($($arg)*)));
         $crate::print!("");
     }
 }

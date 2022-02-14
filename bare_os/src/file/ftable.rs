@@ -10,7 +10,7 @@ bitflags! {
     }
 }
 #[repr(C)]
-#[derive(Debug,Copy,Clone,Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Stat {
     /// 文件所在磁盘驱动器号，该实验中写死为 0 即可
     pub dev: u64,
@@ -25,13 +25,13 @@ pub struct Stat {
 }
 
 impl Stat {
-    pub fn new(dev:u64,ino:u64,mode:StatMode,nlink:u32)->Self{
-        Self{
+    pub fn new(dev: u64, ino: u64, mode: StatMode, nlink: u32) -> Self {
+        Self {
             dev,
             ino,
             mode,
             nlink,
-            pad:[0;7]
+            pad: [0; 7],
         }
     }
 }
