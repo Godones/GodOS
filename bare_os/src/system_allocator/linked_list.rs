@@ -2,10 +2,12 @@
 /// 我们需要一个可以记录无限多空闲区域的分配器
 /// 以此来解决bump分配器不能即时回收使用的缺点
 use crate::system_allocator::common::{align_up, Locked};
+use crate::DEBUG;
 use core::alloc::GlobalAlloc;
+use core::fmt::{Debug, Formatter};
 use core::{alloc::Layout, result};
 
-struct ListNode {
+pub struct ListNode {
     size: usize,
     next: Option<&'static mut ListNode>,
 }
@@ -32,9 +34,11 @@ impl LinkedListAllocator {
             head: ListNode::new(0),
         }
     }
-    pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
+    pub fn init(&mut self, heap_start: usize, heap_size: usize) {
         //初始化堆
-        self.push(heap_start, heap_size);
+        unsafe {
+            self.push(heap_start, heap_size);
+        }
     }
     unsafe fn push(&mut self, address: usize, size: usize) {
         //判断是否满足对齐要求
@@ -106,6 +110,7 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
             if excess > 0 {
                 allocator.push(alloc_end, excess); //放回链表中
             }
+            // DEBUG!("alloc size: {:?}", size);
             alloc_start as *mut u8
         } else {
             core::ptr::null_mut()

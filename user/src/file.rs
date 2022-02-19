@@ -1,4 +1,3 @@
-
 use bitflags::bitflags;
 
 bitflags! {
@@ -27,13 +26,13 @@ pub struct Stat {
 }
 
 impl Stat {
-    pub fn new()->Self{
-        Self{
-            dev:0,
-            ino:0,
-            mode:StatMode::NULL,
-            nlink:0,
-            pad:[0u64;7]
+    pub fn new() -> Self {
+        Self {
+            dev: 0,
+            ino: 0,
+            mode: StatMode::NULL,
+            nlink: 0,
+            pad: [0u64; 7],
         }
     }
 }

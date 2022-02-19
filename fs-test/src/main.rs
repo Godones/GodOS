@@ -174,14 +174,13 @@ fn package() -> std::io::Result<()> {
         size_count += new_inode.get_file_size();
     });
     let mut i = 0;
-    filenames.iter().for_each(|name|{
+    filenames.iter().for_each(|name| {
         let inode = root_inode.find_inode(name.as_str()).unwrap();
         let size = inode.get_file_size();
         // println!("{}-{}",size_V[i],size);
-        assert_eq!(size,size_v[i]);
-        i +=1;
+        assert_eq!(size, size_v[i]);
+        i += 1;
     });
-
 
     Ok(())
 }

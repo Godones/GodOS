@@ -2,10 +2,10 @@
 #![no_main]
 
 extern crate alloc;
+use alloc::vec::Vec;
+use lib::{exit, sleep};
 use lib::{get_time_ms, mutex_blocking_create, mutex_lock, mutex_unlock, print, println};
 use lib::{thread_create, waittid};
-use lib::{sleep, exit};
-use alloc::vec::Vec;
 
 const N: usize = 5;
 const ROUND: usize = 4;
@@ -35,16 +35,24 @@ fn philosopher_dining_problem(id: *const usize) {
     let max = left + right - min;
     for round in 0..ROUND {
         // thinking
-        unsafe { THINK[id][2 * round] = get_time_u(); }
+        unsafe {
+            THINK[id][2 * round] = get_time_u();
+        }
         sleep(ARR[id][2 * round]);
-        unsafe { THINK[id][2 * round + 1] = get_time_u(); }
+        unsafe {
+            THINK[id][2 * round + 1] = get_time_u();
+        }
         // wait for forks
         mutex_lock(min);
         mutex_lock(max);
         // eating
-        unsafe { EAT[id][2 * round] = get_time_u(); }
+        unsafe {
+            EAT[id][2 * round] = get_time_u();
+        }
         sleep(ARR[id][2 * round + 1]);
-        unsafe { EAT[id][2 * round + 1] = get_time_u(); }
+        unsafe {
+            EAT[id][2 * round + 1] = get_time_u();
+        }
         mutex_unlock(max);
         mutex_unlock(min);
     }
@@ -58,9 +66,12 @@ pub fn main() -> i32 {
     let start = get_time_u();
     for i in 0..N {
         let lock_id = mutex_blocking_create();
-        println!("lock_id: {}",lock_id);
+        println!("lock_id: {}", lock_id);
         assert_eq!(lock_id, i as isize);
-        v.push(thread_create(philosopher_dining_problem as usize, &ids.as_slice()[i] as *const _ as usize));
+        v.push(thread_create(
+            philosopher_dining_problem as usize,
+            &ids.as_slice()[i] as *const _ as usize,
+        ));
     }
     for tid in v.iter() {
         waittid(*tid as usize);
@@ -70,19 +81,25 @@ pub fn main() -> i32 {
     println!("'-' -> THINKING; 'x' -> EATING; ' ' -> WAITING ");
     for id in (0..N).into_iter().chain(0..=0) {
         print!("#{}:", id);
-        for j in 0..time_cost/GRAPH_SCALE {
+        for j in 0..time_cost / GRAPH_SCALE {
             let current_time = j * GRAPH_SCALE + start;
-            if (0..ROUND).find(|round| unsafe {
-                let start_thinking = THINK[id][2 * round];
-                let end_thinking = THINK[id][2 * round + 1];
-                start_thinking <= current_time && current_time <= end_thinking
-            }).is_some() {
+            if (0..ROUND)
+                .find(|round| unsafe {
+                    let start_thinking = THINK[id][2 * round];
+                    let end_thinking = THINK[id][2 * round + 1];
+                    start_thinking <= current_time && current_time <= end_thinking
+                })
+                .is_some()
+            {
                 print!("-");
-            } else if (0..ROUND).find(|round| unsafe {
-                let start_eating = EAT[id][2 * round];
-                let end_eating = EAT[id][2 * round + 1];
-                start_eating <= current_time && current_time <= end_eating
-            }).is_some() {
+            } else if (0..ROUND)
+                .find(|round| unsafe {
+                    let start_eating = EAT[id][2 * round];
+                    let end_eating = EAT[id][2 * round + 1];
+                    start_eating <= current_time && current_time <= end_eating
+                })
+                .is_some()
+            {
                 print!("x");
             } else {
                 print!(" ");

@@ -3,8 +3,6 @@
 
 use lib::println;
 
-
-
 fn f(d: usize) {
     println!("d = {}", d);
     f(d + 1);

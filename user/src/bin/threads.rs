@@ -3,21 +3,27 @@
 
 extern crate alloc;
 
-use lib::{thread_create, waittid, exit, print, println};
 use alloc::vec::Vec;
+use lib::{exit, print, println, thread_create, waittid};
 
 pub fn thread_a() -> ! {
-    for _ in 0..100 { print!("a"); }
+    for _ in 0..100 {
+        print!("a");
+    }
     exit(1)
 }
 
 pub fn thread_b() -> ! {
-    for _ in 0..100 { print!("b"); }
+    for _ in 0..100 {
+        print!("b");
+    }
     exit(2)
 }
 
 pub fn thread_c() -> ! {
-    for _ in 0..100 { print!("c"); }
+    for _ in 0..100 {
+        print!("c");
+    }
     exit(3)
 }
 

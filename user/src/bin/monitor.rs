@@ -1,13 +1,15 @@
 #![no_std]
 #![no_main]
 
-
 extern crate alloc;
 
-use lib::{monitor_create, monitor_signal, monitor_wait, mutex_blocking_create, mutex_lock, mutex_unlock, println};
-use lib::{thread_create, waittid, sleep};
-use lib::exit;
 use alloc::vec::Vec;
+use lib::exit;
+use lib::{
+    monitor_create, monitor_signal, monitor_wait, mutex_blocking_create, mutex_lock, mutex_unlock,
+    println,
+};
+use lib::{sleep, thread_create, waittid};
 
 static mut A: usize = 0;
 
@@ -18,7 +20,7 @@ unsafe fn first() -> ! {
     sleep(10);
     println!("First work, Change A --> 1 and wakeup Second");
     mutex_lock(MUTEX_ID);
-    A=1;
+    A = 1;
     monitor_signal(CONDVAR_ID);
     mutex_unlock(MUTEX_ID);
     exit(0)
@@ -27,7 +29,7 @@ unsafe fn first() -> ! {
 unsafe fn second() -> ! {
     println!("Second want to continue,but need to wait A=1");
     mutex_lock(MUTEX_ID);
-    while A==0 {
+    while A == 0 {
         println!("Second: A is {}", A);
         monitor_wait(CONDVAR_ID, MUTEX_ID);
     }

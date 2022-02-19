@@ -3,10 +3,10 @@
 /// !消费者和生产者问题
 extern crate alloc;
 
-use lib::{semaphore_create, semaphore_up, semaphore_down, println, INFO};
-use lib::{thread_create, waittid};
-use lib::exit;
 use alloc::vec::Vec;
+use lib::exit;
+use lib::{println, semaphore_create, semaphore_down, semaphore_up, INFO};
+use lib::{thread_create, waittid};
 
 const SEM_MUTEX: usize = 0; // 互斥访问缓冲区
 const SEM_EMPTY: usize = 1; // 缓冲区空数量
@@ -54,7 +54,10 @@ pub fn main() -> i32 {
     let ids: Vec<_> = (0..PRODUCER_COUNT).collect();
     let mut threads = Vec::new();
     for i in 0..PRODUCER_COUNT {
-        threads.push(thread_create(producer as usize, &ids.as_slice()[i] as *const _ as usize));
+        threads.push(thread_create(
+            producer as usize,
+            &ids.as_slice()[i] as *const _ as usize,
+        ));
     }
     threads.push(thread_create(consumer as usize, 0));
     // wait for all threads to complete

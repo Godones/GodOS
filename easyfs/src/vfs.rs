@@ -14,8 +14,8 @@ use spin::MutexGuard;
 ///记录文件索引节点的相关信息
 /// 可以根据id、offset找到disknode
 pub struct Inode {
-    block_id: usize,        //物理块号->存放索引节点的块号
-    block_offset: usize,    //索引块内偏移
+    block_id: usize,            //物理块号->存放索引节点的块号
+    block_offset: usize,        //索引块内偏移
     fs: Arc<Mutex<FileSystem>>, //文件系统指针，各个索引节点均需要通过这个实际操作磁盘
     block_device: Arc<dyn BlockDevice>,
 }

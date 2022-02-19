@@ -1,9 +1,8 @@
 #![no_std]
 #![no_main]
 
-
-use lib::{fork, exec, wait};
 use lib::println;
+use lib::{exec, fork, wait};
 
 #[no_mangle]
 pub fn main() -> i32 {

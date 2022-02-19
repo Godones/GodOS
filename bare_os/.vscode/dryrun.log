@@ -1,6 +1,0 @@
-make all --dry-run --keep-going --print-directory
-make: Entering directory '/home/MyOS/GodOS/bare_os'
-make: Leaving directory '/home/MyOS/GodOS/bare_os'
- 
-make: *** No rule to make target 'all'.
- 

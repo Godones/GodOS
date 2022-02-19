@@ -1,1 +1,0 @@
-{"buildTargets":["build","clean","debug","disasm","disasm-vim","env","kernel","run","run-inner","target/riscv64gc-unknown-none-elf/release/bare_os.bin","all"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

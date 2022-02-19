@@ -5,20 +5,20 @@
 
 #[macro_use]
 pub mod console;
+mod file;
 mod lang_items;
 pub mod syscall;
 mod system_allocator;
 mod time;
-mod file;
 
 extern crate alloc;
 use crate::syscall::*;
 use alloc::vec::Vec;
 use bitflags::bitflags;
+pub use file::{Stat, StatMode};
 use syscall::{sys_getpid, sys_spawn};
 use system_allocator::init;
 pub use time::Time;
-pub use file::{Stat,StatMode};
 bitflags! {
     pub struct OpenFlags:u32 {
         const R = 0;//只读
@@ -42,11 +42,10 @@ pub fn get_time(time: &mut Time) -> isize {
     sys_get_time(time)
 }
 
-pub fn get_time_ms()->usize{
+pub fn get_time_ms() -> usize {
     let mut time = Time::new();
     sys_get_time(&mut time);
     time.into()
-
 }
 pub fn yield_() -> isize {
     sys_yield()
@@ -144,61 +143,61 @@ pub fn ls() -> isize {
     sys_ls()
 }
 ///硬链接
-pub fn link(oldpath:&str,newpath:&str)->isize{
+pub fn link(oldpath: &str, newpath: &str) -> isize {
     sys_linkat(-100, oldpath.as_ptr(), -100, newpath.as_ptr(), 0) as isize
 }
 ///解除链接
-pub fn unlink(path:&str)->isize{
-    sys_unlinkat(-100,path.as_ptr(),0)
+pub fn unlink(path: &str) -> isize {
+    sys_unlinkat(-100, path.as_ptr(), 0)
 }
 /// 查看文件信息
-pub fn fstat(fd:usize,state:&Stat)->isize{
-    sys_fstat(fd,state)
+pub fn fstat(fd: usize, state: &Stat) -> isize {
+    sys_fstat(fd, state)
 }
-pub fn thread_create(entry:usize,arg:usize)->isize{
-    sys_thread_create(entry,arg)
+pub fn thread_create(entry: usize, arg: usize) -> isize {
+    sys_thread_create(entry, arg)
 }
-pub fn waittid(tid:usize)->isize{
+pub fn waittid(tid: usize) -> isize {
     loop {
         match sys_waittid(tid) {
             -2 => yield_(),
-            exit_code => return exit_code
+            exit_code => return exit_code,
         };
     }
 }
 
-pub fn mutex_blocking_create()->isize{
+pub fn mutex_blocking_create() -> isize {
     sys_mutex_blocking_create()
 }
-pub fn mutex_lock(lock_id:usize)->isize{
+pub fn mutex_lock(lock_id: usize) -> isize {
     sys_mutex_lock(lock_id)
 }
-pub fn mutex_unlock(lock_id:usize)->isize{
+pub fn mutex_unlock(lock_id: usize) -> isize {
     sys_mutex_unlock(lock_id)
 }
-pub fn mutex_create()->isize{
+pub fn mutex_create() -> isize {
     sys_mutex_create()
 }
-pub fn semaphore_up(sem_id:usize)->isize{
+pub fn semaphore_up(sem_id: usize) -> isize {
     sys_semaphore_v(sem_id)
 }
-pub fn semaphore_down(sem_id:usize)->isize{
+pub fn semaphore_down(sem_id: usize) -> isize {
     sys_semaphore_p(sem_id)
 }
-pub fn semaphore_create(count:usize)->isize{
+pub fn semaphore_create(count: usize) -> isize {
     sys_semaphore_create(count)
 }
 
-pub fn monitor_create()->isize{
+pub fn monitor_create() -> isize {
     sys_monitor_create()
 }
 
-pub fn monitor_signal(mon_id:usize)->isize{
+pub fn monitor_signal(mon_id: usize) -> isize {
     sys_monitor_signal(mon_id)
 }
 
-pub fn monitor_wait(mon_id:usize,mutex_id:usize)->isize{
-    sys_monitor_wait(mon_id,mutex_id)
+pub fn monitor_wait(mon_id: usize, mutex_id: usize) -> isize {
+    sys_monitor_wait(mon_id, mutex_id)
 }
 /// weak弱链接，在进行链接时优先寻找bin文件下各个用户程序的入口
 #[linkage = "weak"]

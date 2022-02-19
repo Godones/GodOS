@@ -1,8 +1,7 @@
 #![no_std]
 #![no_main]
 
-
-use lib::{close, fstat, open, OpenFlags, println, Stat, StatMode};
+use lib::{close, fstat, open, println, OpenFlags, Stat, StatMode};
 
 /// 测试 fstat，输出　Test fstat OK! 就算正确。
 
@@ -15,7 +14,7 @@ pub fn main() -> i32 {
     let stat: Stat = Stat::new();
     let ret = fstat(fd, &stat);
     assert_eq!(ret, 0);
-    assert_eq!(stat.mode,StatMode::FILE);
+    assert_eq!(stat.mode, StatMode::FILE);
     close(fd);
     assert_eq!(stat.nlink, 1);
     // unlink(fname);

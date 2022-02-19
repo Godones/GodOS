@@ -27,7 +27,7 @@ pub fn main() -> i32 {
         // close read_end
         close(pipe_fd[0]);
         assert_eq!(core::str::from_utf8(&buffer[..len_read]).unwrap(), STR);
-        assert_eq!(len_read,13);
+        assert_eq!(len_read, 13);
         println!("Read OK, child process exited!");
         0
     } else {

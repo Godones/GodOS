@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use lib::{OpenFlags, open, close, write, get_time};
+use lib::{close, get_time, open, write, OpenFlags};
 use lib::{println, Time};
 
 #[no_mangle]
@@ -26,7 +26,7 @@ pub fn main() -> i32 {
     }
     // INFO!("write");
     close(f);
-    let  end_time = Time::new();
+    let end_time = Time::new();
     let cost = start - end_time;
     let speed_kbs = size_mb * 1000000 / cost;
     println!(

@@ -20,9 +20,9 @@ const SYSCALL_MAILWRITE: usize = 402;
 const SYSCALL_OPEN: usize = 56;
 const SYSCALL_DUP: usize = 24;
 const SYSCALL_LS: usize = 44; //自定义系统调用
-const SYSCALL_LINKAT:usize = 37;
-const SYSCALL_UNLINKAT:usize = 35;
-const SYSCALL_FSTAT:usize = 80;
+const SYSCALL_LINKAT: usize = 37;
+const SYSCALL_UNLINKAT: usize = 35;
+const SYSCALL_FSTAT: usize = 80;
 
 const SYSCALL_THREAD_CREATE: usize = 1000;
 const SYSCALL_GETTID: usize = 1001;
@@ -37,8 +37,8 @@ const SYSCALL_MONITOR_CREATE: usize = 1030;
 const SYSCALL_MONITOR_SIGNAL: usize = 1031;
 const SYSCALL_MONITOR_WAIT: usize = 1032;
 
-use alloc::sync::Arc;
 use crate::{Stat, Time};
+use alloc::sync::Arc;
 fn syscall(id: usize, args: [usize; 3]) -> isize {
     let mut ret: isize;
     unsafe {
@@ -209,73 +209,72 @@ pub fn sys_linkat(
     oldpath: *const u8,
     newdirfd: i32,
     newpath: *const u8,
-    flags: u32) -> isize{
-
-    syscall(SYSCALL_LINKAT,[oldpath as usize,newpath as usize,0])
+    flags: u32,
+) -> isize {
+    syscall(SYSCALL_LINKAT, [oldpath as usize, newpath as usize, 0])
 }
 /// 解除一个文件的链接
-pub fn sys_unlinkat(dirfd: i32, path: *const u8, flags: u32) -> isize{
-    syscall(SYSCALL_UNLINKAT,[path as usize,0,0])
+pub fn sys_unlinkat(dirfd: i32, path: *const u8, flags: u32) -> isize {
+    syscall(SYSCALL_UNLINKAT, [path as usize, 0, 0])
 }
 /// 查看文件信息
 ///
-pub fn sys_fstat(fd:usize,stat:&Stat)->isize{
-    syscall(SYSCALL_FSTAT,[fd,stat as *const Stat as usize,0])
+pub fn sys_fstat(fd: usize, stat: &Stat) -> isize {
+    syscall(SYSCALL_FSTAT, [fd, stat as *const Stat as usize, 0])
 }
 /// 创建线程
 /// entry:线程入口地址
 /// arg:线程参数
-pub fn sys_thread_create(entry:usize,arg:usize)->isize{
-    syscall(SYSCALL_THREAD_CREATE,[entry,arg,0])
+pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
+    syscall(SYSCALL_THREAD_CREATE, [entry, arg, 0])
 }
 /// 回收线程资源
 /// tid:线程标识符
-pub fn sys_waittid(tid:usize)->isize{
-    syscall(SYSCALL_WAITTID,[tid,0,0])
+pub fn sys_waittid(tid: usize) -> isize {
+    syscall(SYSCALL_WAITTID, [tid, 0, 0])
 }
 
 /// 创建互斥锁
-pub fn sys_mutex_blocking_create()->isize{
-    syscall(SYSCALL_MUTEX_CREATE,[1,0,0])
+pub fn sys_mutex_blocking_create() -> isize {
+    syscall(SYSCALL_MUTEX_CREATE, [1, 0, 0])
 }
 
 /// 申请加锁
-pub fn sys_mutex_lock(lock_id:usize)->isize{
-    syscall(SYSCALL_MUTEX_LOCK,[lock_id,0,0])
+pub fn sys_mutex_lock(lock_id: usize) -> isize {
+    syscall(SYSCALL_MUTEX_LOCK, [lock_id, 0, 0])
 }
 
 /// 申请释放锁
-pub fn sys_mutex_unlock(lock_id:usize)->isize{
-    syscall(SYSCALL_MUTEX_UNLOCK,[lock_id,0,0])
+pub fn sys_mutex_unlock(lock_id: usize) -> isize {
+    syscall(SYSCALL_MUTEX_UNLOCK, [lock_id, 0, 0])
 }
 
 /// 创建自旋锁
-pub fn sys_mutex_create()->isize{
-    syscall(SYSCALL_MUTEX_CREATE,[0,0,0])
+pub fn sys_mutex_create() -> isize {
+    syscall(SYSCALL_MUTEX_CREATE, [0, 0, 0])
 }
 
 /// 创建信号量
-pub fn sys_semaphore_create(count:usize)->isize{
-    syscall(SYSCALL_SEMAPHORE_CREATE,[count,0,0])
+pub fn sys_semaphore_create(count: usize) -> isize {
+    syscall(SYSCALL_SEMAPHORE_CREATE, [count, 0, 0])
 }
 /// 信号量p操作
-pub fn sys_semaphore_p(sem_id:usize)->isize{
-    syscall(SYSCALL_SEMAPHORE_DOWN,[sem_id,0,0])
+pub fn sys_semaphore_p(sem_id: usize) -> isize {
+    syscall(SYSCALL_SEMAPHORE_DOWN, [sem_id, 0, 0])
 }
 
 /// 信号量v操作
-pub fn sys_semaphore_v(sem_id:usize)->isize{
-    syscall(SYSCALL_SEMAPHORE_UP,[sem_id,0,0])
+pub fn sys_semaphore_v(sem_id: usize) -> isize {
+    syscall(SYSCALL_SEMAPHORE_UP, [sem_id, 0, 0])
 }
 
-
-pub fn sys_monitor_create()->isize{
-    syscall(SYSCALL_MONITOR_CREATE,[0,0,0])
+pub fn sys_monitor_create() -> isize {
+    syscall(SYSCALL_MONITOR_CREATE, [0, 0, 0])
 }
 
-pub fn sys_monitor_wait(mon_id:usize,mutex_id:usize)->isize{
-    syscall(SYSCALL_MONITOR_WAIT,[mon_id,mutex_id,0])
+pub fn sys_monitor_wait(mon_id: usize, mutex_id: usize) -> isize {
+    syscall(SYSCALL_MONITOR_WAIT, [mon_id, mutex_id, 0])
 }
-pub fn sys_monitor_signal(mon_id:usize)->isize{
-    syscall(SYSCALL_MONITOR_SIGNAL,[0,0,0])
+pub fn sys_monitor_signal(mon_id: usize) -> isize {
+    syscall(SYSCALL_MONITOR_SIGNAL, [0, 0, 0])
 }

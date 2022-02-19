@@ -1,16 +1,14 @@
 #![no_std]
 #![no_main]
 
-
 extern crate alloc;
 
-use lib::{semaphore_create, semaphore_up, semaphore_down, println};
-use lib::{thread_create, waittid, sleep};
-use lib::exit;
 use alloc::vec::Vec;
+use lib::exit;
+use lib::{println, semaphore_create, semaphore_down, semaphore_up};
+use lib::{sleep, thread_create, waittid};
 
 const SEM_SYNC: usize = 0;
-
 
 unsafe fn first() -> ! {
     sleep(10);

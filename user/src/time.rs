@@ -27,15 +27,15 @@ impl Sub for Time {
             us = self.us - other.us + 1000;
         }
         if s > 0 {
-            s * 1000 + us/1000
+            s * 1000 + us / 1000
         } else {
-            us/1000
+            us / 1000
         }
     }
 }
 
 impl From<Time> for usize {
     fn from(t: Time) -> Self {
-        t.s*1000+t.us/1000
+        t.s * 1000 + t.us / 1000
     }
 }

@@ -4,7 +4,6 @@
 #![feature(alloc_error_handler)]
 #![allow(dead_code)]
 #![feature(const_mut_refs)]
-
 #[macro_use]
 pub mod panic;
 mod config;
@@ -27,7 +26,7 @@ use crate::config::KERNEL_HEAP_SIZE;
 use crate::driver::gpu;
 use crate::file::list_apps;
 use crate::sbi::shutdown;
-use crate::system_allocator::buddy::{find_last_min_pow2, test_buddy};
+use crate::system_allocator::buddy::{find_last_min_pow2, test_alloc_dealloc, test_buddy};
 use crate::task::add_initproc;
 use buddy_system_allocator::linked_list::ListNode;
 use core::arch::global_asm;
@@ -67,34 +66,17 @@ extern "C" fn rust_main() -> ! {
     mm::remap_test(); //测试内核映射的正确性
                       //运行程序
 
-    // trap::init();
-    // println!("set trap over");
-    // // gpu();
-    // list_apps();
-    // add_initproc();
-    // timer::enable_timer_interrupt(); //使能位
-    // timer::set_next_timetrigger();
-    // // INFO!("Run process......");
-    // task::run();
-    // panic!("The main_end!");
+    trap::init();
+    println!("set trap over");
 
-    INFO!("{:}", 1<<find_last_min_pow2(5));
-    INFO!("{:}", 1<<find_last_min_pow2(128));
-    INFO!("{:}", 1<<find_last_min_pow2(0x30_0000));
-    INFO!("{}",(4 as usize) .next_power_of_two());
-
-    #[derive(Debug,Clone)]
-    struct node{
-        next : * mut node,
-    }
-    let data = [0usize;10];
-    let raw = data.as_ptr();
-    let first = node{
-        next:null_mut()
-    };
-
-    test_buddy();
-
-
+    // gpu();
+    list_apps();
+    add_initproc();
+    timer::enable_timer_interrupt(); //使能位
+    timer::set_next_timetrigger();
+    // INFO!("Run process......");
+    task::run();
+    // test_alloc_dealloc();
+    // test_buddy();
     shutdown();
 }

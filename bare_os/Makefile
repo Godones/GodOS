@@ -3,7 +3,7 @@ MODE := release
 KERNEL_ELF := target/$(TARGET)/$(MODE)/bare_os
 KERNEL_BIN := $(KERNEL_ELF).bin
 DISASM_TMP := target/$(TARGET)/$(MODE)/asm
-INFO := TRACE
+INFO := ERROR
 #文件模拟块设备
 FS_IMG := ../user/target/$(TARGET)/$(MODE)/fs.img
 # BOARD
@@ -46,7 +46,7 @@ kernel:
 	@cd ../fs-test && make run
 	@echo Platform: $(BOARD)
 	@cp src/linker-$(BOARD).ld src/linker.ld
-	@cargo build --release  --features "board_$(BOARD)" --features "$(INFO)"
+	@cargo build --release  --features board_$(BOARD) --features $(INFO)
 	@rm src/linker.ld
 
 
