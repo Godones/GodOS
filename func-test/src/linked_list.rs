@@ -32,9 +32,11 @@ impl LinkedListAllocator {
             head: ListNode::new(0),
         }
     }
-    pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
+    pub fn init(&mut self, heap_start: usize, heap_size: usize) {
         //初始化堆
-        self.push(heap_start, heap_size);
+        unsafe {
+            self.push(heap_start, heap_size);
+        }
     }
     unsafe fn push(&mut self, address: usize, size: usize) {
         //判断是否满足对齐要求
@@ -52,12 +54,11 @@ impl LinkedListAllocator {
     }
     fn pop(&mut self, size: usize, align: usize) -> Option<(&'static mut ListNode, usize)> {
         //c 语言的方式
-        // todo!(需要修改);
         let mut current = &mut self.head; //头节点的可变引用
         while let Some(ref mut region) = current.next {
             // 循环查找
             // region:下一个节点的引用
-            if let Ok(alloc_start) = Self::alloc_region(&region, size, align) {
+            if let Ok(alloc_start) = Self::alloc_region(region, size, align) {
                 let next = region.next.take();
                 let ret = Some((current.next.take().unwrap(), alloc_start));
                 current.next = next;
@@ -98,7 +99,7 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         //将要申请的对齐方式与listnode比较
         //至少要分配一个能存储listnode大小的区域
-        let (size, align) = LinkedListAllocator::size_align(layout);
+        let (size, align) = (layout.size(),layout.align());
         let mut allocator = self.lock();
         if let Some((region, alloc_start)) = allocator.pop(size, align) {
             let alloc_end = alloc_start + size;

@@ -51,13 +51,11 @@ impl FrameAllocator for StackFrameAllocator {
         // INFO!("[kernel] mm::FrameAllocator::alloc");
         if let Some(page) = self.recycled.pop() {
             Some(page.into())
-        } else {
-            if self.current < self.end {
+        } else if self.current < self.end {
                 self.current += 1;
                 Some((self.current - 1).into())
-            } else {
-                None
-            }
+        } else {
+            None
         }
     }
 

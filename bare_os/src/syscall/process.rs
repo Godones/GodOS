@@ -29,8 +29,8 @@ pub fn sys_get_time(time: *mut Time) -> isize {
     let current_time = crate::timer::get_costtime(); //获取微秒
                                                      // println!("current: {}",current_time);
     *(translated_refmut(current_user_token(), time)) = Time {
-        s: current_time / 1000_000,
-        us: current_time % 1000_000,
+        s: current_time / 1_000_000,
+        us: current_time % 1_000_000,
     };
 
     0

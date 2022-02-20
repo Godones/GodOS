@@ -2,12 +2,10 @@
 /// 我们需要一个可以记录无限多空闲区域的分配器
 /// 以此来解决bump分配器不能即时回收使用的缺点
 use crate::system_allocator::common::{align_up, Locked};
-use crate::DEBUG;
 use core::alloc::GlobalAlloc;
-use core::fmt::{Debug, Formatter};
 use core::{alloc::Layout, result};
 
-pub struct ListNode {
+struct ListNode {
     size: usize,
     next: Option<&'static mut ListNode>,
 }
@@ -56,12 +54,11 @@ impl LinkedListAllocator {
     }
     fn pop(&mut self, size: usize, align: usize) -> Option<(&'static mut ListNode, usize)> {
         //c 语言的方式
-        // todo!(需要修改);
         let mut current = &mut self.head; //头节点的可变引用
         while let Some(ref mut region) = current.next {
             // 循环查找
             // region:下一个节点的引用
-            if let Ok(alloc_start) = Self::alloc_region(&region, size, align) {
+            if let Ok(alloc_start) = Self::alloc_region(region, size, align) {
                 let next = region.next.take();
                 let ret = Some((current.next.take().unwrap(), alloc_start));
                 current.next = next;
@@ -102,7 +99,7 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         //将要申请的对齐方式与listnode比较
         //至少要分配一个能存储listnode大小的区域
-        let (size, align) = LinkedListAllocator::size_align(layout);
+        let (size, align) = (layout.size(),layout.align());
         let mut allocator = self.lock();
         if let Some((region, alloc_start)) = allocator.pop(size, align) {
             let alloc_end = alloc_start + size;
@@ -110,7 +107,6 @@ unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
             if excess > 0 {
                 allocator.push(alloc_end, excess); //放回链表中
             }
-            // DEBUG!("alloc size: {:?}", size);
             alloc_start as *mut u8
         } else {
             core::ptr::null_mut()

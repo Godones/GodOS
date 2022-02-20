@@ -13,7 +13,6 @@ pub mod buddy;
 /// 实现自己的堆分配器
 pub mod bump_allocator;
 mod common;
-mod fixed_size;
 mod linked_list;
 
 static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];

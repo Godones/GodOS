@@ -22,16 +22,11 @@ mod trap;
 extern crate alloc;
 extern crate easyfs;
 
-use crate::config::KERNEL_HEAP_SIZE;
-use crate::driver::gpu;
+// use crate::driver::gpu;
 use crate::file::list_apps;
 use crate::sbi::shutdown;
-use crate::system_allocator::buddy::{find_last_min_pow2, test_alloc_dealloc, test_buddy};
 use crate::task::add_initproc;
-use buddy_system_allocator::linked_list::ListNode;
 use core::arch::global_asm;
-use core::mem::size_of;
-use core::ptr::null_mut;
 
 global_asm!(include_str!("entry.asm"));
 // global_asm!(include_str!("link_app.S"));
@@ -67,7 +62,6 @@ extern "C" fn rust_main() -> ! {
                       //运行程序
 
     trap::init();
-    println!("set trap over");
 
     // gpu();
     list_apps();
@@ -76,7 +70,5 @@ extern "C" fn rust_main() -> ! {
     timer::set_next_timetrigger();
     // INFO!("Run process......");
     task::run();
-    // test_alloc_dealloc();
-    // test_buddy();
     shutdown();
 }

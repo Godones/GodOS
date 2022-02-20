@@ -1,11 +1,7 @@
 ///! 堆分配器的通用函数
-use alloc::alloc::Layout;
 use spin::{Mutex, MutexGuard};
 
-#[alloc_error_handler]
-fn alloc_error_handler(layout: Layout) -> ! {
-    panic!("allocation error: {:?}", layout)
-}
+
 
 /// 包装一下Mutex使得我们可以使用Mutex
 pub struct Locked<T> {

@@ -48,12 +48,10 @@ impl RingBuffer {
         //返回可读的内容数量
         if self.status == RingBufferStatus::EMPTY {
             0
+        } else if self.tail > self.head {
+            self.tail - self.head
         } else {
-            if self.tail > self.head {
-                self.tail - self.head
-            } else {
-                self.tail + MAX_MAIL_NUMBER - self.head
-            }
+            self.tail + MAX_MAIL_NUMBER - self.head
         }
     }
     pub fn write_byte(&mut self, val: &[u8]) {

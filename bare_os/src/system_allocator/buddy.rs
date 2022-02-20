@@ -1,14 +1,10 @@
 ///! buddy分配器
 ///! 使用bump分配器分配内存然后在buddy分配器中进行分配管理
 use crate::system_allocator::common::{align_up, Locked};
-// use crate{DEBUG, INFO};
-use crate::system_allocator::bump_allocator::BumpAllocator;
 use crate::system_allocator::linked_list::LinkedListAllocator;
-use crate::DEBUG;
 use core::alloc::{GlobalAlloc, Layout};
-use core::cmp::max;
 use core::fmt::{Debug, Formatter};
-use core::mem::{align_of, size_of};
+use core::mem::{size_of};
 use core::ptr::null_mut;
 
 const MAXLISTS: usize = 32;
@@ -33,14 +29,14 @@ impl Node {
 pub struct Buddy {
     free_lists: [*mut Node; MAXLISTS], //每个队列都是按照2的幂进行对齐
     linked_list: Locked<LinkedListAllocator>,
-    max_free_index: usize, //record the max free index
+    max_free_index:usize,
 }
 impl Debug for Buddy {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
-            "freelists: {:?}, max_free_index: {}",
-            self.free_lists, self.max_free_index
+            "freelists: {:?}",
+            self.free_lists,
         )
     }
 }
@@ -67,7 +63,7 @@ impl Buddy {
         assert_eq!(align_up(address, core::mem::align_of::<Node>()), address);
         assert!(size >= core::mem::size_of::<Node>());
         let pow2 = find_last_min_pow2(size);
-        DEBUG!("delete:pow2 {}", pow2);
+        // DEBUG!("delete:pow2 {}", pow2);
         self.merge(address, pow2);
     }
     fn merge(&mut self, target_list: usize, pow2: usize) {
@@ -75,18 +71,11 @@ impl Buddy {
         let mut merge_list = &mut self.free_lists[pow2];
         //查找是否有可以合并的node
         let mut find = false;
-        DEBUG!(
-            "target_list 0x{:x} % pow 0x{:x} = {}",
-            target_list,
-            1 << (pow2 + 1),
-            target_list % (1 << (pow2 + 1))
-        );
         let equ = if (target_list % (1 << (pow2 + 1))) == 0 {
             target_list + (1 << pow2)
         } else {
             target_list - (1 << pow2)
         };
-        DEBUG!("equ 0x{:x}", equ);
         // 这里我们需要记住合并节点的前节点
         while !merge_list.is_null() {
             if *merge_list as usize == equ {
@@ -97,7 +86,6 @@ impl Buddy {
                 merge_list = &mut (*(*merge_list)).next;
             }
         }
-        DEBUG!("merge:find {}", find);
         if find {
             let record_merge = *merge_list;
             unsafe {
@@ -105,25 +93,22 @@ impl Buddy {
                 let next_merge_list = &mut ((*(*merge_list)).next);
                 // 合并前后节点
                 if !(*pre_merge_list).is_null() {
-                    (*(*pre_merge_list)).next = (*next_merge_list);
+                    (*(*pre_merge_list)).next = *next_merge_list;
                 }
                 if !(*next_merge_list).is_null() {
-                    (*(*next_merge_list)).prev = (*pre_merge_list);
+                    (*(*next_merge_list)).prev = *pre_merge_list;
                 }
             }
-            DEBUG!("merge::record_merge_lsit 0x{:x}", record_merge as usize);
             let target_list = if equ < target_list {
                 (record_merge) as usize
             } else {
                 target_list
             };
             *merge_list = null_mut();
-            DEBUG!("merge::Self {:?}", self);
-
             self.merge(target_list, pow2 + 1);
         } else {
             merge_list = &mut self.free_lists[pow2];
-            DEBUG!("merge:merge_list 0x{:x}", *merge_list as usize);
+            // DEBUG!("merge:merge_list 0x{:x}", *merge_list as usize);
             let mut target_list = target_list as *mut Node;
             unsafe {
                 (*target_list).next = *merge_list;
@@ -133,13 +118,13 @@ impl Buddy {
                 }
             }
             self.free_lists[pow2] = target_list;
+            self.max_free_index = pow2;//在merge的时候更新最大的free_index
         }
     }
     fn inner(&mut self, index: usize) -> *mut u8 {
         let mut target_list = self.free_lists[index];
         if !target_list.is_null() {
             let answer = target_list;
-            // DEBUG!("inner:answer 0x{:x}", answer as usize);
             //如果后继节点为空，则直接指向null
             //否则，先将后继节点的前驱节点设置为空
             target_list = unsafe {
@@ -151,51 +136,39 @@ impl Buddy {
                 }
             };
             self.free_lists[index] = target_list;
-            // DEBUG!("inner:answer 0x{:x}", answer as usize);
             return answer as *mut u8;
         }
-        return null_mut();
+        null_mut()
     }
     fn get(&mut self, layout: Layout) -> *mut u8 {
         //make sure the size is power of 2
         //找到Node和请求内存大小的较大者,并对齐到2的幂次
-        let size = layout
-            .size()
-            .max(size_of::<Node>())
-            .max(layout.size())
-            .next_power_of_two();
-        let align = layout.align().max(size);
-        //构造合适的layout转递给linked_listAllocator
-        let layout = Layout::from_size_align(size, align).unwrap();
-        DEBUG!("{:?}", layout);
+        // DEBUG!("{:?}", layout);
         //找到对应列表位置
-        let index = find_last_min_pow2(size);
-        DEBUG!("get:index {}", index);
+        let index = find_last_min_pow2(layout.size());
+        // DEBUG!("get:index {}", index);
 
         let answer = self.inner(index);
         if !answer.is_null() {
-            // DEBUG!("get:answer 0x{:x}", answer as usize);
             return answer;
         }
-
         //如果列表中不含有可以分配的内存
         let is_enough = self.split(index, layout);
         if !is_enough {
             return null_mut();
         }
-        DEBUG!("is_enough: {}", is_enough);
-        return self.inner(index);
+        // DEBUG!("is_enough: {}", is_enough);
+        self.inner(index)
     }
     fn split(&mut self, pow2: usize, layout: Layout) -> bool {
         let mut index = 0;
         // 找到合适的可以分割的位置
-        for i in pow2 + 1..=self.max_free_index as usize {
+        for i in pow2 + 1..self.max_free_index {
             if !self.free_lists[i].is_null() {
                 index = i;
                 break;
             }
         }
-        DEBUG!("split:index {}", index);
         if index != 0 {
             for i in (pow2 + 1..=index).rev() {
                 let target_list = self.free_lists[i];
@@ -207,12 +180,9 @@ impl Buddy {
                         self.free_lists[i] = null_mut();
                     }
                 }
-                DEBUG!("split:target_list 0x{:x}", target_list as usize);
                 let mid = target_list as usize + (1 << (i - 1));
                 let mid_list = mid as *mut usize as *mut Node;
-                DEBUG!("split:mid_list 0x{:x}", mid_list as usize);
                 unsafe {
-                    mid_list.write_volatile(Node::new());
                     (*mid_list).next = self.free_lists[i - 1];
                     if !self.free_lists[i - 1].is_null() {
                         (*self.free_lists[i - 1]).prev = mid_list;
@@ -222,26 +192,20 @@ impl Buddy {
                     self.free_lists[i - 1] = target_list;
                 }
             }
-            return true;
+            true
         } else {
             //尝试从linkedlistAllocator中分配内存
-            let mut req = unsafe { self.linked_list.alloc(layout) };
-            DEBUG!(
-                "split:req 0x{:x} % {} == {} ",
-                req as usize,
-                layout.size(),
-                req as usize % layout.size()
-            );
+            let req = unsafe { self.linked_list.alloc(layout) };
             if req.is_null() {
                 return false;
             }
-            let mut req = req as *mut Node;
+            let req = req as *mut Node;
             unsafe {
                 req.write_volatile(Node::new()); //写入node
             }
-            DEBUG!("get mem from linkedlistAllocator");
+            // DEBUG!("get mem from linkedlistAllocator");
             self.free_lists[pow2] = req;
-            return true;
+            true
         }
     }
 }
@@ -252,82 +216,26 @@ pub fn find_last_min_pow2(mut addr: usize) -> usize {
         k += 1;
         addr >>= 1;
     }
-    return k;
+    k
 }
 
 unsafe impl GlobalAlloc for Locked<Buddy> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        // let size = max(
-        //     layout.size().next_power_of_two(),
-        //     max(layout.align(), size_of::<Node>()),
-        // );//获取实际申请的大小
-
+        let size = layout
+            .size()
+            .max(size_of::<Node>())
+            .next_power_of_two();
+        //构造合适的layout转递给linked_listAllocator
+        let layout = Layout::from_size_align(size, size).unwrap();
         let answer = self.lock().get(layout);
-        return answer;
+        answer
     }
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         let size = layout
             .size()
             .max(size_of::<Node>())
-            .max(layout.size())
             .next_power_of_two();
-        let align = layout.align().max(size);
         //构造合适的layout转递给linked_listAllocator
-        let layout = Layout::from_size_align(size, align).unwrap();
         self.lock().delete(ptr as usize, size);
     }
 }
-
-// #[test_case]
-pub fn test_buddy() {
-    let data = [0 as u128; 8].as_mut_ptr();
-    let mut buddy = Buddy::new();
-    DEBUG!("data_ptr: 0x{:x}", data as usize);
-    buddy.init(data as usize, 16 * 8);
-    DEBUG!("{:?}", buddy);
-    let layout = Layout::from_size_align(32, 32).expect("adjusting size failed!");
-    let answer1 = buddy.get(layout);
-    DEBUG!("answer1_ptr: 0x{:x}", answer1 as usize);
-    DEBUG!("{:?}", buddy);
-    let answer2 = buddy.get(layout);
-    DEBUG!("answer2_ptr: 0x{:x}", answer2 as usize);
-    DEBUG!("{:?}", buddy);
-    let layout_16 = Layout::from_size_align(16, 16).expect("adjusting size failed!");
-    let answer3 = buddy.get(layout_16);
-    DEBUG!("answer3_ptr: 0x{:x}", answer3 as usize);
-    DEBUG!("{:?}", buddy);
-    let answer4 = buddy.get(layout_16);
-    DEBUG!("answer4_ptr: 0x{:x}", answer4 as usize);
-    DEBUG!("{:?}", buddy);
-
-    buddy.delete(answer1 as usize, 32);
-    DEBUG!("{:?}", buddy);
-    buddy.delete(answer2 as usize, 32);
-    DEBUG!("{:?}", buddy);
-
-    let anserw5 = buddy.get(layout);
-    DEBUG!("answer5_ptr: 0x{:x}", anserw5 as usize);
-    DEBUG!("{:?}", buddy);
-
-    let anserw6 = buddy.get(layout);
-    DEBUG!("answer6_ptr: 0x{:x}", anserw6 as usize);
-    DEBUG!("{:?}", buddy);
-
-    buddy.delete(anserw5 as usize, 32);
-    DEBUG!("{:?}", buddy);
-    buddy.delete(anserw6 as usize, 32);
-    DEBUG!("{:?}", buddy);
-    buddy.delete(answer3 as usize, 16);
-    DEBUG!("{:?}", buddy);
-    buddy.delete(answer4 as usize, 16);
-    DEBUG!("{:?}", buddy);
-
-    let answer7 = buddy.get(layout);
-    DEBUG!("answer7_ptr: 0x{:x}", answer7 as usize);
-    DEBUG!("{:?}", buddy);
-    let layout_64 = Layout::from_size_align(64, 64).expect("adjusting size failed!");
-    let answer8 = buddy.get(layout_64);
-    DEBUG!("answer8_ptr: 0x{:x}", answer8 as usize);
-    DEBUG!("{:?}", buddy);
-}
-pub fn test_alloc_dealloc() {}

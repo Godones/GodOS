@@ -10,7 +10,7 @@ pub fn get_time() -> usize {
 pub fn get_costtime() -> usize {
     //以us为单位返回cpu运行时间
     // DEBUG!("[kernel] Debug: Get Time");
-    time::read() / (CLOCK_FREQ / 1000_000)
+    time::read() / (CLOCK_FREQ / 1_000_000)
 }
 pub fn enable_timer_interrupt() {
     unsafe {

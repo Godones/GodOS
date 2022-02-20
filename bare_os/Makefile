@@ -3,7 +3,7 @@ MODE := release
 KERNEL_ELF := target/$(TARGET)/$(MODE)/bare_os
 KERNEL_BIN := $(KERNEL_ELF).bin
 DISASM_TMP := target/$(TARGET)/$(MODE)/asm
-INFO := ERROR
+INFO := DEBUG
 #文件模拟块设备
 FS_IMG := ../user/target/$(TARGET)/$(MODE)/fs.img
 # BOARD

@@ -8,7 +8,7 @@ pub const BIG_STRIDE: usize = 1000; //控制一个时间片后应用的步长
 pub const KERNEL_HEAP_SIZE: usize = 0x30_0000; //内核的可分配堆大小
 pub const PAGE_SIZE: usize = 4096;
 pub const PAGE_SIZE_BIT: usize = 12; //页大小需要12个bit位保存
-pub const MEMORY_END: usize = 0x8080_0000; //内存的最大值
+pub const MEMORY_END: usize = 0x8800_0000; //内存的最大值 128MB
 
 pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
